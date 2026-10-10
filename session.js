@@ -1,0 +1,13 @@
+import {validateRecord} from './storage.js';
+export function neutralContext(current,defaults){return {...defaults,mode:current.mode,area:current.area,region:current.region,location:current.location,transport:current.transport};}
+export const CHANGE_REASONS=['満席','行列が長い','休み','営業確認できない','気が変わった','同行者の希望','予定変更','移動が面倒','その他'];
+export const view=c=>c?Object.fromEntries(Object.entries(c).filter(([k])=>k!=='score'&&k!=='weights')):null;
+export function selectStore(d,c,at=new Date().toISOString()){if(!d)throw Error('先に推薦を表示してください。');return {...d,status:'selected',initial_choice:d.initial_choice||view(c),latest_choice:view(c),transitions:[...(d.transitions||[]),{type:'selected',at,candidate:view(c)}]};}
+export function changeStore(d,reason,at=new Date().toISOString()){if(!d)return d;return {...d,status:'changing',change_reason:reason,transitions:[...(d.transitions||[]),{type:'change',at,reason,from:d.latest_choice||d.initial_choice}]};}
+export function completeMeal(state,record,decision){
+ const d=decision, r=validateRecord({...record,decision_id:d?.id||null,first_recommendation:d?.first_recommendation||null,presented_candidates:d?.presented_candidates||[],fallback:d?.initial_fallback||d?.fallback||null,initial_choice:d?.initial_choice||null,latest_choice:d?.latest_choice||null,decision_context:d?.context||null,actual_visit:record.store_name,change_reason:record.change_reason||d?.change_reason||'',use_for_learning:record.is_test===false&&record.use_for_learning!==false});
+ const done=d?{...d,status:'completed',record_id:r.id,actual_visit:r.store_name,change_reason:r.change_reason,meal_result:{dish:r.dish_name,amount_jpy:r.amount_jpy,satisfaction:r.satisfaction},use_for_learning:r.use_for_learning,completed_at:r.created_at,transitions:[...(d.transitions||[]),{type:'completed',at:r.created_at,record_id:r.id}]}:null;
+ const entry=r.kind==='store'?{id:'visit:'+r.id,record_id:r.id,decision_id:d?.id||null,name:r.store_name,at:r.created_at,status:'open',entered:true,is_test:r.is_test,use_for_learning:r.use_for_learning}:null;
+ return {...state,records:[...state.records,r],decisions:done?[...state.decisions.filter(x=>x.id!==done.id),done]:state.decisions,events:entry?[...state.events,entry]:state.events};
+}
+export function excludeRecord(state,id){const record=state.records.find(r=>r.id===id);if(!record)throw Error('記録が見つかりません。');return {...state,records:state.records.map(r=>r.id===id?{...r,use_for_learning:false}:r),decisions:state.decisions.map(d=>d.id===record.decision_id?{...d,use_for_learning:false}:d),events:state.events.map(e=>e.record_id===id||(record.decision_id&&e.decision_id===record.decision_id)?{...e,use_for_learning:false}:e)};}
