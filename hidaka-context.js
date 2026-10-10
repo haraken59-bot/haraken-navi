@@ -45,7 +45,7 @@ export function navigationContext(cloud,owner,at=new Date().toISOString()){
  const rows=valid('shochu')&&Array.isArray(cloud.shochu.data)?cloud.shochu.data:[];
  const stores=new Map();
  for(const row of rows){if(!row.store_id||!row.bottle_id)continue;
-  let store=stores.get(row.store_id);if(!store){store={store_id:row.store_id,name:row.store_name,area:row.area??null,latitude:row.latitude??null,longitude:row.longitude??null,closed_weekdays:row.closed_weekdays??[],is_basic_closed_today:row.is_basic_closed_today??null,last_visit_reference:row.last_visited_on??null,days_since_visit_reference:row.days_since_last_visit??null,visit_reference_note:'RPCの参照日。実訪問・ボトル最終訪問・キープ開始日のいずれかで、由来は未取得',bottles:[]};stores.set(row.store_id,store);}
+let store=stores.get(row.store_id);if(!store){store={store_id:row.store_id,name:row.store_name,area:row.area??null,latitude:row.latitude??null,longitude:row.longitude??null,closed_weekdays:row.closed_weekdays??[],is_basic_closed_today:row.is_basic_closed_today??null,last_visit_reference:row.last_visited_on??null,days_since_visit_reference:row.days_since_last_visit??null,visit_reference_note:'店舗来店日はstore_visitsの実来店履歴のみ。履歴なしは未取得（NULL）',bottles:[]};stores.set(row.store_id,store);}
   const value=Number.isFinite(row.remaining_percent)&&row.remaining_percent>=0&&row.remaining_percent<=100?row.remaining_percent:null;
   if(!store.bottles.some(b=>b.id===row.bottle_id))store.bottles.push({id:row.bottle_id,brand:row.brand??null,remaining_percent:value,remaining_observed_at:null,remaining_note:value===null?'残量不明':'保存済み残量。更新日時不明・現在量は要確認',kept_at:row.kept_at??null,status:row.status??null});
  }
@@ -59,7 +59,7 @@ export function navigationReasons(context,candidate){
  const s=context.shochuContext?.stores.find(s=>s.store_id===candidate.store_id);
  if(s){if(s.bottles.some(b=>b.status==='active'&&b.remaining_percent>0))reasons.push({type:'keep',text:'キープボトルあり（保存情報・現在残量は要確認）'});
  if(s.bottles.some(b=>b.remaining_percent!==null))reasons.push({type:'remaining',text:'焼酎残量の保存情報あり（更新日時不明）'});
- if(s.last_visit_reference)reasons.push({type:'visit_reference',text:'訪問等の参照日あり（キープ開始日による補完の可能性）',date:s.last_visit_reference});
+ if(s.last_visit_reference)reasons.push({type:'visit_reference',text:'店舗の実来店履歴あり（store_visits）',date:s.last_visit_reference});
  if(s.is_basic_closed_today===true)reasons.push({type:'closed',text:'通常は定休日・営業要確認'});
  }return reasons;
 }
