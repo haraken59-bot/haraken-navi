@@ -2,7 +2,7 @@
   "name": "ハラケン・ナビ",
   "short_name": "ハラケンナビ",
   "lang": "ja",
-  "id": "/haraken-navi/",
+  "id": "/haraken-navi-app/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
