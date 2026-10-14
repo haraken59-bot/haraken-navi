@@ -71,6 +71,13 @@ export class ReadOnlyClient{
   this.refreshing=(globalThis.navigator?.locks?.request?globalThis.navigator.locks.request('haraken-navi-refresh',renew):renew()).finally(()=>this.refreshing=null);}
   return this.refreshing;
  }
+ async verifyNaviOwner(){
+  const s=await this.fresh();let response;
+  try{response=await this.request(PROJECT+'/functions/v1/navi-discover?mode=owner-check',{method:'GET',headers:{Authorization:'Bearer '+s.access_token},cache:'no-store',signal:AbortSignal.timeout(8000)});}catch{throw Error('本人確認を完了できませんでした。');}
+  if(!response.ok)throw Error('この機能はハラケン本人専用です');
+  const data=await response.json();if(data.ok!==true||data.authenticated!==true||this.session()?.access_token!==s.access_token)throw Error('本人確認を完了できませんでした。');
+  return true;
+ }
  async user(){const s=await this.fresh();return this.send('/auth/v1/user',undefined,s.access_token,'GET');}
  async logout(){this._navigationContext=null;const s=this.session();this.store.removeItem(SESSION_KEY);if(s)await this.send('/auth/v1/logout?scope=local',undefined,s.access_token);}
  async rpc(name,args,expectedOwner=null){if(!Object.values(RPCS).some(([n])=>n===name))throw Error('読み取り専用RPC以外は呼べません。');const s=await this.fresh();if(expectedOwner&&s.user.id!==expectedOwner)throw Error('ログイン状態が変わりました。');const data=await this.send('/rest/v1/rpc/'+name,args,s.access_token);if(expectedOwner&&(this.session()?.user?.id!==expectedOwner||!ownerSafe(data,expectedOwner)))throw Error('本人の参照結果を確認できません。');if(['get_food_context','get_meal_history','get_hidaka_ai_context'].includes(name)&&data?.schema_version!==1)throw Error('未対応の食事データ形式です。');return data;}

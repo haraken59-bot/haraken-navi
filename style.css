@@ -19,3 +19,5 @@
 #test-banner {display:inline-block;margin:0 0 .4rem}
 #meal-edit-dialog {max-width:32rem;width:calc(100% - 3rem);border:1px solid #ccc;border-radius:16px;padding:1.25rem}
 #meal-edit-dialog::backdrop {background:rgba(0,0,0,.35)}
+
+header{flex-wrap:wrap;gap:6px}#auth-badge{font-size:12px;white-space:nowrap;padding:6px 8px;min-height:32px}#entry-choice .chips{flex-wrap:wrap}@media(max-width:400px){header{gap:4px}.brand{font-size:16px}#settings-toggle{font-size:12px;padding:6px}#auth-badge{font-size:11px}}

@@ -47,6 +47,19 @@ export function edgeDiscoveryTransport(endpoint,getToken,request=fetch){
    return response;
  };
 }
+// Guest calls carry no JWT, cookies or owner inputs. No local Node fallback.
+export function guestDiscoveryTransport(endpoint,request=fetch){
+ const target=new URL(endpoint);if(target.protocol!=='https:')throw Error('invalid_endpoint');
+ const allowed=new Set(['area','region','latitude','longitude','placeIndex','direction','category','portion','budget','mealMode']);
+ return async(url,options={})=>{
+  const source=new URL(url,'https://local.invalid'),out=new URL(target);out.search='';
+  for(const [key,value] of source.searchParams)if(allowed.has(key))out.searchParams.set(key,value);
+  out.searchParams.set('mode','guest-discover');
+  try {const response=await request(out,{method:'GET',credentials:'omit',cache:'no-store',redirect:'error',signal:options.signal});
+   if(!response.ok)throw Error('unavailable');return response;
+  }catch{throw Error('店舗検索を利用できません。時間をおいて再検索してください。');}
+ };
+}
 export class DiscoveryController{
  constructor(request=(...args)=>globalThis.fetch(...args),storage=null,now=()=>Date.now()){this.request=request;this.storage=storage;this.now=now;this.saved={};try{this.saved=JSON.parse(storage?.getItem(CACHE_KEY)||'{}');}catch{}if(!this.saved||typeof this.saved!=='object'||Array.isArray(this.saved))this.saved={};this.key='';this.value=null;this.version=0;this.pending=null;}
  reset(){this.version++;this.key='';this.value=null;this.pending=null;}
