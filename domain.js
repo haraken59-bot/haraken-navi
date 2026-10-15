@@ -101,6 +101,9 @@ export function recommend(candidates,ctx,records=[],food={},events=[],now=new Da
  const learned=learningRecords(records),scored=[],tendencies=mealTendencies(records,food,now),omakase=ctx.mode==='eat'&&!ctx.desire.trim()&&ctx.category==='おまかせ';
  let maxMinutes=Number(ctx.minutes)||Infinity;if(ctx.returnBy){const [h,m]=ctx.returnBy.split(':').map(Number);const local=new Date(now.toLocaleString('en-US',{timeZone:'Asia/Tokyo'}));let remain=h*60+m-local.getHours()*60-local.getMinutes();if(remain<0)remain+=1440;maxMinutes=Math.min(maxMinutes,remain);}
  for(const c of [...candidates,...actionCandidates(ctx)]){
+  if(ctx.storesOnly&&c.kind!=='store')continue;
+  if(c.closed===true||c.permanently_closed===true)continue;
+  if(c.kind==='store'&&ctx.location&&Number.isFinite(ctx.radius_m)&&[c.latitude,c.longitude].every(Number.isFinite)&&distanceKm(ctx.location,c)*1000>ctx.radius_m)continue;
   if(c.id==='home'&&wantsOutside(ctx))continue;
   if(c.mode!==ctx.mode&&c.mode!=='both')continue;if(!c.search_scoped&&ctx.area&&c.area&&!norm(c.area).includes(norm(ctx.area)))continue;
   const op=operating(c,events,now);if(!op.available)continue;
@@ -124,12 +127,13 @@ export function recommend(candidates,ctx,records=[],food={},events=[],now=new Da
   if(Number.isFinite(maxMinutes)&&c.kind==='store'&&travel===null)score-=25;
   if(ctx.mode==='drink'){const desire=ctx.companions>1?ctx.socialWish:ctx.soloWish;if(c.kind==='store')score+=(desire-3)*18+(c.bottles?.length?8:0)-(ctx.tomorrow?8:0);if(c.id==='home')score+=(3-desire)*30+(ctx.tomorrow?15:0);}
   if(c.kind==='action')score-=55;if(c.id==='wait')score+=1;if(c.id==='wait'&&ctx.direction==='wait')score+=300;if(ctx.direction==='genre'&&recent.length)score-=18;
+  if(!Number.isFinite(score))score=0;
   if(ctx.mode==='eat'&&ctx.portion==='軽め'&&c.id==='home')score+=65;
   scored.push({...c,match,genre_fit,portion_fit,score,pricing,distance_m:ctx.location&&Number.isFinite(c.latitude)?Math.round(distanceKm(ctx.location,c)*1000):null,score_parts:{price:weights.money*priceScore,time:weights.time*(travel==null?0.2:Math.max(0,1-travel/40)),certainty:weights.reliable*op.certainty+reliabilityAdjustment,novel:weights.novel*(familiarity?0.2:1)},meal_fit:fit,expectedSatisfaction:rating,travel,op,label:match?'今の気分に合いそう':familiarity?'安定候補':c.kind==='action'?'こんな過ごし方も':'新規開拓枠',reason:genre_fit?genre_fit.reason+(ctx.portion?'・'+ctx.portion+'の量は要確認':''):ctx.portion&&ctx.mode==='eat'?(portion_fit==='fit'?`${ctx.category==='おまかせ'?'':ctx.category+'・'}${ctx.portion}の条件に合う提供情報あり（量は要確認）`: '食事量への適合は情報不足・要確認'):match?'今の「食べたい・飲みたい」を優先':fit.reason?fit.reason:past.length?'学習対象の本人記録を参考にしました':c.satisfaction>=4?'過去の本人満足度が高い候補':c.bottles?.length?'キープボトルのある店':c.kind==='action'?'店に行く以外の選択肢も大切に':favorite?'記録された好みと共通点があります':'今の条件から比較する候補'});
  }
  const fitRank=c=>c.portion_fit==='fit'?2:c.portion_fit==='unsuitable'?0:1;
  const hasPortion=ctx.mode==='eat'&&Boolean(ctx.portion);
- if(hasPortion&&ctx.portion==='ガッツリ'){for(let i=scored.length-1;i>=0;i--)if(scored[i].portion_fit==='unsuitable')scored.splice(i,1);}
+ if(hasPortion&&ctx.portion==='ガッツリ'&&!ctx.relaxPortion){for(let i=scored.length-1;i>=0;i--)if(scored[i].portion_fit==='unsuitable')scored.splice(i,1);}
  const explicit=Boolean(ctx.desire.trim()||ctx.category!=='おまかせ');scored.sort((a,b)=>(ctx.direction==='wait'?Number(b.id==='wait')-Number(a.id==='wait'):0)||(explicit?b.match-a.match:0)||(hasPortion?fitRank(b)-fitRank(a):0)||b.score-a.score||a.id.localeCompare(b.id));
  const unique=[];for(const c of scored)if(!unique.some(x=>x.kind==='store'&&c.kind==='store'&&sameStore(x,c)))unique.push(c);
  let top=unique.slice(0,3);if(ctx.direction!=='wait'){
@@ -140,5 +144,17 @@ export function recommend(candidates,ctx,records=[],food={},events=[],now=new Da
  const fallbackMatch=c=>explicit?c.match:(c.tags||[]).filter(t=>top[0]?.tags?.includes(t)).length;
  const fallback=unique.filter(c=>c.id!==top[0]?.id&&c.kind==='store').sort((a,b)=>fallbackMatch(b)-fallbackMatch(a)||(hasPortion?fitRank(b)-fitRank(a):0)||(omakase?(b.meal_fit?.score||0)-(a.meal_fit?.score||0):0)||(a.travel??999)-(b.travel??999)||b.expectedSatisfaction-a.expectedSatisfaction||b.op.certainty-a.op.certainty||b.score-a.score)[0]||unique.find(c=>c.id==='wait');
  return {portionInsufficient:hasPortion&&!scored.some(c=>c.kind==='store'&&c.portion_fit==='fit'&&(!explicit||c.match>0)),priceComparableCount:scored.filter(c=>c.kind==='store'&&c.pricing.comparable).length,ranked:unique,tendencies:omakase?tendencies:null,top,fallback:top[0]?.kind==='action'?null:fallback,weights,unmatched:explicit&&ctx.direction!=='wait'&&!top.some(c=>c.match),limitedTime:Number.isFinite(maxMinutes),generated_at:now.toISOString()};
+}
+
+// Preserve hard exclusions (mode, distance/time, confirmed closure, genre mismatch).
+// Wishes are ranking hints; only the soft portion preference can be relaxed.
+export function recommendSearch(candidates,ctx,records=[],food={},events=[],now=new Date()){
+ let result=recommend(candidates,ctx,records,food,events,now);
+ if(ctx.direction!=='wait'&&!result.top.some(c=>c.kind==='store')){
+  const relaxed=recommend(candidates,{...ctx,storesOnly:true,relaxPortion:true},records,food,events,now);
+  if(relaxed.top.length)result={...relaxed,searchFallback:true};
+ }
+ if(result.top.some(c=>c.kind==='store')&&result.unmatched)result.searchFallback=true;
+ return result;
 }
 

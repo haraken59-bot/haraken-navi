@@ -21,12 +21,16 @@ export function buildPool(discovery,cloud,records,local,ctx){
  return pool;
 }
 export function scopeKey(ctx){return ctx.area.trim()?`area:${ctx.region||''}:${ctx.area.trim()}:${ctx.placeIndex??''}`:ctx.location?`gps:${ctx.location.latitude}:${ctx.location.longitude}`:'';}
+// API coordinates define the search area; its display label is not an area filter.
+export function guestPool(data){return (data?.candidates||[]).filter(c=>c.discovered&&c.source_kind==='hotpepper').filter(c=>!data.center||![c.latitude,c.longitude].every(Number.isFinite)||km(c,data.center)<=data.radius_m/1000).map(c=>({...c,search_scoped:true}));}
+export function searchHint(value){return String(value||'').normalize('NFKC').replace(/[^\p{L}\p{N}\sー]/gu,' ').replace(/\s+/g,' ').trim().slice(0,60);}
 // A late response from a previous area must never replace the new area's pool.
 const CACHE_KEY='haraken-discovery-cache-v1',FRESH=30*60*1000,MAX_AGE=7*86400000;
 // Shared request contract for the current Node route and a future Edge transport.
 // Personal history, owner IDs and satisfaction never enter search parameters.
 export function discoveryParams(ctx){
  const params=new URLSearchParams();
+ const hint=searchHint(ctx.desire);if(hint)params.set('hint',hint);
  if(ctx.area?.trim()){params.set('area',ctx.area.trim());params.set('region',ctx.region||'');if(ctx.placeIndex!=null)params.set('placeIndex',ctx.placeIndex);}
  else if(ctx.location){params.set('latitude',ctx.location.latitude);params.set('longitude',ctx.location.longitude);}
  if(['near','cheap','adventure','sure'].includes(ctx.direction))params.set('direction',ctx.direction);
@@ -50,7 +54,7 @@ export function edgeDiscoveryTransport(endpoint,getToken,request=fetch){
 // Guest calls carry no JWT, cookies or owner inputs. No local Node fallback.
 export function guestDiscoveryTransport(endpoint,request=fetch){
  const target=new URL(endpoint);if(target.protocol!=='https:')throw Error('invalid_endpoint');
- const allowed=new Set(['area','region','latitude','longitude','placeIndex','direction','category','portion','budget','mealMode']);
+ const allowed=new Set(['area','region','latitude','longitude','placeIndex','direction','category','portion','budget','mealMode','hint']);
  return async(url,options={})=>{
   const source=new URL(url,'https://local.invalid'),out=new URL(target);out.search='';
   for(const [key,value] of source.searchParams)if(allowed.has(key))out.searchParams.set(key,value);
@@ -66,7 +70,7 @@ export class DiscoveryController{
  remember(key,data){this.saved[key]=data;this.saved=Object.fromEntries(Object.entries(this.saved).filter(([,v])=>this.valid(v)).sort((a,b)=>Date.parse(b[1].fetched_at)-Date.parse(a[1].fetched_at)).slice(0,12));if(this.storage){for(;;){try{this.storage.setItem(CACHE_KEY,JSON.stringify(this.saved));break;}catch{const keys=Object.keys(this.saved);if(keys.length<=1)break;delete this.saved[keys[keys.length-1]];}}}}
  valid(v){return v&&Array.isArray(v.candidates)&&v.center&&Number.isFinite(v.center.latitude)&&Number.isFinite(v.center.longitude)&&Number.isFinite(Date.parse(v.fetched_at))&&this.now()-Date.parse(v.fetched_at)<MAX_AGE&&v.candidates.every(c=>!c.hotpepper||this.now()-Date.parse(c.hotpepper.fetched_at)<86400000);}
  recover(data,old){if(!data.source_data||!old?.source_data)return data;const sources={...data.source_data};let reused=false;for(const kind of ['osm','hotpepper']){const v=old.source_data[kind];if(!sources[kind]&&v&&this.now()-Date.parse(v.fetched_at)<(kind==='hotpepper'?86400000:MAX_AGE)){sources[kind]=v;reused=true;}}if(!reused)return data;return {...data,source_data:sources,candidates:mergeExternal(sources.osm?.candidates,sources.hotpepper?.candidates),from_cache:true,degraded:true,warning:(data.warning||'')+' 保存情報を併用しています。最新情報ではない可能性があります。'};}
- async search(ctx){const variant=':'+JSON.stringify([ctx.direction||'',ctx.category||'おまかせ',ctx.portion||'',ctx.budget??null,ctx.mode||'eat']);const key=scopeKey(ctx)+variant,base=scopeKey({...ctx,placeIndex:undefined})+variant;
+ async search(ctx){const variant=':'+JSON.stringify([ctx.direction||'',ctx.category||'おまかせ',ctx.portion||'',ctx.budget??null,ctx.mode||'eat',searchHint(ctx.desire)]);const key=scopeKey(ctx)+variant,base=scopeKey({...ctx,placeIndex:undefined})+variant;
   if(key&&this.key===key&&this.value&&!this.value.degraded&&(this.value.needs_choice||this.now()-Date.parse(this.value.fetched_at)<FRESH))return this.value;
   if(key&&this.key===key&&this.pending)return this.pending;const version=++this.version;this.key=key;this.value=null;
   const params=discoveryParams(ctx);

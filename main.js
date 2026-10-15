@@ -5,8 +5,8 @@ import {prepareNow,localAction,historyReusable} from './now-context.js';
 import {MealClient} from './meal-client.js';
 import {mountMealUI} from './meal-ui.js';
 import {neutralContext,CHANGE_REASONS,selectStore,changeStore,completeMeal,excludeRecord} from './session.js';
-import {buildPool,DiscoveryController,scopeKey,edgeDiscoveryTransport,guestDiscoveryTransport} from './discovery.js';
-import {DEFAULT_CONTEXT,normalizeConditions,toggleCondition,recommend,provenance,trustedValue,japanDay} from './domain.js';
+import {buildPool,guestPool,DiscoveryController,scopeKey,edgeDiscoveryTransport,guestDiscoveryTransport} from './discovery.js';
+import {DEFAULT_CONTEXT,normalizeConditions,toggleCondition,recommendSearch,provenance,trustedValue,japanDay} from './domain.js';
 import {readState,writeState,validateRecord,isStorageQuotaError} from './storage.js';
 import {ReadOnlyClient,consumeAuthRedirect,SESSION_KEY,PROJECT,loadPublicConfig,OtpFlow,OtpAuthError} from './api.js';
 const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -25,7 +25,7 @@ function load(){authDisplay();discovery=isMember()?memberDiscovery:guestDiscover
 function commit(next){if(!isMember()){state=emptyState();return;}if(locked)throw Error('保存データを保護するため、書き込みを停止しています。');const current=readState(localStorage,owner);if(JSON.stringify(current)!==JSON.stringify(state)){state=current;throw Error('別のタブで記録が更新されました。入力は残っています。もう一度操作してください。');}writeState(localStorage,owner,next);state=next;}
 function safe(fn){return async e=>{try{await fn(e);}catch(err){say(err.message||'処理できませんでした。');}};}
 function fields(){const num=['budget','minutes','companions','soloWish','socialWish','round'];for(const id of ['desire','area','region',...num,'transport','occasion','weather','returnBy','tomorrow'])ctx[id]=num.includes(id)?($ (id).value===''?null:Number($(id).value)):$(id).value;ctx.companions=Math.max(1,ctx.companions||1);return {...ctx};}
-function candidates(){if(!isMember())return (discoveryData?.candidates||[]).filter(c=>c.discovered&&c.source_kind==='hotpepper');return buildPool(discoveryData,cloud,state.records,state.candidates.filter(c=>c.is_test===testMode),ctx);}
+function candidates(){if(!isMember())return guestPool(discoveryData);return buildPool(discoveryData,cloud,state.records,state.candidates.filter(c=>c.is_test===testMode),ctx);}
 function events(){if(!isMember())return [];return state.events.filter(e=>e.is_test===testMode&&e.use_for_learning!==false);}
 function snapshot(c){if(!c)return null;const {score,weights,...view}=c;return view;}
 async function calculate(reason='生成',additional=0){
@@ -42,11 +42,12 @@ async function calculate(reason='生成',additional=0){
  if(data.needs_choice){$('search-details').open=true;$('discovery-status').textContent='検索する場所を選んでください。';$('place-choice').hidden=false;$('place-choice').replaceChildren();data.places.forEach((p,i)=>{const b=document.createElement('button');b.className='secondary';b.textContent=p.label;b.onclick=()=>{ctx.placeIndex=i;calculate('場所を選択');};$('place-choice').append(b);});return;}
  const pool=actionOnly?[]:candidates();$('discovery-status').textContent=(data.degraded?(data.error||'')+' '+data.warning+(data.from_cache?' 保存日時：'+new Date(data.fetched_at).toLocaleString('ja-JP')+'。':'')+' ':'')+`${data.center?.label||ctx.area} ${data.center?"の検索範囲":"（所在地を確認できる履歴のみ）"}：外部情報から${data.candidates.length}店、履歴と照合後${pool.length}店。営業時間・価格・料理は要確認。`+(data.truncated?'取得上限に達したため一部の店舗のみです。':'');
  if(actionOnly)$('discovery-status').textContent='外出しない選択も、正式な候補として比較しています。';
- result=recommend(pool,{...ctx,owner,location:data.center||null},isMember()?state.records:[],isMember()?{...(cloud.food?.data||{}),meal_history:cloud.history?.data?.records||[],history_owner:cloudOwner}:{},isMember()?events():[]);
+ result=recommendSearch(pool,{...ctx,owner,storesOnly:!isMember()&&ctx.direction!=='wait',radius_m:data.radius_m,location:data.center||null},isMember()?state.records:[],isMember()?{...(cloud.food?.data||{}),meal_history:cloud.history?.data?.records||[],history_owner:cloudOwner}:{},isMember()?events():[]);
  if(!decision){decision={id:uid(),created_at:new Date().toISOString(),is_test:testMode,first_recommendation:snapshot(result.top[0]),presented_candidates:result.top.map(snapshot),initial_choice:null,initial_fallback:snapshot(result.fallback),status:'recommended',revisions:[],context:{...ctx,location:data.center||ctx.location||null}};}
  else decision={...decision,revisions:[...decision.revisions,{at:new Date().toISOString(),reason,context:{...ctx,location:data.center||ctx.location||null},candidates:result.top.map(snapshot),fallback:snapshot(result.fallback)}]};
  if(!isMember()){result.top=result.top.filter(c=>c.kind==='store'||(ctx.direction==='wait'&&c.id==='wait'));if(result.fallback?.kind!=='store')result.fallback=null;}
  decision.fallback=snapshot(result.fallback);commit({...state,decisions:[...state.decisions.filter(d=>d.id!==decision.id),decision]});renderResult();$('recalculation-status').textContent=reason==='生成'?'推薦を計算しました。':`「${reason}」を反映して再計算しました。${previous===result.top[0]?.id?'現在の第1候補が引き続き最適です。':'候補の順位を更新しました。'}`+(result.portionInsufficient?' 食事量の条件に合う店舗情報が不足しています。':'')+(ctx.direction==='cheap'&&result.priceComparableCount<3?' 同じ条件で比較できる価格情報が不足しているため、十分に比較できません。':'');
+ if(!result.top.length)$('recalculation-status').textContent='条件に合う候補がありません。エリアや条件を変えてください。';else if(result.searchFallback)$('recalculation-status').textContent='希望に完全一致する店が少ないため、近い候補を表示しています。';
  if(data.pending&&additional<3&&!decision.initial_choice)setTimeout(()=>{if(run===calculation&&!decision?.initial_choice)calculate('追加の店舗情報',additional+1);},5000);
  }catch(e){if(run!==calculation)return;if(isStorageQuotaError(e)&&result){renderResult();$('discovery-status').textContent='端末の保存容量が不足しています。候補は表示しますが、今回の推薦は端末に保存できていません。既存の記録・写真は削除していません。';return;}discoveryData=null;result=null;$('results').hidden=true;$('search-details').open=true;$('discovery-status').textContent=e.message+' 店舗候補は表示していません。';}
 }
