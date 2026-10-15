@@ -1,6 +1,7 @@
 // Public place data only. Matching never treats a chain name as a branch identifier.
 export const distanceKm=(a,b)=>{const r=x=>x*Math.PI/180;return 12742*Math.asin(Math.sqrt(Math.sin(r(b.latitude-a.latitude)/2)**2+Math.cos(r(a.latitude))*Math.cos(r(b.latitude))*Math.sin(r(b.longitude-a.longitude)/2)**2));};
-export const normalizeName=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[\p{P}\p{S}\s]/gu,'');
+export const officialStoreName=s=>['やきとり日高','やきとり ひだか','やきとりひだか'].includes(String(s||'').trim())?'やきとり ひだか':s;
+export const normalizeName=s=>String(officialStoreName(s)||'').normalize('NFKC').toLowerCase().replace(/[\p{P}\p{S}\s]/gu,'');
 // A conservative time-of-day hint, not an opening-hours/calendar interpreter.
 // If every published interval is outside the current time, reduce confidence.
 export function outsidePublishedHours(c,now=new Date()){

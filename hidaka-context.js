@@ -1,3 +1,4 @@
+import {officialStoreName} from './places.js';
 // Read-only adapter for get_hidaka_ai_context v1. Missing proposal data stays unknown.
 const list=v=>Array.isArray(v)?v:[];
 function frequency(orders,key){
@@ -20,7 +21,7 @@ export function hidakaContext(data){
    satisfaction:order.feedback?.satisfaction??null,feedback:order.feedback??null};
  });
  const counts=orders.map(o=>o.skewer_count).filter(Number.isFinite);
- return {store:data?.store??null,recent_orders:orders,
+ return {store:data?.store?{...data.store,name:officialStoreName(data.store.name)}:null,recent_orders:orders,
   order_summary:{...data?.order_summary,
    frequent_actual_items:frequency(orders,'actual_items'),frequent_removed_items:frequency(orders,'removed_items'),
    frequent_manual_items:frequency(orders,'manual_items'),
@@ -45,7 +46,7 @@ export function navigationContext(cloud,owner,at=new Date().toISOString()){
  const rows=valid('shochu')&&Array.isArray(cloud.shochu.data)?cloud.shochu.data:[];
  const stores=new Map();
  for(const row of rows){if(!row.store_id||!row.bottle_id)continue;
-let store=stores.get(row.store_id);if(!store){store={store_id:row.store_id,name:row.store_name,area:row.area??null,latitude:row.latitude??null,longitude:row.longitude??null,closed_weekdays:row.closed_weekdays??[],is_basic_closed_today:row.is_basic_closed_today??null,last_visit_reference:row.last_visited_on??null,days_since_visit_reference:row.days_since_last_visit??null,visit_reference_note:'店舗来店日はstore_visitsの実来店履歴のみ。履歴なしは未取得（NULL）',bottles:[]};stores.set(row.store_id,store);}
+let store=stores.get(row.store_id);if(!store){store={store_id:row.store_id,name:officialStoreName(row.store_name),area:row.area??null,latitude:row.latitude??null,longitude:row.longitude??null,closed_weekdays:row.closed_weekdays??[],is_basic_closed_today:row.is_basic_closed_today??null,last_visit_reference:row.last_visited_on??null,days_since_visit_reference:row.days_since_last_visit??null,visit_reference_note:'店舗来店日はstore_visitsの実来店履歴のみ。履歴なしは未取得（NULL）',bottles:[]};stores.set(row.store_id,store);}
   const value=Number.isFinite(row.remaining_percent)&&row.remaining_percent>=0&&row.remaining_percent<=100?row.remaining_percent:null;
   if(!store.bottles.some(b=>b.id===row.bottle_id))store.bottles.push({id:row.bottle_id,brand:row.brand??null,remaining_percent:value,remaining_observed_at:null,remaining_note:value===null?'残量不明':'保存済み残量。更新日時不明・現在量は要確認',kept_at:row.kept_at??null,status:row.status??null});
  }
@@ -72,3 +73,4 @@ export function hidakaOrderUrl(candidate, context, owner, url, status) {
  if (candidate.user_id && candidate.user_id !== owner) return null;
  try { const parsed=new URL(url); return parsed.protocol==='https:'&&!parsed.username&&!parsed.password?parsed.href:null; } catch { return null; }
 }
+
