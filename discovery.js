@@ -22,7 +22,7 @@ export function buildPool(discovery,cloud,records,local,ctx){
 }
 export function scopeKey(ctx){return ctx.area.trim()?`area:${ctx.region||''}:${ctx.area.trim()}:${ctx.placeIndex??''}`:ctx.location?`gps:${ctx.location.latitude}:${ctx.location.longitude}`:'';}
 // API coordinates define the search area; its display label is not an area filter.
-export function guestPool(data){return (data?.candidates||[]).filter(c=>c.discovered&&c.source_kind==='hotpepper').filter(c=>!data.center||![c.latitude,c.longitude].every(Number.isFinite)||km(c,data.center)<=data.radius_m/1000).map(c=>({...c,search_scoped:true}));}
+export function guestPool(data){return (data?.candidates||[]).filter(c=>c.discovered&&['hotpepper','known_store'].includes(c.source_kind)).filter(c=>!data.center||![c.latitude,c.longitude].every(Number.isFinite)||km(c,data.center)<=data.radius_m/1000).map(c=>({...c,search_scoped:true}));}
 export function searchHint(value){return String(value||'').normalize('NFKC').replace(/[^\p{L}\p{N}\sー]/gu,' ').replace(/\s+/g,' ').trim().slice(0,60);}
 // A late response from a previous area must never replace the new area's pool.
 const CACHE_KEY='haraken-discovery-cache-v1',FRESH=30*60*1000,MAX_AGE=7*86400000;
