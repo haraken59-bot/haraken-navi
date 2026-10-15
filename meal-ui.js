@@ -1,3 +1,4 @@
+import {officialStoreName} from './places.js';
 import {canRestoreMealLearning} from './meal-client.js';
 import {prepareMealPhoto,saveMealWithPhotos,downloadMealPhoto} from './meal-photo.js';
 import {buildMeal,parseMealText,gpsComparison,duplicateMeals} from './meal-record.js';
@@ -28,7 +29,7 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
  $('actual-store').addEventListener('blur',()=>{const matches=stores.filter(s=>normalizeStoreName(s.name)===normalizeStoreName($('actual-store').value));if(matches.length===1)$('meal-store-id').value=matches[0].id;showPhotos();});
  $('actual-store').addEventListener('input',()=>{$('meal-store-id').value='';showPhotos();});
  $('meal-store-id').onchange=()=>{const s=stores.find(s=>s.id===$('meal-store-id').value);if(s)$('actual-store').value=s.name;pending=null;showPhotos();};
- function renderHistory(){ $('meal-cloud-history').innerHTML='<h3>共通の食事履歴</h3>'+history.map(r=>{const m=r.navi_metadata||{};return `<div class="record"><b>${esc(r.store_name||'店舗未記入')}</b> · ${esc(r.dish_name||'料理未記入')}<br>${esc(r.eaten_at?new Date(r.eaten_at).toLocaleString('ja-JP'):'日時不明')} / ${r.amount_jpy==null?'金額未記入':esc(r.amount_jpy)+'円'} / 満足度 ${esc(r.satisfaction??'未記入')}<p>${esc(r.comment)}</p>${m.is_test?'テスト · ':''}${m.exclude_from_learning?'学習対象外':''}${m.version?`<p>AI推薦：${esc(m.first_recommendation?.name||'なし')}<br>最初の選択：${esc(m.initial_choice?.name||'なし')}<br>最後の選択：${esc(m.latest_choice?.name||'未記録')}<br>実際の店：${esc(r.store_name)}<br>変更理由：${esc(m.change_reason||'なし')}</p>`:''}<button type="button" class="quiet" data-photo-id="${esc(r.id)}">写真・位置情報（${r.photo_count||0}枚）</button><button type="button" class="quiet" data-edit-meal="${esc(r.id)}">編集</button>${canRestoreMealLearning(r)?`<button type="button" class="quiet" data-restore-learning="${esc(r.id)}">学習対象に戻す</button>`:''}<div id="photos-${esc(r.id)}"></div></div>`;}).join('');}
+ function renderHistory(){ $('meal-cloud-history').innerHTML='<h3>共通の食事履歴</h3>'+history.map(r=>{const m=r.navi_metadata||{};return `<div class="record"><b>${esc(officialStoreName(r.store_name)||'店舗未記入')}</b> · ${esc(r.dish_name||'料理未記入')}<br>${esc(r.eaten_at?new Date(r.eaten_at).toLocaleString('ja-JP'):'日時不明')} / ${r.amount_jpy==null?'金額未記入':esc(r.amount_jpy)+'円'} / 満足度 ${esc(r.satisfaction??'未記入')}<p>${esc(r.comment)}</p>${m.is_test?'テスト · ':''}${m.exclude_from_learning?'学習対象外':''}${m.version?`<p>AI推薦：${esc(officialStoreName(m.first_recommendation?.name)||'なし')}<br>最初の選択：${esc(officialStoreName(m.initial_choice?.name)||'なし')}<br>最後の選択：${esc(officialStoreName(m.latest_choice?.name)||'未記録')}<br>実際の店：${esc(officialStoreName(r.store_name))}<br>変更理由：${esc(m.change_reason||'なし')}</p>`:''}<button type="button" class="quiet" data-photo-id="${esc(r.id)}">写真・位置情報（${r.photo_count||0}枚）</button><button type="button" class="quiet" data-edit-meal="${esc(r.id)}">編集</button>${canRestoreMealLearning(r)?`<button type="button" class="quiet" data-restore-learning="${esc(r.id)}">学習対象に戻す</button>`:''}<div id="photos-${esc(r.id)}"></div></div>`;}).join('');}
  function openEdit(row){
   const existing=document.getElementById('meal-edit-dialog');existing?.remove();
   const dialog=document.createElement('dialog');dialog.id='meal-edit-dialog';
@@ -66,5 +67,6 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
  });
  return {async refresh(){if(account!==getOwner()){account=getOwner();photos=[];current=null;history=[];pending=null;form.reset();$('meal-date').value=nowInput();showPhotos();renderHistory();}if(!getClient()?.session()){history=[];renderHistory();return;}await reload();stores=await getClient().stores();$('meal-store-id').innerHTML='<option value="">店名で記録（店舗マスタは変更しません）</option>'+stores.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} ${esc(s.area)}</option>`).join('');}};
 }
+
 
 
