@@ -1,4 +1,4 @@
-import {samePlace,normalizeName,mergeExternal} from './places.js';
+import {samePlace,normalizeName,mergeExternal,validPoint,withinSearch} from './places.js';
 import {candidatesFromCloud} from './domain.js';
 import {learningRecords} from './storage.js';
 function mealPeriod(date){if(!date)return 'unknown';const h=Number(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tokyo',hour:'2-digit',hourCycle:'h23'}).format(new Date(date)));return h>=11&&h<15?'lunch':h>=17?'dinner':'unknown';}
@@ -18,11 +18,11 @@ export function buildPool(discovery,cloud,records,local,ctx){
   if(latest){if(raw.discovered)c.genre_external={...raw};c.personal_prices=history.filter(h=>h.price!=null&&Number.isFinite(Number(h.price))).map(h=>({amount:Number(h.price),at:h.observed_at,period:h.meal_period||mealPeriod(h.observed_at)}));c.history_observed_at=latest.observed_at;c.price_observed_at=latest.observed_at;c.tags=[...new Set([...(c.tags||[]),...(latest.tags||[])])];c.store_id=latest.store_id;c.satisfaction=latest.satisfaction;c.price=latest.price??raw.price;c.observed_at=raw.observed_at||latest.observed_at;c.history_source=latest.source;c.history_dish=latest.dish;c.dish=latest.dish?latest.dish+'（過去の記録・現在の提供は要確認）':raw.dish;}
   pool.push(c);
  }
- return pool;
+ return discovery?.center?withinSearch(pool,discovery.center,discovery.radius_m):pool;
 }
-export function scopeKey(ctx){return ctx.area.trim()?`area:${ctx.region||''}:${ctx.area.trim()}:${ctx.placeIndex??''}`:ctx.location?`gps:${ctx.location.latitude}:${ctx.location.longitude}`:'';}
+export function scopeKey(ctx){return validPoint(ctx.location)?`gps:${ctx.location.latitude}:${ctx.location.longitude}`:ctx.area.trim()?`area:${ctx.region||''}:${ctx.area.trim()}:${ctx.placeIndex??''}`:'';}
 // API coordinates define the search area; its display label is not an area filter.
-export function guestPool(data){return (data?.candidates||[]).filter(c=>c.discovered&&['hotpepper','known_store'].includes(c.source_kind)).filter(c=>!data.center||![c.latitude,c.longitude].every(Number.isFinite)||km(c,data.center)<=data.radius_m/1000).map(c=>({...c,search_scoped:true}));}
+export function guestPool(data){return withinSearch((data?.candidates||[]).filter(c=>c.discovered&&['hotpepper','known_store'].includes(c.source_kind)),data?.center,data?.radius_m).map(c=>({...c,search_scoped:true}));}
 export function searchHint(value){return String(value||'').normalize('NFKC').replace(/[^\p{L}\p{N}\sー]/gu,' ').replace(/\s+/g,' ').trim().slice(0,60);}
 // A late response from a previous area must never replace the new area's pool.
 const CACHE_KEY='haraken-discovery-cache-v1',FRESH=30*60*1000,MAX_AGE=7*86400000;
@@ -31,8 +31,8 @@ const CACHE_KEY='haraken-discovery-cache-v1',FRESH=30*60*1000,MAX_AGE=7*86400000
 export function discoveryParams(ctx){
  const params=new URLSearchParams();
  const hint=searchHint(ctx.desire);if(hint)params.set('hint',hint);
- if(ctx.area?.trim()){params.set('area',ctx.area.trim());params.set('region',ctx.region||'');if(ctx.placeIndex!=null)params.set('placeIndex',ctx.placeIndex);}
- else if(ctx.location){params.set('latitude',ctx.location.latitude);params.set('longitude',ctx.location.longitude);}
+ if(validPoint(ctx.location)){params.set('latitude',ctx.location.latitude);params.set('longitude',ctx.location.longitude);}
+ else if(ctx.area?.trim()){params.set('area',ctx.area.trim());params.set('region',ctx.region||'');if(ctx.placeIndex!=null)params.set('placeIndex',ctx.placeIndex);}
  if(['near','cheap','adventure','sure'].includes(ctx.direction))params.set('direction',ctx.direction);
  if(ctx.budget!=null&&ctx.budget!=='')params.set('budget',String(ctx.budget));
  params.set('category',ctx.category||'おまかせ');params.set('portion',ctx.portion||'');params.set('mealMode',ctx.mode||'eat');
@@ -71,14 +71,16 @@ export class DiscoveryController{
  valid(v){return v&&Array.isArray(v.candidates)&&v.center&&Number.isFinite(v.center.latitude)&&Number.isFinite(v.center.longitude)&&Number.isFinite(Date.parse(v.fetched_at))&&this.now()-Date.parse(v.fetched_at)<MAX_AGE&&v.candidates.every(c=>!c.hotpepper||this.now()-Date.parse(c.hotpepper.fetched_at)<86400000);}
  recover(data,old){if(!data.source_data||!old?.source_data)return data;const sources={...data.source_data};let reused=false;for(const kind of ['osm','hotpepper']){const v=old.source_data[kind];if(!sources[kind]&&v&&this.now()-Date.parse(v.fetched_at)<(kind==='hotpepper'?86400000:MAX_AGE)){sources[kind]=v;reused=true;}}if(!reused)return data;return {...data,source_data:sources,candidates:mergeExternal(sources.osm?.candidates,sources.hotpepper?.candidates),from_cache:true,degraded:true,warning:(data.warning||'')+' 保存情報を併用しています。最新情報ではない可能性があります。'};}
  async search(ctx){const variant=':'+JSON.stringify([ctx.direction||'',ctx.category||'おまかせ',ctx.portion||'',ctx.budget??null,ctx.mode||'eat',searchHint(ctx.desire)]);const key=scopeKey(ctx)+variant,base=scopeKey({...ctx,placeIndex:undefined})+variant;
+  const matchesCenter=data=>!validPoint(ctx.location)||validPoint(data?.center)&&km(ctx.location,data.center)<0.001;
+  if(this.value&&!matchesCenter(this.value))this.value=null;
   if(key&&this.key===key&&this.value&&!this.value.degraded&&(this.value.needs_choice||this.now()-Date.parse(this.value.fetched_at)<FRESH))return this.value;
   if(key&&this.key===key&&this.pending)return this.pending;const version=++this.version;this.key=key;this.value=null;
   const params=discoveryParams(ctx);
   const promise=(async()=>{try{
    const response=await this.request('/api/discover?'+params,{signal:AbortSignal.timeout(30000)});let data=await response.json();if(!response.ok)throw Object.assign(Error(data.error||'店舗を探索できませんでした。'),{stage:data.stage,center:data.center});
-   if(version!==this.version)return null;data=this.recover(data,this.saved[key]);this.value=data;if(!data.needs_choice&&this.valid(data)){this.remember(key,data);this.remember(base,data);}return data;
+   if(version!==this.version)return null;if(!matchesCenter(data))throw Error('検索中心を確認できません。もう一度検索してください。');data=this.recover(data,matchesCenter(this.saved[key])?this.saved[key]:null);this.value=data;if(!data.needs_choice&&this.valid(data)){this.remember(key,data);this.remember(base,data);}return data;
   }catch(e){if(version!==this.version)return null;const old=this.saved[key]||(ctx.placeIndex==null?this.saved[base]:null);
-   const cached=this.valid(old)?old:null;this.value={...(cached||{candidates:[],center:e.center||(!ctx.area.trim()?ctx.location:null),radius_m:1200}),degraded:true,from_cache:Boolean(cached),stage:e.stage||'店舗検索',error:e.message,warning:cached?'保存済みの探索結果を使用しています。最新情報ではない可能性があります。':'外部探索に失敗しました。同エリアの履歴・手動登録から候補を探しています。'};return this.value;
+   const cached=this.valid(old)&&matchesCenter(old)?old:null;this.value={...(cached||{candidates:[],center:validPoint(ctx.location)?ctx.location:e.center||null,radius_m:1200}),degraded:true,from_cache:Boolean(cached),stage:e.stage||'店舗検索',error:e.message,warning:cached?'保存済みの探索結果を使用しています。最新情報ではない可能性があります。':'外部探索に失敗しました。同エリアの履歴・手動登録から候補を探しています。'};return this.value;
   }finally{if(version===this.version)this.pending=null;}})();this.pending=promise;return promise;
  }
 }

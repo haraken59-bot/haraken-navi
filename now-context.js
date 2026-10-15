@@ -2,7 +2,7 @@
 export function localAction(ctx){return ctx.direction==='wait'||/家で|自宅で|まだ決めない|後で決め|食べない|飲まない/.test(ctx.desire||'');}
 export function validLocation(p){return Number.isFinite(p?.latitude)&&Number.isFinite(p?.longitude)&&Math.abs(p.latitude)<=90&&Math.abs(p.longitude)<=180;}
 export function locateCurrent(geo=globalThis.navigator?.geolocation){
- return new Promise((resolve,reject)=>{if(!geo){reject(Error('位置情報なし'));return;}geo.getCurrentPosition(p=>resolve({latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy}),reject,{timeout:10000,maximumAge:300000});});
+ return new Promise((resolve,reject)=>{if(!geo){reject(Error('位置情報なし'));return;}geo.getCurrentPosition(p=>resolve({latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy}),reject,{timeout:10000,maximumAge:0,enableHighAccuracy:true});});
 }
 export async function prepareNow(input,{locate=locateCurrent,now=new Date(),preferGps=false}={}){
  const context={...input,entrypoint:'now',requested_at:now.toISOString(),weekday:new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',weekday:'long'}).format(now)};
