@@ -1,0 +1,35 @@
+import {buildMeal} from '../meal-record.js';
+import {prepareMealPhoto,originalPath,saveMealWithPhotos,PHOTO_BUCKET} from '../meal-photo.js';
+export const MARKER='navi-safe-delete-test-v1',KEY='navi-safe-delete-test-ledger-v1';
+const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(x);
+const hash=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value))),b=>b.toString(16).padStart(2,'0')).join('');
+const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
+export class DeleteTest {
+ constructor(client,store){this.client=client;this.store=store;this.owner=null;this.ledger=null;}
+ async gate(){await this.client.verifyNaviOwner();const s=await this.client.fresh();if(this.owner&&this.owner!==s.user.id)throw Error('owner_changed');this.owner=s.user.id;return s;}
+ valid(l){return l?.version===1&&l.owner===this.owner&&uuid(l.id)&&uuid(l.nonce)&&l.meal?.id===l.id&&l.meal?.navi_metadata?.delete_test?.nonce===l.nonce&&l.meal?.navi_metadata?.delete_test?.kind===MARKER&&l.meal.navi_metadata.is_test===true&&l.meal.navi_metadata.exclude_from_learning===true&&l.photo&&l.path===originalPath(l.owner,l.id,{...l.photo,file:{type:l.photo.mime}});}
+ persist(){this.store.setItem(KEY,JSON.stringify(this.ledger));}
+ async init(){await this.gate();const raw=this.store.getItem(KEY);if(raw){const l=JSON.parse(raw);if(!this.valid(l))throw Error('invalid_ledger');this.ledger=l;}return !!this.ledger;}
+ async read(path,body,method='GET'){const s=await this.client.fresh();if(s.user.id!==this.owner)throw Error('owner_changed');return this.client.send(path,body,s.access_token,method);}
+ async target(){const l=this.ledger;if(!this.valid(l))throw Error('invalid_ledger');const rows=await this.read('/rest/v1/meals?select=id,user_id,revision,navi_metadata&id=eq.'+l.id+'&user_id=eq.'+this.owner);if(!Array.isArray(rows)||rows.length>1)throw Error('unexpected_target');if(!rows.length)return null;const r=rows[0],m=r.navi_metadata;
+  if(r.user_id!==this.owner||m?.delete_test?.kind!==MARKER||m?.delete_test?.nonce!==l.nonce||m.is_test!==true||m.exclude_from_learning!==true||m.original_photos?.length!==1||m.original_photos[0].path!==l.path||m.original_photos[0].image_id!==l.photo.id||!Number.isInteger(r.revision))throw Error('not_test_record');return r;
+ }
+ async rows(table){let all=[];for(let offset=0;offset<10000;offset+=500){const rows=await this.read('/rest/v1/'+table+'?select=*&user_id=eq.'+this.owner+'&order='+(table==='meal_details'?'meal_id':'id')+'&limit=500&offset='+offset);if(!Array.isArray(rows))throw Error('snapshot');all.push(...rows);if(rows.length<500)return all;}throw Error('snapshot_limit');}
+ async snapshot(){
+  const result={};for(const table of ['meals','meal_details','meal_images']){const rows=(await this.rows(table)).filter(r=>r.id!==this.ledger?.id&&r.meal_id!==this.ledger?.id);result[table]={count:rows.length,hash:await hash(JSON.stringify(canonical(rows)))};}
+  const queue=[this.owner],objects=[];let requests=0;
+  while(queue.length){if(++requests>500)throw Error('snapshot_limit');const prefix=queue.shift();const rows=await this.read('/storage/v1/object/list/'+PHOTO_BUCKET,{prefix,limit:1000,offset:0,sortBy:{column:'name',order:'asc'}},'POST');if(!Array.isArray(rows)||rows.length>=1000)throw Error('snapshot_limit');for(const r of rows){if(typeof r.name!=='string'||r.name.includes('/'))throw Error('snapshot');const path=prefix+'/'+r.name;if(path===this.owner+'/'+this.ledger?.id||path.startsWith(this.owner+'/'+this.ledger?.id+'/'))continue;if(r.id)objects.push({path,id:r.id,metadata:r.metadata,updated_at:r.updated_at});else queue.push(path);}}
+  objects.sort((a,b)=>a.path.localeCompare(b.path));result.storage={count:objects.length,hash:await hash(JSON.stringify(canonical(objects)))};return result;
+ }
+ async prepare(file){await this.gate();if(this.ledger||this.store.getItem(KEY))throw Error('existing_test');const p=await prepareMealPhoto(file),id=crypto.randomUUID(),nonce=crypto.randomUUID();const meal=buildMeal({eaten_at:new Date().toISOString(),store_name:'安全削除・一時テスト '+id,dish_name:'検証専用（実際の食事ではありません）',satisfaction:3,amount_jpy:0,comment:'検証後に削除する専用テスト記録'}, {id,photos:[p],isTest:true});meal.navi_metadata.delete_test={kind:MARKER,nonce};
+  this.ledger={version:1,owner:this.owner,id,nonce,meal,path:originalPath(this.owner,id,p),photo:{...p,file:undefined,mime:file.type,bytes:Array.from(new Uint8Array(await file.arrayBuffer()))},phase:'prepared',baseline:null,job:null};this.persist();this.ledger.baseline=await this.snapshot();this.persist();
+ }
+ async create(){await this.gate();if(!this.valid(this.ledger))throw Error('invalid_ledger');const l=this.ledger;if(l.phase!=='prepared')throw Error('already_created');if(!l.baseline){l.baseline=await this.snapshot();this.persist();}const old=await this.target();if(old){l.phase='saved';this.persist();return;}
+  const p={...l.photo,file:new File([new Uint8Array(l.photo.bytes)],l.photo.name,{type:l.photo.mime})};await saveMealWithPhotos(this.client,l.meal,[p]);const row=await this.target();if(!row||!(await this.client.originalExists(l.path)))throw Error('save_unconfirmed');l.phase='saved';this.persist();
+ }
+ async edge(input){const s=await this.gate();const r=await this.client.request(this.client.config.url+'/functions/v1/navi-meal-delete',{method:'POST',headers:{Authorization:'Bearer '+s.access_token,'Content-Type':'application/json'},body:JSON.stringify(input),signal:AbortSignal.timeout(45000)});if(!r.ok)throw Error('edge_unconfirmed');const data=await r.json();if(this.client.session()?.user?.id!==this.owner)throw Error('owner_changed');return data;}
+ async remove(){await this.gate();const l=this.ledger;if(!this.valid(l)||!['saved','deleting','done'].includes(l.phase))throw Error('not_ready');const row=await this.target();if(row){l.revision=row.revision;l.phase='deleting';this.persist();}else if(l.phase!=='deleting'&&l.phase!=='done')throw Error('missing_before_delete');
+  const data=await this.edge({action:'delete',meal_id:l.id,revision:l.revision});if(!['pending','done'].includes(data.state))throw Error('job_unconfirmed');l.job=data.state;if(data.state==='done')l.phase='done';this.persist();return data.state;
+ }
+ async inspect(){await this.gate();if(!this.valid(this.ledger))throw Error('invalid_ledger');const l=this.ledger,row=await this.target(),images=await this.client.mealPhotos(l.id),exists=await this.client.originalExists(l.path),details=await this.read('/rest/v1/meal_details?select=meal_id&meal_id=eq.'+l.id+'&user_id=eq.'+this.owner);if(!Array.isArray(images)||!Array.isArray(details))throw Error('inspect');const after=await this.snapshot();return {db_record_exists:!!row,photo_rows:images.length,detail_rows:details.length,storage_object_exists:exists,job_response:l.job||'未実行',other_data_unchanged:!!l.baseline&&JSON.stringify(after)===JSON.stringify(l.baseline),deletion_complete:l.job==='done'&&!row&&!images.length&&!details.length&&!exists};}
+}
