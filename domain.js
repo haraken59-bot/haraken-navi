@@ -125,7 +125,7 @@ export function recommend(candidates,ctx,records=[],food={},events=[],now=new Da
   if(ctx.direction==='adventure')score+=Math.max(0,12-recent.length*4)*(familiarity?0.25:1);
   if(ctx.budget&&pricing.value>ctx.budget)score-=20*pricing.confidence;
   if(Number.isFinite(maxMinutes)&&c.kind==='store'&&travel===null)score-=25;
-  if(ctx.mode==='drink'){const desire=ctx.companions>1?ctx.socialWish:ctx.soloWish;if(c.kind==='store')score+=(desire-3)*18+(c.bottles?.length?8:0)-(ctx.tomorrow?8:0);if(c.id==='home')score+=(3-desire)*30+(ctx.tomorrow?15:0);}
+  if(ctx.mode==='drink'){const desire=ctx.companions>1?ctx.socialWish:ctx.soloWish;if(c.kind==='store')score+=(desire-3)*18-(ctx.tomorrow?8:0);if(c.id==='home')score+=(3-desire)*30+(ctx.tomorrow?15:0);}
   if(c.kind==='action')score-=55;if(c.id==='wait')score+=1;if(c.id==='wait'&&ctx.direction==='wait')score+=300;if(ctx.direction==='genre'&&recent.length)score-=18;
   if(!Number.isFinite(score))score=0;
   if(ctx.mode==='eat'&&ctx.portion==='軽め'&&c.id==='home')score+=65;

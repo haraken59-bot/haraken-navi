@@ -1,0 +1,16 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {buildPool,guestPool} from '../discovery.js';
+import {recommend,DEFAULT_CONTEXT} from '../domain.js';
+const point={latitude:33.59,longitude:130.4};
+const external={id:'ext',store_id:'s',name:'架空店',kind:'store',mode:'drink',discovered:true,source_kind:'hotpepper',tags:['飲み'],price:2000,...point};
+const discovery={center:point,radius_m:500,candidates:[external]};
+const ctx={...DEFAULT_CONTEXT,mode:'drink',location:point,storesOnly:true};
+const bottle=id=>({store_id:'s',store_name:'架空店',bottle_id:id,brand:'架空銘柄',remaining_percent:40,...point});
+const pool=rows=>buildPool(discovery,{shochu:{data:rows}},[],[],ctx);
+test('external-first retains bottle fields and external identity',()=>{const p=pool([bottle('b1')]);assert.equal(p.length,1);assert.equal(p[0].id,'ext');assert.deepEqual(p[0].bottles,[bottle('b1')]);assert.equal(external.bottles,undefined);});
+test('multiple bottles retain distinct amounts',()=>{const p=pool([bottle('b1'),{...bottle('b2'),remaining_percent:70}]);assert.deepEqual(p[0].bottles.map(b=>b.remaining_percent),[40,70]);});
+test('duplicate bottle IDs and both RPC shapes merge without loss',()=>{const d={...discovery,candidates:[{...external,bottles:[{id:'b1',brand:'架空銘柄',extra:'retained'}]}]};const p=buildPool(d,{shochu:{data:[bottle('b1'),bottle('b1')]}},[],[],ctx);assert.equal(p[0].bottles.length,1);assert.equal(p[0].bottles[0].extra,'retained');assert.equal(p[0].bottles[0].remaining_percent,40);});
+test('no bottles and different store stay unchanged',()=>{assert.equal(pool([])[0].bottles,undefined);assert.equal(pool([{...bottle('b1'),store_id:'other',longitude:131}])[0].bottles,undefined);});
+test('bottles alone never change scores across four corrections',()=>{for(const direction of ['', 'near','cheap','adventure','sure']){const run=bottles=>recommend([{...external,bottles}],{...ctx,direction},[],{},[],new Date('2026-10-17T10:00:00Z')).top.find(c=>c.id==='ext');const a=run([]),b=run([bottle('b1')]);assert.ok(a&&b);assert.equal(a.score,b.score);}});
+test('owner merge does not mutate external response used by guest',()=>{const before=structuredClone(discovery);pool([bottle('b1')]);assert.deepEqual(discovery,before);assert.equal(guestPool(discovery)[0].bottles,undefined);});

@@ -7,6 +7,16 @@ export function km(a,b){const r=x=>x*Math.PI/180;return 12742*Math.asin(Math.sqr
 function inArea(c,discovery,area){if(!discovery)return false;if(discovery.center&&Number.isFinite(c.latitude)&&Number.isFinite(c.longitude))return km(c,discovery.center)<=discovery.radius_m/1000;return Boolean(area&&c.area&&norm(c.area).includes(norm(area)));}
 // Identical chain names alone must not link records from a different area/branch.
 function sameLocalStore(a,b,discovery,area){if(a.store_id&&b.store_id)return a.store_id===b.store_id;if(Number.isFinite(a.latitude)&&Number.isFinite(b.latitude))return samePlace(a,b);if(![a.name,...(a.aliases||[])].some(n=>normalizeName(n)===normalizeName(b.name)))return false;if(Number.isFinite(a.latitude)&&Number.isFinite(b.latitude))return km(a,b)<0.15;return inArea(b,discovery,area);}
+// Owner candidates only: retain both RPC bottle shapes; store matching is unchanged.
+function mergeBottles(candidates){
+ const bottles=[],byId=new Map();
+ for(const candidate of candidates)for(const bottle of candidate.bottles||[]){
+  const id=bottle.bottle_id||bottle.id;
+  if(id&&byId.has(id)){const existing=byId.get(id);for(const [key,value] of Object.entries(bottle))if(existing[key]==null&&value!=null)existing[key]=value;}
+  else{const copy={...bottle};bottles.push(copy);if(id)byId.set(id,copy);}
+ }
+ return bottles;
+}
 export function buildPool(discovery,cloud,records,local,ctx){
  const known=[...candidatesFromCloud(cloud),...learningRecords(records).map(r=>({id:'record:'+r.id,name:r.store_name,dish:r.dish_name,kind:r.kind||'store',mode:r.context?.mode||'eat',area:r.context?.area||'',tags:r.tags||[],price:r.amount_jpy,satisfaction:r.satisfaction,observed_at:r.created_at,meal_period:r.context?.meal_period||mealPeriod(r.created_at),source:'ナビの本人記録',confidence:'本人確定',visited:true}))];
  const sources=[...(discovery?.candidates||[]),...local.filter(c=>inArea(c,discovery,ctx.area)),...known.filter(c=>inArea(c,discovery,ctx.area))],pool=[];
@@ -16,6 +26,7 @@ export function buildPool(discovery,cloud,records,local,ctx){
   const supplement=local.find(k=>sameLocalStore(raw,k,discovery,ctx.area));
   const c={source_kind:raw.source_kind||'personal_history',sources:raw.sources||['personal_history'],...raw,...(supplement||{}),id:raw.id,search_scoped:true,visited:history.length>0||raw.visited===true,is_new:history.length===0&&!raw.visited};
   if(latest){if(raw.discovered)c.genre_external={...raw};c.personal_prices=history.filter(h=>h.price!=null&&Number.isFinite(Number(h.price))).map(h=>({amount:Number(h.price),at:h.observed_at,period:h.meal_period||mealPeriod(h.observed_at)}));c.history_observed_at=latest.observed_at;c.price_observed_at=latest.observed_at;c.tags=[...new Set([...(c.tags||[]),...(latest.tags||[])])];c.store_id=latest.store_id;c.satisfaction=latest.satisfaction;c.price=latest.price??raw.price;c.observed_at=raw.observed_at||latest.observed_at;c.history_source=latest.source;c.history_dish=latest.dish;c.dish=latest.dish?latest.dish+'（過去の記録・現在の提供は要確認）':raw.dish;}
+  const bottles=mergeBottles([...history,c]);if(bottles.length)c.bottles=bottles;
   pool.push(c);
  }
  return discovery?.center?withinSearch(pool,discovery.center,discovery.radius_m):pool;
