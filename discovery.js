@@ -24,8 +24,9 @@ export function buildPool(discovery,cloud,records,local,ctx){
  for(const raw of sources){if(raw.kind!=='store')continue;if(pool.some(c=>c.id===raw.id||(!(externalIds.has(c.id)&&externalIds.has(raw.id))&&sameLocalStore(c,raw,discovery,ctx.area))))continue;
   const history=known.filter(k=>sameLocalStore(raw,k,discovery,ctx.area)),latest=history.sort((a,b)=>String(b.observed_at||'').localeCompare(String(a.observed_at||'')))[0];
   const supplement=local.find(k=>sameLocalStore(raw,k,discovery,ctx.area));
-  const c={source_kind:raw.source_kind||'personal_history',sources:raw.sources||['personal_history'],...raw,...(supplement||{}),id:raw.id,search_scoped:true,visited:history.length>0||raw.visited===true,is_new:history.length===0&&!raw.visited};
+  const c={source_kind:raw.source_kind||'personal_history',sources:raw.sources||['personal_history'],...raw,...(supplement||{}),id:raw.id,search_scoped:true,visited:history.some(k=>k.visited!==false)||raw.visited===true,is_new:!history.some(k=>k.visited!==false)&&!raw.visited};
   if(latest){if(raw.discovered)c.genre_external={...raw};c.personal_prices=history.filter(h=>h.price!=null&&Number.isFinite(Number(h.price))).map(h=>({amount:Number(h.price),at:h.observed_at,period:h.meal_period||mealPeriod(h.observed_at)}));c.history_observed_at=latest.observed_at;c.price_observed_at=latest.observed_at;c.tags=[...new Set([...(c.tags||[]),...(latest.tags||[])])];c.store_id=latest.store_id;c.satisfaction=latest.satisfaction;c.price=latest.price??raw.price;c.observed_at=raw.observed_at||latest.observed_at;c.history_source=latest.source;c.history_dish=latest.dish;c.dish=latest.dish?latest.dish+'（過去の記録・現在の提供は要確認）':raw.dish;}
+  const master=(cloud.stores?.data||[]).find(s=>!s.is_test&&s.id===c.store_id);if(master){c.owner_genres=master.genres||[];if(master.usage_mode)c.mode=master.usage_mode;}
   const bottles=mergeBottles([...history,c]);if(bottles.length)c.bottles=bottles;
   pool.push(c);
  }

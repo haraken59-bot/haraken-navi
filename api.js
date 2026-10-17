@@ -34,7 +34,7 @@ export function consumeAuthRedirect(location,history){
  if(!params.get('access_token')||!params.get('refresh_token'))throw Error('ログインリンクの情報が不足しています。新しいリンクを送信してください。');
  return {access_token:params.get('access_token'),refresh_token:params.get('refresh_token'),expires_at:Number(params.get('expires_at'))||undefined,expires_in:Number(params.get('expires_in'))||0};
 }
-export const RPCS={food:['get_food_context',{confirmed_only:false}],history:['get_meal_history',{page_size:100,page_offset:0}],hidaka:['get_hidaka_ai_context',{p_app_key:'hidaka-order',p_legacy_store_id:'hidaka-001',p_recent_limit:5}],shochu:['get_shochu_keep_navigation_reference',{p_include_finished:false}]};
+export const RPCS={stores:['get_navi_store_catalog',{}],food:['get_food_context',{confirmed_only:false}],history:['get_meal_history',{page_size:100,page_offset:0}],hidaka:['get_hidaka_ai_context',{p_app_key:'hidaka-order',p_legacy_store_id:'hidaka-001',p_recent_limit:5}],shochu:['get_shochu_keep_navigation_reference',{p_include_finished:false}]};
 export function validateConfig(c){
  if(c?.url?.replace(/\/$/,'')!==PROJECT)throw Error('接続先は既存の shochu-keep-ledger に限定しています。');
  const k=c.publishableKey||'';
@@ -80,7 +80,7 @@ export class ReadOnlyClient{
  }
  async user(){const s=await this.fresh();return this.send('/auth/v1/user',undefined,s.access_token,'GET');}
  async logout(){this._navigationContext=null;const s=this.session();this.store.removeItem(SESSION_KEY);if(s)await this.send('/auth/v1/logout?scope=local',undefined,s.access_token);}
- async rpc(name,args,expectedOwner=null){if(!Object.values(RPCS).some(([n])=>n===name))throw Error('読み取り専用RPC以外は呼べません。');const s=await this.fresh();if(expectedOwner&&s.user.id!==expectedOwner)throw Error('ログイン状態が変わりました。');const data=await this.send('/rest/v1/rpc/'+name,args,s.access_token);if(expectedOwner&&(this.session()?.user?.id!==expectedOwner||!ownerSafe(data,expectedOwner)))throw Error('本人の参照結果を確認できません。');if(['get_food_context','get_meal_history','get_hidaka_ai_context'].includes(name)&&data?.schema_version!==1)throw Error('未対応の食事データ形式です。');return data;}
+ async rpc(name,args,expectedOwner=null){if(!Object.values(RPCS).some(([n])=>n===name))throw Error('読み取り専用RPC以外は呼べません。');const s=await this.fresh();if(expectedOwner&&s.user.id!==expectedOwner)throw Error('ログイン状態が変わりました。');const data=await this.send('/rest/v1/rpc/'+name,args,s.access_token);if(expectedOwner&&(this.session()?.user?.id!==expectedOwner||!ownerSafe(data,expectedOwner)))throw Error('本人の参照結果を確認できません。');if(name==='get_navi_store_catalog'&&!Array.isArray(data))throw Error('未対応の店舗データ形式です。');if(['get_food_context','get_meal_history','get_hidaka_ai_context'].includes(name)&&data?.schema_version!==1)throw Error('未対応の食事データ形式です。');return data;}
  async context(){const owner=this.session()?.user?.id;if(!owner){this._navigationContext=null;throw Error('先にログインしてください。');}const entries=Object.entries(RPCS);const values=await Promise.allSettled(entries.map(([,v])=>this.rpc(...v,owner)));if(this.session()?.user?.id!==owner){this._navigationContext=null;throw Error('ログイン状態が変わりました。');}const cloud=Object.fromEntries(entries.map(([key],i)=>[key,values[i].status==='fulfilled'?{data:values[i].value,ok:true,...(key==='hidaka'?{context:hidakaContext(values[i].value)}:{})}:{ok:false,error:key==='hidaka'?'日高オーダー履歴を取得できなかったため、今回は他の条件だけで判断します。 '+values[i].reason.message:values[i].reason.message}]));this._navigationContext=navigationContext(cloud,owner);return cloud;}
 }
 

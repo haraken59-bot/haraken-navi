@@ -1,4 +1,5 @@
 import {ReadOnlyClient} from './api.js';
+import {validPoint,distanceKm} from './places.js';
 import {PHOTO_BUCKET} from './meal-photo.js';
 export const canRestoreMealLearning=row=>row?.navi_metadata?.is_test===true&&row?.navi_metadata?.exclude_from_learning===true;
 export class MealClient extends ReadOnlyClient{
@@ -56,6 +57,20 @@ export class MealClient extends ReadOnlyClient{
   return history.records.map(r=>({...r,navi_metadata:byId.get(r.id)||{},is_test:byId.get(r.id)?.is_test===true,exclude_from_learning:byId.get(r.id)?.exclude_from_learning===true}));
  }
  async mealPhotos(id){if(!/^[a-f0-9-]{36}$/i.test(id))throw Error('記録ID不正');const s=await this.fresh();return this.send('/rest/v1/meal_images?select=id,thumbnail,file_name,taken_at&meal_id=eq.'+id,undefined,s.access_token,'GET');}
- async stores(){const s=await this.fresh();return this.send('/rest/v1/stores?select=id,name,area,latitude,longitude&order=name&limit=1000',undefined,s.access_token,'GET');}
- async context(){const value=await super.context();try{value.history={ok:true,data:{schema_version:1,records:await this.historyPage()}};}catch{value.history={ok:false,error:'共通履歴の追加情報を取得できません。DB更新または接続を確認してください。'};}return value;}
+ async nearbyPhotoStores(point){
+  if(!validPoint(point)||(point.latitude===0&&point.longitude===0))throw Error('写真GPSが正しくありません。');
+  const session=await this.fresh(),url=new URL(this.config.url+'/functions/v1/navi-discover');
+  for(const [k,v] of Object.entries({mode:'discover',latitude:point.latitude,longitude:point.longitude,direction:'near',preference:'おまかせ'}))url.searchParams.set(k,String(v));
+  const response=await this.request(url,{headers:{Authorization:'Bearer '+session.access_token},signal:AbortSignal.timeout(30000)});
+  if(!response.ok)throw Error('写真周辺の店舗を取得できません。');
+  const data=await response.json();if(this.session()?.user?.id!==session.user.id)throw Error('ログイン状態が変わりました。');
+  return (data.candidates||[]).filter(c=>validPoint(c)&&distanceKm(point,c)<=0.5&&!c.closed&&!c.permanently_closed).sort((a,b)=>distanceKm(point,a)-distanceKm(point,b)).slice(0,20).map(c=>({name:c.name,latitude:c.latitude,longitude:c.longitude,address:c.address||c.hotpepper?.address||'',distance_m:Math.round(distanceKm(point,c)*1000)}));
+ }
+ async confirmStore(candidate){
+  await this.verifyNaviOwner();const session=await this.fresh();
+  const id=await this.send('/rest/v1/rpc/confirm_navi_store',{p_name:candidate.name,p_latitude:candidate.latitude,p_longitude:candidate.longitude,p_confirmed:true},session.access_token);
+  if(this.session()?.user?.id!==session.user.id)throw Error('ログイン状態が変わりました。');return id;
+ }
+ async stores(){const s=await this.fresh();return this.send('/rest/v1/stores?select=id,name,area,latitude,longitude&is_test=eq.false&order=name&limit=1000',undefined,s.access_token,'GET');}
+ async context(){const value=await super.context();try{value.history={ok:true,data:{schema_version:1,records:(await this.historyPage()).filter(r=>!(value.stores?.data||[]).some(s=>s.is_test&&s.id===r.store_id))}};}catch{value.history={ok:false,error:'共通履歴の追加情報を取得できません。DB更新または接続を確認してください。'};}return value;}
 }

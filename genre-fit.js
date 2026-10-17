@@ -27,7 +27,7 @@ export function genreFit(candidate,genre,{now=new Date(),owner=null,history=[],h
  for(const [source,text,level] of information){const found=evaluate(text,source,level);if(found)levels.push(found);}
  // Lunch-only descriptions must not be promoted by their derived generic tags.
  const lunchOnly=information.some(([,text])=>scoped(text)&&rule.test(clean(text)));
- for(const text of [...tags,c.cuisine||'']){if(!text||!rule.test(clean(text)))continue;add('category',text);levels.push(lunchOnly&&genre==='定食'?'unknown':'strong');}
+ for(const text of [...tags,...(candidate.owner_genres||[]),c.cuisine||'']){if(!text||!rule.test(clean(text)))continue;add('category',text);levels.push(lunchOnly&&genre==='定食'?'unknown':'strong');}
  for(const r of history){
   const meta=r.navi_metadata||{};const who=r.user_id||r.owner_id||historyOwner;
   if(!owner||owner==='guest'||who!==owner||r.is_test===true||r.exclude_from_learning===true||r.use_for_learning===false||meta.is_test===true||meta.exclude_from_learning===true)continue;
