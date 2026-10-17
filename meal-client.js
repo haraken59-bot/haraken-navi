@@ -2,6 +2,18 @@ import {ReadOnlyClient} from './api.js';
 import {PHOTO_BUCKET} from './meal-photo.js';
 export const canRestoreMealLearning=row=>row?.navi_metadata?.is_test===true&&row?.navi_metadata?.exclude_from_learning===true;
 export class MealClient extends ReadOnlyClient{
+ async mealDeleteRequest(action,row){
+  const s=await this.fresh();
+  const body={action};
+  if(row){if(!/^[a-f0-9-]{36}$/i.test(row.id)||!Number.isInteger(row.revision))throw Error('履歴を再取得してください。');body.meal_id=row.id;body.revision=row.revision;}
+  try{
+   const r=await this.request(this.config.url+'/functions/v1/navi-meal-delete',{method:'POST',headers:{Authorization:'Bearer '+s.access_token,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(45000)});
+   if(!r.ok)throw Error('unconfirmed');
+   const result=await r.json();if(this.session()?.user?.id!==s.user.id)throw Error('changed');return result;
+  }catch{throw Error('削除の完了を確認できませんでした。履歴を再取得してください。写真削除が未完了の場合は再試行できます。');}
+ }
+ deleteMeal(row){return this.mealDeleteRequest('delete',row);}
+ resumeMealDeletions(){return this.mealDeleteRequest('resume');}
  async restoreMealLearning(row){
   if(!canRestoreMealLearning(row)||!/^[a-f0-9-]{36}$/i.test(row.id)||!Number.isInteger(row.revision))throw Error('履歴を再取得してから操作してください。');
   try{const session=await this.fresh();return await this.send('/rest/v1/rpc/restore_navi_meal_learning',{mid:row.id,expected_revision:row.revision},session.access_token);}
