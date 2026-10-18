@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {parseSearch} from '../supabase/functions/navi-discover/search-service.mjs';
+const params=new URLSearchParams({latitude:'32.74333',longitude:'129.87572',hint:'万徳',photoStoreLookup:'1'});
+const photo=parseSearch(params);
+assert.equal(photo.photoStoreLookup,true);
+assert.equal(photo.hint,'万徳');
+assert.equal(photo.latitude,32.74333);
+params.delete('photoStoreLookup');
+assert.equal(parseSearch(params).photoStoreLookup,false);
+params.set('photoStoreLookup','true');
+assert.equal(parseSearch(params).photoStoreLookup,false);
