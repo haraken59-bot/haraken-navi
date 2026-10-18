@@ -31,7 +31,13 @@ export async function chooseStore({client,point,onSelect,initialName='',referenc
   if(address===null)return;
   if(!name||!address.trim()){status.textContent='店名と住所が必要です。';return;}
   const mapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(name+' '+address.trim());
-  const link=document.createElement('a');link.href=mapUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent='地図で店舗位置を確認する';status.replaceChildren('住所を確認しました。',link,'。地図の位置が確認できるまで登録はしません。');
+  const link=document.createElement('a');link.href=mapUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent='地図で店舗位置を確認する';status.replaceChildren('住所を確認しました。',link,'。地図の位置を確認し、緯度・経度を入力してください。');
+  const latitude=prompt('地図で確認した店舗の緯度を入力してください（写真GPSを転記しないでください）。','');if(latitude===null)return;
+  const longitude=prompt('地図で確認した店舗の経度を入力してください。','');if(longitude===null)return;
+  const candidate={name,latitude:Number(latitude),longitude:Number(longitude)};
+  if(!latitude.trim()||!longitude.trim()||!validPoint(candidate)||(candidate.latitude===0&&candidate.longitude===0)){status.textContent='緯度・経度が正しくありません。登録していません。';return;}
+  if(!confirm('店舗名：'+name+'\n住所（確認用）：'+address.trim()+'\n緯度：'+candidate.latitude+'\n経度：'+candidate.longitude+'\n\n地図上の店舗位置と一致していますか？登録して食事に関連付けますか？'))return;
+  busy=true;try{const id=await client.confirmStore(candidate);if(!current())return;await onSelect({...candidate,id});dialog.close();}catch{status.textContent='店舗登録または関連付けに失敗しました。入力とログイン状態を確認してください。';}finally{busy=false;}
  };
  near.hidden=!validPoint(point);
  near.onclick=async()=>{if(busy)return;busy=true;near.disabled=true;status.textContent='写真周辺を検索しています…';try{const found=await client.nearbyPhotoStores(point,initialName);if(!current())return;rows=found;input.value='';draw();status.textContent=rows.length?'候補を選び、確認してください。':'写真周辺に候補がありません。店舗ID未設定のまま保存できます。';}catch{status.textContent='候補を取得できません。未連携のまま保存できます。';}finally{busy=false;near.disabled=false;}};
