@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {createSearchService,parseSearch} from '../supabase/functions/navi-discover/search-service.mjs';
+const urls=[];
+const state={cached:async()=>null,acquire:async()=>true,save:async()=>true,finish:async()=>true};
+const service=createSearchService({state,readEnv:k=>k==='HOTPEPPER_API_KEY'?'test-key':null,request:async url=>{urls.push(new URL(url));return {ok:true,json:async()=>({results:{shop:[],results_available:0}})};},uuid:()=>String(urls.length),now:()=>Date.now(),sleep:async()=>{}});
+const params=new URLSearchParams({latitude:'32.74333',longitude:'129.8757236111111',hint:'万徳',photoStoreLookup:'1',direction:'near'});
+const result=await service(parseSearch(params));
+assert.deepEqual(result.candidates,[]);
+assert.equal(result.degraded,true,'unmatched name must be reported as incomplete');
+assert.ok(urls.length<=6,'provider budget enforced');
+assert.ok(urls.some(u=>u.searchParams.get('keyword')==='万徳'),'name keyword must reach Hot Pepper');
+assert.ok(urls.every(u=>u.hostname==='webservice.recruit.co.jp'));
+assert.ok(urls.every(u=>u.searchParams.get('key')==='test-key'));
+console.log('photo store service mock: OK');
