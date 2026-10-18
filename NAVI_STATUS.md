@@ -138,3 +138,9 @@
 ## 19. 写真GPS検索の店名ヒント（2026-10-18）
 - PR #8 squash merge：52c8ea7abbd3bcb3e62937d9413182c7435416f5。meal-client.jsから写真の店名をnavi-discoverのhintに送信、store-link-ui.jsから記録済み店名を引き渡し。CI pathsにmeal-client.js/store-link-ui.jsを追加。
 - GitHub Actions run 39100303365 completed success。mainマージ済み。公開Pages反映とAndroid実機での万徳候補表示は未確認。検索プロバイダが候補十分と判定するとキーワード検索を省略する可能性があり、表示保証なし。DB書込・自動店舗確定なし。
+
+## 20. PR #9 写真店舗の手動確認フロー（2026-10-18、未マージ）
+- ブランチ fix/photo-store-name-search、PR #9。写真GPS検索結果を店名一致優先で表示し、候補がない場合に住所入力からGoogleマップを開く案内と、本人による緯度経度入力・最終確認・既存confirm_navi_store経由の関連付け処理を追加。
+- 住所は地図検索用のみでDB保存なし。写真GPSと完全一致の座標、数値でない座標、無効範囲は拒否。ただし位置の真正性は自動保証できず、地図上で本人確認が必要。
+- GitHub Actions run 39101449499 success（commit 48e6b3e）。自動テスト成功は実機での登録成功を意味しない。Android操作未確認、Pages未公開、PR未マージ、本番DB変更なし。
+- 公開前の残作業：手動フローのUI操作テストと回帰テスト、PR内の未使用photoStoreLookupパラメータの扱い整理、レビュー、マージ後の配信とAndroid確認。
