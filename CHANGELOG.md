@@ -70,3 +70,6 @@
 ## 2026-10-18 店舗関連付けの店名検索改善
 - PR #4 squash merge：fbb76ea7c23c56133c809f21c94fb4f617059232。既存店名の検索欄初期値と表記揺れ吸収を追加。店舗確定は引き続き本人操作のみ。
 - GitHub Actions run 39098740055 success。追加6条件の検索テストを含む。DB・実履歴変更なし。公開配信一致／Android確認は未実施。
+
+## 2026-10-18 写真GPS周辺候補の表示修正
+- PR #5 squash merge：fea77fe2c87db4a6e56ba242b41d80bdcf24c38c。写真GPS検索時に店名絞り込みを解除して周辺候補を表示。GitHub Actions run 39098851457 success。DB・実履歴変更なし。公開配信一致／Android確認は未実施。
