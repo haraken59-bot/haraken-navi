@@ -73,3 +73,6 @@
 
 ## 2026-10-18 写真GPS周辺候補の表示修正
 - PR #5 squash merge：fea77fe2c87db4a6e56ba242b41d80bdcf24c38c。写真GPS検索時に店名絞り込みを解除して周辺候補を表示。GitHub Actions run 39098851457 success。DB・実履歴変更なし。公開配信一致／Android確認は未実施。
+
+## 2026-10-18 店舗候補順位付け
+- PR #6 squash merge：a4bc3751213ed7f13588e69662cd7547e3519f99。店名完全一致・住所一致・GPS距離による候補表示順と一致根拠表示を追加。GitHub Actions run 39099000413 success。住所照合は入力提供時のみ。DB・履歴変更なし。
