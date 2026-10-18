@@ -26,7 +26,7 @@ export async function chooseStore({client,point,onSelect,initialName='',referenc
  const draw=()=>{list.innerHTML=visibleStoreRows(rows,input.value,referenceAddress).map(({r,i,rank})=>'<p><button type="button" data-select="'+i+'">'+escape(r.name)+'</button> '+escape(r.address||r.area||'')+(r.distance_m!=null?' / 約'+r.distance_m+'m':'')+(rank.exact?' / 店名一致':'')+(rank.addressMatch?' / 所在地一致':'')+'</p>').join('');};
  dialog.querySelector('[data-close]').onclick=()=>{if(!busy)dialog.close();};dialog.onclose=()=>dialog.remove();dialog.oncancel=e=>{if(busy)e.preventDefault();};input.oninput=()=>{draw();status.textContent=storeListStatus(rows,input.value);};
  dialog.querySelector('[data-manual]').onclick=async()=>{if(busy||!current())return;
-  const name=String(initialName||input.value||'').trim();
+  const name=String(input.value||initialName||'').trim().slice(0,120);
   const address=prompt('店舗の住所を入力してください（地図で確認するために使用。DBには保存されません）。','');
   if(address===null)return;
   if(!name||!address.trim()){status.textContent='店名と住所が必要です。';return;}
