@@ -32,7 +32,16 @@ export function linkedStoreId(candidate){
 }
 export async function resolveStoreSelection(client,candidate){
  const existing=linkedStoreId(candidate);
- return existing||client.confirmStore(candidate);
+ if(existing)return existing;
+ // Reuse a uniquely matching registered store before any new registration.
+ const stores=await client.stores();
+ const matches=stores.filter(s=>sameStoreLocation(s,candidate));
+ if(matches.length===1)return matches[0].id;
+ if(matches.length>1)throw Error('同名の登録店舗が複数あります。店舗を確認してください。');
+ return client.confirmStore(candidate);
+}
+export function sameStoreLocation(store,candidate){
+ return storeNameKey(store?.name)===storeNameKey(candidate?.name)&&validPoint(store)&&validPoint(candidate)&&Math.abs(store.latitude-candidate.latitude)<0.00001&&Math.abs(store.longitude-candidate.longitude)<0.00001;
 }
 export async function recoverStoreLink({client,candidate,onSelect,isCurrent=()=>true}){
  if(!isCurrent())return false;
@@ -40,7 +49,7 @@ export async function recoverStoreLink({client,candidate,onSelect,isCurrent=()=>
  // Re-read the registered stores; do not issue a second registration blindly.
  const stores=await client.stores();
  if(!isCurrent())return false;
- const matching=stores.filter(s=>storeNameKey(s.name)===storeNameKey(candidate.name)&&validPoint(s)&&validPoint(candidate)&&Math.abs(s.latitude-candidate.latitude)<0.00001&&Math.abs(s.longitude-candidate.longitude)<0.00001);
+ const matching=stores.filter(s=>sameStoreLocation(s,candidate));
  if(matching.length!==1)return false;
  await onSelect({...candidate,id:matching[0].id});
  return isCurrent();
