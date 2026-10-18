@@ -67,3 +67,6 @@ assert.match(clientSource,/distanceKm\(point,c\)<=0\.5/,'unnamed candidates rema
 
 assert.match(clientSource,/Array\.isArray\(data\.candidates\)/,'malformed candidate container rejected');
 assert.match(clientSource,/typeof c\.name==='string'/,'nameless candidate rejected');
+
+assert.match(clientSource,/const photoNameKey=/,'photo store name normalizer present');
+assert.match(clientSource,/photoNameKey\(c\.name\)\.includes\(hintKey\)/,'photo filtering and sorting use normalized names');
