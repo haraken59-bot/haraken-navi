@@ -18,7 +18,6 @@ export function visibleStoreRows(rows,query,referenceAddress=''){
 }
 export function storeListStatus(rows,query){if(!rows.length)return '登録店舗がありません。店舗ID未設定でも保存できます。';if(!storeNameKey(query))return '登録店舗をすべて表示しています。店舗を選び、確認してください。';return visibleStoreRows(rows,query).length?'店名に一致する登録店舗を表示しています。':'登録店舗に店名一致がありません。入力を消すと全店舗を表示します。';}
 export function photoPoint(metadata){return [metadata?.photo_location,...(metadata?.photo_locations||[]).map(x=>x.location)].find(p=>validPoint(p)&&(p.latitude!==0||p.longitude!==0))||null;}
-export function manualStorePoint(name,latitude,longitude,photoPoint){const candidate={name:String(name||'').trim(),latitude:Number(latitude),longitude:Number(longitude)};if(!candidate.name||!Number.isFinite(candidate.latitude)||!Number.isFinite(candidate.longitude)||!validPoint(candidate)||!validPoint(photoPoint))return null;return candidate;}
 export async function chooseStore({client,point,onSelect,initialName='',referenceAddress='',isCurrent=()=>true}){
  if(!client?.session())throw Error('この機能はハラケン本人専用です');
  const dialog=document.createElement('dialog');dialog.innerHTML='<h3>店舗を確認して関連付け</h3><p>GPSだけで店舗を確定しません。店名・所在地を確認してください。</p><input aria-label="店舗名で絞り込み" placeholder="店舗名で絞り込み"><button type="button" data-near>写真の500m以内を検索</button><button type="button" data-manual>候補にない店舗を手動確認</button><p role="status"></p><div data-list></div><button type="button" data-close>閉じる</button>';
