@@ -12,3 +12,13 @@ assert.ok(urls.some(u=>u.searchParams.get('keyword')==='万徳'),'name keyword m
 assert.ok(urls.every(u=>u.hostname==='webservice.recruit.co.jp'));
 assert.ok(urls.every(u=>u.searchParams.get('key')==='test-key'));
 console.log('photo store service mock: OK');
+
+const matchingShop={id:'J000113208',name:'餃子菜館 万徳',lat:'32.74333',lng:'129.8757236111111',address:'長崎県長崎市銅座町2-2',genre:{name:'中華'}};
+const matchedUrls=[];
+const matchingService=createSearchService({state,readEnv:k=>k==='HOTPEPPER_API_KEY'?'test-key':null,request:async url=>{matchedUrls.push(new URL(url));return {ok:true,json:async()=>({results:{shop:[matchingShop],results_available:1}})};},uuid:()=>String(matchedUrls.length),now:()=>Date.now(),sleep:async()=>{}});
+const matched=await matchingService(parseSearch(params));
+assert.equal(matched.candidates.some(c=>c.name==='餃子菜館 万徳'),true,'partial name match returned to client');
+assert.equal(matched.candidates.find(c=>c.name==='餃子菜館 万徳')?.address,matchingShop.address);
+assert.equal(matched.degraded,false,'matched store is not marked incomplete');
+assert.ok(matchedUrls.length<=6);
+console.log('photo store service matching shop: OK');
