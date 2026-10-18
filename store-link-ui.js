@@ -26,6 +26,13 @@ export function verifiedManualStore(name,latitude,longitude,photo){
  if(validPoint(photo)&&Math.abs(candidate.latitude-photo.latitude)<1e-8&&Math.abs(candidate.longitude-photo.longitude)<1e-8)return null;
  return candidate;
 }
+export async function confirmManualStore({candidate,approved,client,onSelect,isCurrent=()=>true}){
+ if(!candidate||approved!==true||!isCurrent())return false;
+ const id=await client.confirmStore(candidate);
+ if(!isCurrent())return false;
+ await onSelect({...candidate,id});
+ return true;
+}
 export async function chooseStore({client,point,onSelect,initialName='',referenceAddress='',isCurrent=()=>true}){
  if(!client?.session())throw Error('この機能はハラケン本人専用です');
  const dialog=document.createElement('dialog');dialog.innerHTML='<h3>店舗を確認して関連付け</h3><p>GPSだけで店舗を確定しません。店名・所在地を確認してください。</p><input aria-label="店舗名で絞り込み" placeholder="店舗名で絞り込み"><button type="button" data-near>写真の500m以内を検索</button><button type="button" data-manual>候補にない店舗を手動確認</button><p role="status"></p><div data-list></div><button type="button" data-close>閉じる</button>';
@@ -47,7 +54,7 @@ export async function chooseStore({client,point,onSelect,initialName='',referenc
   const candidate=verifiedManualStore(name,latitude,longitude,point);
   if(!candidate){status.textContent='店舗の緯度・経度が不正、または写真GPSと同じです。登録していません。';return;}
   if(!confirm('店舗名：'+name+'\n住所（確認用）：'+address.trim()+'\n緯度：'+candidate.latitude+'\n経度：'+candidate.longitude+'\n\n地図上の店舗位置と一致していますか？登録して食事に関連付けますか？'))return;
-  busy=true;try{const id=await client.confirmStore(candidate);if(!current())return;await onSelect({...candidate,id});dialog.close();}catch{status.textContent='店舗登録または関連付けに失敗しました。入力とログイン状態を確認してください。';}finally{busy=false;}
+  busy=true;try{const saved=await confirmManualStore({candidate,approved:true,client,onSelect,isCurrent:current});if(saved)dialog.close();}catch{status.textContent='店舗登録または関連付けに失敗しました。入力とログイン状態を確認してください。';}finally{busy=false;}
   };
 
  };
