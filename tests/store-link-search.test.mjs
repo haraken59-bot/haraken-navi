@@ -44,3 +44,12 @@ assert.equal(links,0,'cancel and stale dialogs must not link');
 assert.equal(await confirmManualStore({candidate,approved:true,client,onSelect}),true);
 assert.equal(writes,1,'explicit approval writes once');
 assert.equal(links,1,'explicit approval links once');
+
+const uiSource=readFileSync(new URL('../store-link-ui.js',import.meta.url),'utf8');
+const manualStart=uiSource.indexOf("dialog.querySelector('[data-manual]').onclick");
+const mapLink=uiSource.indexOf("status.replaceChildren('住所を確認しました。'",manualStart);
+const nextClick=uiSource.indexOf('next.onclick=async()=>',manualStart);
+const coordinatePrompt=uiSource.indexOf("const latitude=prompt(",manualStart);
+assert.ok(manualStart>=0&&mapLink>manualStart&&nextClick>mapLink&&coordinatePrompt>nextClick,'map link is presented before coordinates are prompted on a separate click');
+assert.match(uiSource,/if\(!confirm\('店舗名：'/,'manual registration requires explicit final confirmation');
+assert.match(uiSource,/confirmManualStore\(\{candidate,approved:true,client,onSelect,isCurrent:current\}\)/,'manual registration uses guarded write helper');
