@@ -25,7 +25,14 @@ export async function chooseStore({client,point,onSelect,initialName='',referenc
  const current=()=>dialog.isConnected&&isCurrent();
  const draw=()=>{list.innerHTML=visibleStoreRows(rows,input.value,referenceAddress).map(({r,i,rank})=>'<p><button type="button" data-select="'+i+'">'+escape(r.name)+'</button> '+escape(r.address||r.area||'')+(r.distance_m!=null?' / 約'+r.distance_m+'m':'')+(rank.exact?' / 店名一致':'')+(rank.addressMatch?' / 所在地一致':'')+'</p>').join('');};
  dialog.querySelector('[data-close]').onclick=()=>{if(!busy)dialog.close();};dialog.onclose=()=>dialog.remove();dialog.oncancel=e=>{if(busy)e.preventDefault();};input.oninput=()=>{draw();status.textContent=storeListStatus(rows,input.value);};
- dialog.querySelector('[data-manual]').onclick=()=>{if(busy||!current())return;status.textContent='候補にない店舗は、住所と地図上の位置を別途確認してください。写真GPSだけでは登録しません。';};
+ dialog.querySelector('[data-manual]').onclick=()=>{if(busy||!current())return;
+  const name=String(initialName||input.value||'').trim();
+  const address=prompt('店舗の住所を入力してください（地図で確認するために使用。DBには保存されません）。','');
+  if(address===null)return;
+  if(!name||!address.trim()){status.textContent='店名と住所が必要です。';return;}
+  const mapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(name+' '+address.trim());
+  const link=document.createElement('a');link.href=mapUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent='地図で店舗位置を確認する';status.replaceChildren('住所を確認しました。',link,'。地図の位置が確認できるまで登録はしません。');
+ };
  near.hidden=!validPoint(point);
  near.onclick=async()=>{if(busy)return;busy=true;near.disabled=true;status.textContent='写真周辺を検索しています…';try{const found=await client.nearbyPhotoStores(point,initialName);if(!current())return;rows=found;input.value='';draw();status.textContent=rows.length?'候補を選び、確認してください。':'写真周辺に候補がありません。店舗ID未設定のまま保存できます。';}catch{status.textContent='候補を取得できません。未連携のまま保存できます。';}finally{busy=false;near.disabled=false;}};
  list.onclick=async e=>{const button=e.target.closest('[data-select]');if(!button||busy||!current())return;const candidate=rows[Number(button.dataset.select)];if(!candidate||!confirm('「'+candidate.name+'」をこの食事の店舗として関連付けますか？'))return;busy=true;button.disabled=true;
