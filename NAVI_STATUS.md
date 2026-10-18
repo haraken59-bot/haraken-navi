@@ -144,3 +144,8 @@
 - 住所は地図検索用のみでDB保存なし。写真GPSと完全一致の座標、数値でない座標、無効範囲は拒否。ただし位置の真正性は自動保証できず、地図上で本人確認が必要。
 - GitHub Actions run 39101449499 success（commit 48e6b3e）。自動テスト成功は実機での登録成功を意味しない。Android操作未確認、Pages未公開、PR未マージ、本番DB変更なし。
 - 公開前の残作業：手動フローのUI操作テストと回帰テスト、PR内の未使用photoStoreLookupパラメータの扱い整理、レビュー、マージ後の配信とAndroid確認。
+
+### PR #9 追加レビュー（2026-10-18）
+- 未使用photoStoreLookup指定を削除し、実装済みhintのみを維持。座標入力の検証をverifiedManualStoreに分離し正常・不正値を自動テスト。キャンセル／無効画面ではDB書込しないconfirmManualStore単体テストを追加。
+- Googleマップのリンクを表示した後、別ボタンで座標入力を開始する二段階操作に修正。画面コード上の操作順を検査する回帰テストを追加（commit ae0acad）。Androidの実画面操作・Googleマップとの連携・本番DBへの登録は未検証。
+- commit 0c8fdc6 の Actions run 39101790815 は成功。commit ae0acad のCIは確認待ち。未マージ・未公開。
