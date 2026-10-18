@@ -82,3 +82,16 @@ assert.equal(await resolveStoreSelection(lookupClient,{id:'hotpepper:J0001',name
 assert.equal(externalConfirms,1,'external candidates must be explicitly confirmed');
 assert.equal(await resolveStoreSelection(lookupClient,{id:'hotpepper:J0001',store_id:existingId}),existingId);
 assert.equal(externalConfirms,1,'known registered store must not be registered again');
+
+import {recoverStoreLink} from '../store-link-ui.js';
+{
+ const candidate={name:'焼鳥ひだか',latitude:33.59,longitude:130.4};
+ const id='11111111-1111-4111-8111-111111111111';
+ let links=0;
+ const client={stores:async()=>[{id,name:'やきとり ひだか',latitude:33.59,longitude:130.4}]};
+ assert.equal(await recoverStoreLink({client,candidate,onSelect:async s=>{assert.equal(s.id,id);links++;}}),true);
+ assert.equal(links,1);
+ assert.equal(await recoverStoreLink({client:{stores:async()=>[...(await client.stores()),...(await client.stores())]},candidate,onSelect:async()=>{throw Error('ambiguous link');}}),false);
+ assert.equal(await recoverStoreLink({client,candidate,onSelect:async()=>{throw Error('stale');},isCurrent:()=>false}),false);
+ await assert.rejects(recoverStoreLink({client:{stores:async()=>{throw Error('network');}},candidate,onSelect:async()=>{}}),/network/);
+}
