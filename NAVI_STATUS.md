@@ -116,3 +116,7 @@
 - PR #4をmainへsquash merge：fbb76ea7c23c56133c809f21c94fb4f617059232。既存食事履歴の店名を関連付け画面の検索欄へ事前入力し、全角半角・空白・中黒・焼鳥表記の違いを吸収する検索を追加。
 - GitHub Actions run 39098740055 completed success。追加6条件の検索テストを含むワークフロー合格。既存の本人確認とGPS検索は維持し、店舗自動確定なし。
 - DB・食事履歴205件・認証・他アプリ変更なし。mainへのマージ確認済み。GitHub Pagesの当該コミットの公開配信一致とAndroid実機確認は未実施。
+
+## 15. 写真GPS候補の店名フィルター残留修正（2026-10-18）
+- PR #5 squash merge：fea77fe2c87db4a6e56ba242b41d80bdcf24c38c。食事履歴の店名事前入力が写真GPS周辺検索の候補表示を隠す問題を修正。GPS検索時は絞り込みを解除、候補選択は元配列インデックス維持。
+- GitHub Actions run 39098851457 completed success。店名照合の回帰テスト計8条件を含む。店舗の自動確定なし。DB・食事履歴変更なし。GitHub Pages配信一致・Android実機確認は未実施。
