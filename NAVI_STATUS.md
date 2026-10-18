@@ -120,3 +120,7 @@
 ## 15. 写真GPS候補の店名フィルター残留修正（2026-10-18）
 - PR #5 squash merge：fea77fe2c87db4a6e56ba242b41d80bdcf24c38c。食事履歴の店名事前入力が写真GPS周辺検索の候補表示を隠す問題を修正。GPS検索時は絞り込みを解除、候補選択は元配列インデックス維持。
 - GitHub Actions run 39098851457 completed success。店名照合の回帰テスト計8条件を含む。店舗の自動確定なし。DB・食事履歴変更なし。GitHub Pages配信一致・Android実機確認は未実施。
+
+## 16. 店舗候補の順位付け（2026-10-18）
+- PR #6 squash merge：a4bc3751213ed7f13588e69662cd7547e3519f99。店名完全一致・住所一致・GPS距離で関連付け候補の表示順を整理し、店名一致／所在地一致の根拠を表示。住所照合は呼び出し元がreferenceAddressを提供する場合のみ有効で、現行履歴画面は未提供。
+- GitHub Actions run 39099000413 completed success。候補順位の追加4条件を含む。本人確認維持、店舗自動確定なし、DB・履歴変更なし。公開配信一致とAndroid実機確認は未実施。
