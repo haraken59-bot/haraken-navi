@@ -118,3 +118,11 @@ import {recoverStoreLink} from '../store-link-ui.js';
  const other={...existing,latitude:33.5901};
  assert.equal(sameStoreLocation(other,candidate),false,'different floor/building location is not silently matched');
 }
+
+{
+ const candidate={id:'hotpepper:J009',name:'同名の店',latitude:33.59,longitude:130.4};
+ let creates=0;
+ const client={stores:async()=>[{id:'11111111-1111-4111-8111-111111111111',name:'同名の店',latitude:33.591,longitude:130.4}],confirmStore:async()=>{creates++;}};
+ await assert.rejects(resolveStoreSelection(client,candidate),/場所を確認/);
+ assert.equal(creates,0,'same-name different-location store requires manual review before create');
+}
