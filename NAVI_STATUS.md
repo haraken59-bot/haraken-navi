@@ -149,3 +149,6 @@
 - 未使用photoStoreLookup指定を削除し、実装済みhintのみを維持。座標入力の検証をverifiedManualStoreに分離し正常・不正値を自動テスト。キャンセル／無効画面ではDB書込しないconfirmManualStore単体テストを追加。
 - Googleマップのリンクを表示した後、別ボタンで座標入力を開始する二段階操作に修正。画面コード上の操作順を検査する回帰テストを追加（commit ae0acad）。Androidの実画面操作・Googleマップとの連携・本番DBへの登録は未検証。
 - commit 0c8fdc6 の Actions run 39101790815 は成功。commit ae0acad のCIは確認待ち。未マージ・未公開。
+
+### 写真店名自動検索（開発中・2026-10-18）
+- feat/photo-name-auto-discovery：店舗確認画面で写真GPSと既存店名がある場合、周辺候補検索を自動開始する変更を作成。店名による独立検索・座標入力撤廃は未実装。CI・Android未確認、本番未公開、DB変更なし。
