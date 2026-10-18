@@ -29,6 +29,8 @@ jobs:
         run: node --check domain.js
       - name: Meal photo safety tests
         run: node --experimental-default-type=module --test tests/meal-photo-safety.test.mjs
+      - name: Guest privacy regression test
+        run: node --experimental-default-type=module --test tests/guest-privacy.test.mjs
       - name: Specific dish unit tests
         run: node --experimental-default-type=module --test tests/specific-dish.test.mjs
       - name: Recommendation integration tests
