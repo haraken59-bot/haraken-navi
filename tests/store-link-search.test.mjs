@@ -19,3 +19,8 @@ assert.match(storeListStatus(stores,'存在しない'),/一致がありません
 assert.match(storeListStatus(stores,'寿司'),/一致する登録店舗/);
 assert.match(storeListStatus([],''),/登録店舗がありません/);
 console.log('store link search: 16 assertions passed');
+
+import {readFileSync} from 'node:fs';
+const clientSource=readFileSync(new URL('../meal-client.js',import.meta.url),'utf8');
+assert.match(clientSource,/photoStoreLookup:'1'/,'named photo lookup requests dedicated server mode');
+assert.match(clientSource,/hint/,'named photo lookup passes name hint');
