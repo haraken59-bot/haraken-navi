@@ -16,6 +16,7 @@ export function visibleStoreRows(rows,query,referenceAddress=''){
  .filter(({rank})=>!wanted||rank.partial)
  .sort((a,b)=>Number(b.rank.exact)-Number(a.rank.exact)||Number(b.rank.addressMatch)-Number(a.rank.addressMatch)||a.rank.distance-b.rank.distance||a.i-b.i);
 }
+export function storeListStatus(rows,query){if(!rows.length)return '登録店舗がありません。店舗ID未設定でも保存できます。';if(!storeNameKey(query))return '登録店舗をすべて表示しています。店舗を選び、確認してください。';return visibleStoreRows(rows,query).length?'店名に一致する登録店舗を表示しています。':'登録店舗に店名一致がありません。入力を消すと全店舗を表示します。';}
 export function photoPoint(metadata){return [metadata?.photo_location,...(metadata?.photo_locations||[]).map(x=>x.location)].find(p=>validPoint(p)&&(p.latitude!==0||p.longitude!==0))||null;}
 export async function chooseStore({client,point,onSelect,initialName='',referenceAddress='',isCurrent=()=>true}){
  if(!client?.session())throw Error('この機能はハラケン本人専用です');
@@ -23,10 +24,10 @@ export async function chooseStore({client,point,onSelect,initialName='',referenc
  document.body.append(dialog);dialog.showModal();const status=dialog.querySelector('[role=status]'),list=dialog.querySelector('[data-list]'),input=dialog.querySelector('input'),near=dialog.querySelector('[data-near]');let rows=[],busy=false;input.value=String(initialName||'').slice(0,120);
  const current=()=>dialog.isConnected&&isCurrent();
  const draw=()=>{list.innerHTML=visibleStoreRows(rows,input.value,referenceAddress).map(({r,i,rank})=>'<p><button type="button" data-select="'+i+'">'+escape(r.name)+'</button> '+escape(r.address||r.area||'')+(r.distance_m!=null?' / 約'+r.distance_m+'m':'')+(rank.exact?' / 店名一致':'')+(rank.addressMatch?' / 所在地一致':'')+'</p>').join('');};
- dialog.querySelector('[data-close]').onclick=()=>{if(!busy)dialog.close();};dialog.onclose=()=>dialog.remove();dialog.oncancel=e=>{if(busy)e.preventDefault();};input.oninput=draw;
+ dialog.querySelector('[data-close]').onclick=()=>{if(!busy)dialog.close();};dialog.onclose=()=>dialog.remove();dialog.oncancel=e=>{if(busy)e.preventDefault();};input.oninput=()=>{draw();status.textContent=storeListStatus(rows,input.value);};
  near.hidden=!validPoint(point);
  near.onclick=async()=>{if(busy)return;busy=true;near.disabled=true;status.textContent='写真周辺を検索しています…';try{const found=await client.nearbyPhotoStores(point);if(!current())return;rows=found;input.value='';draw();status.textContent=rows.length?'候補を選び、確認してください。':'写真周辺に候補がありません。店舗ID未設定のまま保存できます。';}catch{status.textContent='候補を取得できません。未連携のまま保存できます。';}finally{busy=false;near.disabled=false;}};
  list.onclick=async e=>{const button=e.target.closest('[data-select]');if(!button||busy||!current())return;const candidate=rows[Number(button.dataset.select)];if(!candidate||!confirm('「'+candidate.name+'」をこの食事の店舗として関連付けますか？'))return;busy=true;button.disabled=true;
  try{const id=candidate.id||await client.confirmStore(candidate);if(!current())return;await onSelect({...candidate,id});dialog.close();}catch{status.textContent='関連付けを確認できません。履歴・店舗を再取得してください。';}finally{busy=false;button.disabled=false;}};
- try{rows=await client.stores();if(!current())return;draw();status.textContent=rows.length?(visibleStoreRows(rows,input.value).length?'登録店舗から選べます。':'登録店舗に店名一致がありません。入力を消すと全店舗を表示します。'):'登録店舗がありません。店舗ID未設定でも保存できます。';}catch{status.textContent='登録店舗を取得できません。';}
+ try{rows=await client.stores();if(!current())return;draw();status.textContent=storeListStatus(rows,input.value);}catch{status.textContent='登録店舗を取得できません。';}
 }
