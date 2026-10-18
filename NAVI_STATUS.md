@@ -129,3 +129,8 @@
 - 公開GitHub Pagesの store-link-ui.js と meal-ui.js がHTTP 200で取得できることを確認。前者にstoreCandidateRank/visibleStoreRowsおよびGPS検索時 rows=found; input.value=''; draw();、後者に initialName:row.store_name の存在を確認。
 - 確認URL：https://haraken59-bot.github.io/haraken-navi/store-link-ui.js / https://haraken59-bot.github.io/haraken-navi/meal-ui.js 。公開ソースの機能断片確認であり、Gitコミット全ファイルのバイト一致やAndroid操作成功を意味しない。
 - 本番DB・履歴・アプリ設定の変更なし。Android本人操作で店舗関連付け検索とGPS候補を確認する作業が残る。
+
+## 18. 店名絞り込み解除時の案内文修正（2026-10-18）
+- Android実機で、redLanternの店名検索を空にすると登録3店舗が表示された一方、旧「一致がありません」の案内が残る不整合を確認。
+- PR #7 squash merge：64131e0c2d8725e240d4da2781868d45f2984bee。入力変更時に候補と案内文を同期。GitHub Actions run 39099512864 completed success、追加4条件含む。
+- mainマージ済み。公開GitHub Pagesへの当該修正反映とAndroid再確認は未実施。DB・履歴変更なし。
