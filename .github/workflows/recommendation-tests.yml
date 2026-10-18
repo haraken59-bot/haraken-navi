@@ -4,6 +4,7 @@ on:
     branches:
       - fix/specific-food-preference-20261018
       - 'fix/meal-photo-safety-*'
+      - 'fix/navi-six-followups-*'
   pull_request:
     paths:
       - 'domain.js'
