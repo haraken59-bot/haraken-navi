@@ -177,3 +177,8 @@
 - `navi-discover-photo-test` v2を本番と同じverify_jwt=falseで別名配備（本番v22は不変）。
 - GET認証なし通常経路はHTTP 401 `unauthorized`、ゲスト検索はHTTP 200・候補100件。長崎GPSとhint=万徳を指定し検索語には含まれたが、候補名に万徳なし。
 - これはゲスト検索経路のみの検証。会員向けphotoStoreLookup経路・Android実機は未検証。万徳が見つからない問題があるため公開保留。
+
+### 2026-10-18 写真店舗照合の追加検証
+- 店名照合をmeal-client.jsでEdgeと同じ記号・空白除去方式に統一（47aa258c）。store-link-search.test.mjsに回帰検査追加（80bca544）。GitHub Actions 39114417657 success。
+- ゲスト検索と写真専用検索の継続条件を区別するテスト追加（359b1625）、GitHub Actions 39106546622 success。
+- 本人JWTでの検証用Edge実検索とAndroid実機操作は未確認。PR #10は未マージ・Pages未公開、本番navi-discover v22は不変。検証用Edge navi-discover-photo-test v2のみ稼働。
