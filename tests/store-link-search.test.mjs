@@ -70,3 +70,15 @@ assert.match(clientSource,/typeof c\.name==='string'/,'nameless candidate reject
 
 assert.match(clientSource,/const photoNameKey=/,'photo store name normalizer present');
 assert.match(clientSource,/photoNameKey\(c\.name\)\.includes\(hintKey\)/,'photo filtering and sorting use normalized names');
+
+import {linkedStoreId,resolveStoreSelection} from '../store-link-ui.js';
+const existingId='11111111-1111-4111-8111-111111111111';
+assert.equal(linkedStoreId({id:'hotpepper:J0001'}),null,'provider ID must not be used as DB store UUID');
+assert.equal(linkedStoreId({id:'hotpepper:J0001',store_id:existingId}),existingId,'existing store UUID takes priority');
+assert.equal(linkedStoreId({id:existingId}),existingId,'registered store row ID remains valid');
+let externalConfirms=0;
+const lookupClient={confirmStore:async()=>{externalConfirms++;return existingId;}};
+assert.equal(await resolveStoreSelection(lookupClient,{id:'hotpepper:J0001',name:'External'}),existingId);
+assert.equal(externalConfirms,1,'external candidates must be explicitly confirmed');
+assert.equal(await resolveStoreSelection(lookupClient,{id:'hotpepper:J0001',store_id:existingId}),existingId);
+assert.equal(externalConfirms,1,'known registered store must not be registered again');
