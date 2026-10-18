@@ -76,3 +76,6 @@
 
 ## 2026-10-18 店舗候補順位付け
 - PR #6 squash merge：a4bc3751213ed7f13588e69662cd7547e3519f99。店名完全一致・住所一致・GPS距離による候補表示順と一致根拠表示を追加。GitHub Actions run 39099000413 success。住所照合は入力提供時のみ。DB・履歴変更なし。
+
+## 2026-10-18 店舗検索の案内文同期
+- PR #7 squash merge：64131e0c2d8725e240d4da2781868d45f2984bee。Androidで発見した、絞り込み解除後も不一致案内が残る問題を修正。GitHub Actions run 39099512864 success。DB変更なし。
