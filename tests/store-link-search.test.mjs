@@ -55,3 +55,6 @@ assert.match(uiSource,/if\(!confirm\('店舗名：'/,'manual registration requir
 assert.match(uiSource,/confirmManualStore\(\{candidate,approved:true,client,onSelect,isCurrent:current\}\)/,'manual registration uses guarded write helper');
 
 assert.match(uiSource,/if\(validPoint\(point\)&&String\(initialName\|\|''\)\.trim\(\)\)await near\.onclick\(\)/,'auto-search when both photo GPS and saved name exist');
+
+assert.match(uiSource,/const matched=visibleStoreRows\(rows,initialName,referenceAddress\)/,'prefer name-matching nearby candidates');
+assert.match(uiSource,/input\.value=matched\.length\?String\(initialName\|\|''\):''/,'show all nearby candidates when name match is absent');
