@@ -124,3 +124,8 @@
 ## 16. 店舗候補の順位付け（2026-10-18）
 - PR #6 squash merge：a4bc3751213ed7f13588e69662cd7547e3519f99。店名完全一致・住所一致・GPS距離で関連付け候補の表示順を整理し、店名一致／所在地一致の根拠を表示。住所照合は呼び出し元がreferenceAddressを提供する場合のみ有効で、現行履歴画面は未提供。
 - GitHub Actions run 39099000413 completed success。候補順位の追加4条件を含む。本人確認維持、店舗自動確定なし、DB・履歴変更なし。公開配信一致とAndroid実機確認は未実施。
+
+## 17. 本番公開資産の読み取り確認（2026-10-18）
+- 公開GitHub Pagesの store-link-ui.js と meal-ui.js がHTTP 200で取得できることを確認。前者にstoreCandidateRank/visibleStoreRowsおよびGPS検索時 rows=found; input.value=''; draw();、後者に initialName:row.store_name の存在を確認。
+- 確認URL：https://haraken59-bot.github.io/haraken-navi/store-link-ui.js / https://haraken59-bot.github.io/haraken-navi/meal-ui.js 。公開ソースの機能断片確認であり、Gitコミット全ファイルのバイト一致やAndroid操作成功を意味しない。
+- 本番DB・履歴・アプリ設定の変更なし。Android本人操作で店舗関連付け検索とGPS候補を確認する作業が残る。
