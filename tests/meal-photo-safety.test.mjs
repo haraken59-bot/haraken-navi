@@ -40,3 +40,17 @@ test('account switch prevents database write',async()=>{
  await assert.rejects(saveMealWithPhotos(c,meal,[photo]),/アカウントが変わりました/);
  assert.equal(c.calls.saves.length,0);
 });
+
+test('upload timeout before DB write preserves originals and stops',async()=>{
+ const c=client({upload:async()=>{throw Error('upload timeout');}});
+ await assert.rejects(saveMealWithPhotos(c,meal,[photo]),/upload timeout/);
+ assert.equal(c.calls.saves.length,0);
+ assert.equal(c.calls.deletes.length,0);
+});
+test('account switch during upload prevents DB write',async()=>{
+ let calls=0;
+ const c=client({fresh:async()=>({user:{id:++calls===1?owner:'44444444-4444-4444-8444-444444444444'}})});
+ await assert.rejects(saveMealWithPhotos(c,meal,[photo]),/アカウントが変わりました/);
+ assert.equal(c.calls.saves.length,0);
+ assert.equal(c.calls.deletes.length,0);
+});
