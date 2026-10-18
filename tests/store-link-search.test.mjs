@@ -64,3 +64,6 @@ assert.match(uiSource,/rows=found\.length\?found:registeredRows/,'empty photo lo
 
 assert.match(clientSource,/distanceKm\(point,c\)<=1/,'named store may be up to 1km away');
 assert.match(clientSource,/distanceKm\(point,c\)<=0\.5/,'unnamed candidates remain within 500m');
+
+assert.match(clientSource,/Array\.isArray\(data\.candidates\)/,'malformed candidate container rejected');
+assert.match(clientSource,/typeof c\.name==='string'/,'nameless candidate rejected');
