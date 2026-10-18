@@ -1,0 +1,4 @@
+import assert from 'node:assert/strict';
+import {existsSync} from 'node:fs';
+const paths=['../supabase/functions/navi-discover/index.ts','../supabase/functions/navi-discover/search-service.mjs','../supabase/functions/navi-discover/adaptive-search.mjs','../supabase/functions/navi-discover/handler.mjs','../supabase/functions/navi-discover/guest-search.mjs','../supabase/functions/navi-discover/guest-state.mjs','../supabase/functions/navi-discover/guest-usage.mjs','../supabase/functions/navi-discover/search-state.mjs','../supabase/functions/navi-discover/diagnostics.mjs','../supabase/functions/navi-discover/known-stores.mjs','../supabase/functions/navi-discover/known-places.mjs','../supabase/functions/navi-discover/db-runtime.ts','../supabase/functions/navi-discover/db.mjs','../app/places.js','../app/genre-fit.js','../app/scripts/hotpepper-service.mjs'];
+for(const path of paths)assert.ok(existsSync(new URL(path,import.meta.url)),path+' missing');
