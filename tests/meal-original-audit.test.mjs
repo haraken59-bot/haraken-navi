@@ -19,3 +19,8 @@ test('foreign and invalid paths cannot be considered cleanup candidates',()=>{
  const result=auditOriginalReferences({owner,objects:[b,'other-user/'+meal+'/x.jpg','../danger'],meals:[],complete:true});
  assert.deepEqual(result.candidates,[]);assert.deepEqual(result.unverified,[b]);assert.equal(result.invalid.length,2);
 });
+
+test('malformed metadata is reported conservatively without deletion',()=>{
+ const result=auditOriginalReferences({owner,objects:[b],meals:[{id:meal,navi_metadata:{original_photos:{unexpected:true}}},{id:meal,navi_metadata:{original_photos:[null]}}],complete:true});
+ assert.deepEqual(result.candidates,[]);assert.deepEqual(result.unverified,[b]);assert.equal(result.canDelete,false);
+});
