@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const adaptive=readFileSync(new URL('../supabase/functions/navi-discover/adaptive-search.mjs',import.meta.url),'utf8');
+const service=readFileSync(new URL('../supabase/functions/navi-discover/search-service.mjs',import.meta.url),'utf8');
+assert.match(service,/photoStoreLookup:params\.get\('photoStoreLookup'\)==='1'/);
+assert.match(adaptive,/const MAX_PROVIDER_REQUESTS=6/);
+assert.match(adaptive,/providerKeys\.size>=MAX_PROVIDER_REQUESTS/);
+assert.match(adaptive,/input\.photoStoreLookup/);
+assert.match(adaptive,/if\(terms\.length&&\(r===500\|\|input\.photoStoreLookup\)/);
+assert.match(service,/calls>=6/);
