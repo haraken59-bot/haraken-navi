@@ -91,3 +91,7 @@
 - 店舗確認画面で写真GPSと店名がある場合に周辺検索を自動起動。既存の手動検索は維持。追加テストあり、CI結果確認待ち。独立店名検索・座標入力不要化は今後の課題。未公開・DB変更なし。
 
 - PR #10 の未対応photoStoreLookup指定を削除し、店名一致時は絞り込み維持・不一致時は周辺候補に戻す。GitHub Actions 39103281475 success。未マージ・未公開。
+
+## 2026-10-18 写真履歴専用の店名検索（Edgeソース試作）
+- PR #10ブランチにEdgeのsearch-service.mjs/adaptive-search.mjsを新規配置。photoStoreLookup=1の場合は店名一致を重視し、各検索半径でキーワード検索を試みる。meal-client.jsも専用指定を送信。
+- **重要**：Edgeの全依存ファイルはGitHubに未配置。現在のSupabase本番Edge v22は変更なし。既存の通常検索と本番挙動は変わらない。統合テスト、API呼出回数上限・部分失敗時の挙動、Edge配備、Android確認は未完了。PR未マージ・未公開。
