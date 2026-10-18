@@ -24,5 +24,5 @@ export async function adaptiveNearby({input,center,load,knownStores=async()=>[],
  // At most one related term: never turn an AND keyword query into an unrelated genre.
  if(!enough()&&terms.length>1&&!failed)await query(terms[1]);
  if(!successes&&!known.length)throw Error('search_unavailable');
- return {candidates:withinSearch(external,center,radius),radius_m:radius,search_radii:attempted,search_terms:searched,partial:partial||failed||Boolean(input.photoStoreLookup&&q&&!enough()),fetched_at};
+ return {candidates:pool(),radius_m:radius,search_radii:attempted,search_terms:searched,partial:partial||failed||Boolean(input.photoStoreLookup&&q&&!enough()),fetched_at};
 }
