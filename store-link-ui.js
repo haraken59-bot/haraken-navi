@@ -38,6 +38,7 @@ export async function resolveStoreSelection(client,candidate){
  const matches=stores.filter(s=>sameStoreLocation(s,candidate));
  if(matches.length===1)return matches[0].id;
  if(matches.length>1)throw Error('同名の登録店舗が複数あります。店舗を確認してください。');
+ if(stores.some(s=>storeNameKey(s.name)===storeNameKey(candidate.name)))throw Error('同名の登録店舗があります。場所を確認してから紐付けしてください。');
  return client.confirmStore(candidate);
 }
 export function sameStoreLocation(store,candidate){
