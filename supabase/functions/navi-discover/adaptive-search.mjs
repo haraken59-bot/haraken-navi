@@ -13,7 +13,7 @@ export async function adaptiveNearby({input,center,load,knownStores=async()=>[],
  const eligible=()=>pool().filter(c=>!c.closed&&!c.permanently_closed&&(!c.mode||c.mode==='both'||c.mode===input.mode)&&genreFit(c,genre)?.level!=='mismatch');
  const q=terms[0]||'',matchingTerms=/やきとり|焼き鳥|焼鳥|串焼/.test(q)?['やきとり','焼き鳥','焼鳥','串焼']:/麺|ラーメン|うどん|そば/.test(q)?['麺','ラーメン','うどん','そば']:/中華|餃子|炒飯/.test(q)?['中華','中華料理','餃子','炒飯']:terms.slice(0,1);
  const matches=c=>{if(!terms.length)return true;const text=[c.name,c.dish,c.meal_evidence,...(c.tags||[])].join(' ').normalize('NFKC');return matchingTerms.some(t=>text.includes(t));};
- const enough=()=>{const rows=eligible();if(input.photoStoreLookup&&q)return rows.some(c=>String(c.name||'').normalize('NFKC').includes(q));return rows.length>=6&&(!terms.length||rows.filter(matches).length>=3);};
+ const enough=()=>{const rows=eligible();if(input.photoStoreLookup&&q)return rows.some(c=>String(c.name||'').normalize('NFKC').replace(/[\s・･ー－-]/g,'').includes(q.replace(/[\s・･ー－-]/g,'')));return rows.length>=6&&(!terms.length||rows.filter(matches).length>=3);};
  const query=async(keyword='')=>{const k=radius+':'+keyword;if(providerKeys.has(k))return true;providerKeys.add(k);try{add(await load(radius,keyword));successes++;if(keyword)searched.push(keyword);return true;}catch{failed=true;return false;}};
  for(const r of RADII){radius=r;attempted.push(r);try{known=await knownStores(center,r);}catch{known=[];}
   if(!await query())break;
