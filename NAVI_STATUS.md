@@ -172,3 +172,8 @@
 - Supabase本番Edge v22の全16ファイルとPRブランチを照合：14ファイル完全一致、差分はsearch-service.mjsとadaptive-search.mjsのみ。
 - CI対象漏れを発見し修正。追加7種のEdge関連テストをGitHub Actionsへ組み込み、run 39105943675で全ジョブ成功を確認。
 - 未実施・公開阻害：本番APIキーを用いたHot Pepper実応答確認、配備したEdgeの認証付きE2E、Android実機操作。実API・実機が未検証のため「公開前の検証すべて完了」とは判定しない。PR未マージ、Edge未配備、DB変更なし。
+
+### 検証用Edge実通信（2026-10-18）
+- `navi-discover-photo-test` v2を本番と同じverify_jwt=falseで別名配備（本番v22は不変）。
+- GET認証なし通常経路はHTTP 401 `unauthorized`、ゲスト検索はHTTP 200・候補100件。長崎GPSとhint=万徳を指定し検索語には含まれたが、候補名に万徳なし。
+- これはゲスト検索経路のみの検証。会員向けphotoStoreLookup経路・Android実機は未検証。万徳が見つからない問題があるため公開保留。
