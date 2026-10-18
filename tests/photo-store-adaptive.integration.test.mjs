@@ -18,3 +18,16 @@ const run=async(load,hint='万徳')=>adaptiveNearby({input:{hint,category:'お�
 {
  let calls=0;await assert.rejects(run(async()=>{calls++;throw Error('provider unavailable');}),/search_unavailable/);assert.equal(calls,1);
 }
+
+// Guest mode may stop on enough generic results; photo mode must continue looking for the named store.
+{
+ const generic=Array.from({length:8},(_,i)=>candidate('generic-'+i,'別の店'+i));
+ let guestCalls=0;
+ const guest=await adaptiveNearby({input:{hint:'万徳',category:'おまかせ',mode:'eat',photoStoreLookup:false},center,knownStores:async()=>[],load:async()=>{guestCalls++;return {candidates:generic,partial:false};}});
+ let photoCalls=0;
+ const photo=await run(async()=>{photoCalls++;return {candidates:generic,partial:false};});
+ assert.ok(guestCalls<photoCalls,'photo lookup continues after guest search may stop');
+ assert.equal(photoCalls,6,'photo mode checks bounded provider queries');
+ assert.equal(photo.partial,true,'no name match is reported as incomplete');
+ assert.equal(guest.candidates.some(c=>c.name.includes('万徳')),false);
+}
