@@ -24,12 +24,14 @@ export async function saveMealWithPhotos(client,meal,photos){
  const attached=photos.map(p=>({image_id:p.id,path:originalPath(owner,meal.id,p),...p.original_info,sha256:p.fingerprint}));
  const saved={...meal,navi_metadata:{...meal.navi_metadata,original_photos:attached}};
  // Deterministic paths make retry safe; never overwrite a different object.
+ // Never delete originals on upload failure: an earlier ambiguous save may
+ // already have committed this meal and reference these deterministic paths.
  try{for(let i=0;i<photos.length;i++)await client.uploadOriginal(attached[i].path,photos[i].file,photos[i].fingerprint);}
- catch(e){try{await client.removePendingOriginals(attached.map(x=>x.path));}catch{e.message+=' 未完了の原画の削除を確認できません。入力を変えず再試行してください。';}throw e;}
+ catch(e){e.message+=' アップロード済みの原画は保護しています。入力を変えず再試行してください。';throw e;}
  if((await client.fresh()).user.id!==owner)throw Error('アカウントが変わりました。保存を停止しました。');
  try{await client.mealRpc('save_navi_meal',{meal:saved});}
  catch(e){
-  if(e.saveRejected){try{await client.removePendingOriginals(attached.map(x=>x.path));}catch{e.message+=' 未完了原画の削除を確認できません。';}throw e;}
+  if(e.saveRejected){e.message+=' 原画は安全のため保持しています。履歴を確認してください。';throw e;}
   // Timeout may mean the DB committed. Do not delete a possibly attached original.
   e.message+=' 原画は再試行用に保持しています。入力を変えずに再試行してください。';throw e;
  }
