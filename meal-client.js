@@ -57,10 +57,11 @@ export class MealClient extends ReadOnlyClient{
   return history.records.map(r=>({...r,navi_metadata:byId.get(r.id)||{},is_test:byId.get(r.id)?.is_test===true,exclude_from_learning:byId.get(r.id)?.exclude_from_learning===true}));
  }
  async mealPhotos(id){if(!/^[a-f0-9-]{36}$/i.test(id))throw Error('記録ID不正');const s=await this.fresh();return this.send('/rest/v1/meal_images?select=id,thumbnail,file_name,taken_at&meal_id=eq.'+id,undefined,s.access_token,'GET');}
- async nearbyPhotoStores(point){
+ async nearbyPhotoStores(point,name=''){
   if(!validPoint(point)||(point.latitude===0&&point.longitude===0))throw Error('写真GPSが正しくありません。');
   const session=await this.fresh(),url=new URL(this.config.url+'/functions/v1/navi-discover');
-  for(const [k,v] of Object.entries({mode:'discover',latitude:point.latitude,longitude:point.longitude,direction:'near',preference:'おまかせ'}))url.searchParams.set(k,String(v));
+  const hint=String(name||'').normalize('NFKC').trim().slice(0,60);
+  for(const [k,v] of Object.entries({mode:'discover',latitude:point.latitude,longitude:point.longitude,direction:'near',preference:'おまかせ',...(hint?{hint}:{})}))url.searchParams.set(k,String(v));
   const response=await this.request(url,{headers:{Authorization:'Bearer '+session.access_token},signal:AbortSignal.timeout(30000)});
   if(!response.ok)throw Error('写真周辺の店舗を取得できません。');
   const data=await response.json();if(this.session()?.user?.id!==session.user.id)throw Error('ログイン状態が変わりました。');
