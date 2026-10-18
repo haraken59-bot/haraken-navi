@@ -58,3 +58,6 @@ assert.match(uiSource,/if\(validPoint\(point\)&&String\(initialName\|\|''\)\.tri
 
 assert.match(uiSource,/const matched=visibleStoreRows\(rows,initialName,referenceAddress\)/,'prefer name-matching nearby candidates');
 assert.match(uiSource,/input\.value=matched\.length\?String\(initialName\|\|''\):''/,'show all nearby candidates when name match is absent');
+
+assert.match(uiSource,/registeredRows=rows/,'registered stores retained as fallback');
+assert.match(uiSource,/rows=found\.length\?found:registeredRows/,'empty photo lookup does not erase registered stores');
