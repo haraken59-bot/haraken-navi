@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {storeNameKey,matchingStores,visibleStoreRows,storeCandidateRank,storeListStatus,verifiedManualStore} from '../store-link-ui.js';
+import {storeNameKey,matchingStores,visibleStoreRows,storeCandidateRank,storeListStatus,verifiedManualStore,confirmManualStore} from '../store-link-ui.js';
 const stores=[{name:'焼鳥 にわ とりのすけ 西新店'},{name:'やきとり ひだか'},{name:'寿司の店'}];
 assert.equal(storeNameKey(' やきとり・ひだか '),storeNameKey('焼鳥ひだか'));
 assert.equal(matchingStores(stores,'焼き鳥 ひだか')[0]?.name,'やきとり ひだか');
@@ -31,3 +31,16 @@ const photo={latitude:32.74333,longitude:129.8757236111111};
 assert.deepEqual(verifiedManualStore('万徳','32.744','129.876',photo),{name:'万徳',latitude:32.744,longitude:129.876});
 for(const [lat,lng] of [['','129.876'],['abc','129.876'],['32.744abc','129.876'],['91','129.876'],['32.744','181'],['0','0'],[String(photo.latitude),String(photo.longitude)]])assert.equal(verifiedManualStore('万徳',lat,lng,photo),null,'invalid manual coordinate rejected');
 assert.equal(verifiedManualStore('','32.744','129.876',photo),null,'name required');
+
+let writes=0,links=0;
+const client={confirmStore:async()=>{writes++;return 'store-id';}};
+const onSelect=async()=>{links++;};
+const candidate={name:'万徳',latitude:32.744,longitude:129.876};
+assert.equal(await confirmManualStore({candidate,approved:false,client,onSelect}),false);
+assert.equal(await confirmManualStore({candidate:null,approved:true,client,onSelect}),false);
+assert.equal(await confirmManualStore({candidate,approved:true,client,onSelect,isCurrent:()=>false}),false);
+assert.equal(writes,0,'cancel and stale dialogs must not write');
+assert.equal(links,0,'cancel and stale dialogs must not link');
+assert.equal(await confirmManualStore({candidate,approved:true,client,onSelect}),true);
+assert.equal(writes,1,'explicit approval writes once');
+assert.equal(links,1,'explicit approval links once');
