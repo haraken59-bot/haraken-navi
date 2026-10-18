@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {storeNameKey,matchingStores} from '../store-link-ui.js';
+const stores=[{name:'焼鳥 にわ とりのすけ 西新店'},{name:'やきとり ひだか'},{name:'寿司の店'}];
+assert.equal(storeNameKey(' やきとり・ひだか '),storeNameKey('焼鳥ひだか'));
+assert.equal(matchingStores(stores,'焼き鳥 ひだか')[0]?.name,'やきとり ひだか');
+assert.equal(matchingStores(stores,'にわ とりのすけ').length,1);
+assert.equal(matchingStores(stores,'寿司').length,1);
+assert.equal(matchingStores(stores,'不明な店').length,0);
+assert.equal(matchingStores(stores,'').length,3);
+console.log('store link search: 6 assertions passed');
