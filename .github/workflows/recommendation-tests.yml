@@ -3,12 +3,18 @@ on:
   push:
     branches:
       - fix/specific-food-preference-20261018
+      - 'fix/meal-photo-safety-*'
   pull_request:
     paths:
       - 'domain.js'
       - 'genre-fit.js'
       - 'meal-client.js'
+      - 'meal-photo.js'
+      - 'meal-record.js'
+      - 'meal-ui.js'
+      - 'supabase/functions/**'
       - 'store-link-ui.js'
+      - 'app/places.js'
       - 'tests/**'
       - '.github/workflows/recommendation-tests.yml'
 jobs:
@@ -21,6 +27,8 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: node --check domain.js
+      - name: Meal photo safety tests
+        run: node --experimental-default-type=module --test tests/meal-photo-safety.test.mjs
       - name: Specific dish unit tests
         run: node --experimental-default-type=module --test tests/specific-dish.test.mjs
       - name: Recommendation integration tests
