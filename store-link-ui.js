@@ -57,7 +57,7 @@ export async function recoverStoreLink({client,candidate,onSelect,isCurrent=()=>
 }
 export async function confirmManualStore({candidate,approved,client,onSelect,isCurrent=()=>true}){
  if(!candidate||approved!==true||!isCurrent())return false;
- const id=await client.confirmStore(candidate);
+ const id=await resolveStoreSelection(client,candidate);
  if(!isCurrent())return false;
  await onSelect({...candidate,id});
  return true;
