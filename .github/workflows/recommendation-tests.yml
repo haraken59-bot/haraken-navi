@@ -1,5 +1,6 @@
 name: Recommendation regression tests
 on:
+  workflow_dispatch:
   push:
     branches:
       - fix/specific-food-preference-20261018
