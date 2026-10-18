@@ -16,6 +16,6 @@ export function auditOriginalReferences({owner,objects,meals,complete=false}){
   if(!references.has(path))candidates.push(path);
  }
  return {checked:(objects||[]).length,referenced:references.size,
-  candidates:complete?candidates:[],unverified:complete?[]:candidates,
+  candidates:[],unverified:candidates,
   invalid,canDelete:false,reason:'候補は削除対象ではありません。保存途中の参照・全履歴・保留処理の照合が必要です。'};
 }
