@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {recommend,DEFAULT_CONTEXT} from '../domain.js';
+const now=new Date('2026-10-18T10:00:00+09:00');
+const store=(id,name,dish,tags)=>({id,name,dish,tags,mode:'eat',kind:'store',observed_at:now.toISOString(),travel_minutes:5,price:1800,search_scoped:true});
+const stores=[store('steak','ステーキ店','ステーキ',['肉']),store('yakitori','やきとり ひだか','焼き鳥',['肉','焼き鳥']),store('yakiniku','焼肉店','焼肉',['肉'])];
+const rank=(desire,category)=>recommend(stores,{...DEFAULT_CONTEXT,desire,category,storesOnly:true},[],{},[],now).top.map(x=>x.id);
+assert.equal(rank('やきとり','肉')[0],'yakitori','specific dish outranks broad meat');
+assert.equal(rank('焼肉','肉')[0],'yakiniku','yakiniku outranks other meat');
+assert.equal(rank('','肉').length,3,'broad meat still returns three stores');
+assert.equal(rank('','おまかせ').length,3,'omakase still returns three stores');
+console.log('recommend integration: 4 assertions passed');

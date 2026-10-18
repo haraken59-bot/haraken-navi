@@ -1,0 +1,25 @@
+name: Recommendation regression tests
+on:
+  push:
+    branches:
+      - fix/specific-food-preference-20261018
+  pull_request:
+    paths:
+      - 'domain.js'
+      - 'genre-fit.js'
+      - 'tests/**'
+      - '.github/workflows/recommendation-tests.yml'
+jobs:
+  recommendation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax
+        run: node --check domain.js
+      - name: Specific dish unit tests
+        run: node --experimental-default-type=module --test tests/specific-dish.test.mjs
+      - name: Recommendation integration tests
+        run: node --experimental-default-type=module --test tests/recommend-specific.test.mjs
