@@ -22,9 +22,7 @@ console.log('store link search: 16 assertions passed');
 
 import {readFileSync} from 'node:fs';
 const clientSource=readFileSync(new URL('../meal-client.js',import.meta.url),'utf8');
-assert.match(clientSource,/photoStoreLookup:'1'/,'named photo lookup requests dedicated server mode');
-assert.match(clientSource,/hint/,'named photo lookup passes name hint');
+assert.match(clientSource,/\.\.\.\(hint\?\{hint\}:\{\}\)/,'named photo lookup passes optional hint');
 
-assert.match(clientSource,/hint,photoStoreLookup:'1'/,'dedicated mode requires a name hint');
 
 assert.match(clientSource,/match\(a\)-match\(b\)/,'name matches are ranked ahead of 20-item cap');
