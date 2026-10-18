@@ -134,3 +134,7 @@
 - Android実機で、redLanternの店名検索を空にすると登録3店舗が表示された一方、旧「一致がありません」の案内が残る不整合を確認。
 - PR #7 squash merge：64131e0c2d8725e240d4da2781868d45f2984bee。入力変更時に候補と案内文を同期。GitHub Actions run 39099512864 completed success、追加4条件含む。
 - mainマージ済み。公開GitHub Pagesへの当該修正反映とAndroid再確認は未実施。DB・履歴変更なし。
+
+## 19. 写真GPS検索の店名ヒント（2026-10-18）
+- PR #8 squash merge：52c8ea7abbd3bcb3e62937d9413182c7435416f5。meal-client.jsから写真の店名をnavi-discoverのhintに送信、store-link-ui.jsから記録済み店名を引き渡し。CI pathsにmeal-client.js/store-link-ui.jsを追加。
+- GitHub Actions run 39100303365 completed success。mainマージ済み。公開Pages反映とAndroid実機での万徳候補表示は未確認。検索プロバイダが候補十分と判定するとキーワード検索を省略する可能性があり、表示保証なし。DB書込・自動店舗確定なし。
