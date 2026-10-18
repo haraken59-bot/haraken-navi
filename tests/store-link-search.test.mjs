@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {storeNameKey,matchingStores,visibleStoreRows,storeCandidateRank} from '../store-link-ui.js';
+import {storeNameKey,matchingStores,visibleStoreRows,storeCandidateRank,storeListStatus} from '../store-link-ui.js';
 const stores=[{name:'焼鳥 にわ とりのすけ 西新店'},{name:'やきとり ひだか'},{name:'寿司の店'}];
 assert.equal(storeNameKey(' やきとり・ひだか '),storeNameKey('焼鳥ひだか'));
 assert.equal(matchingStores(stores,'焼き鳥 ひだか')[0]?.name,'やきとり ひだか');
@@ -14,4 +14,8 @@ assert.deepEqual(visibleStoreRows(ranked,'やきとり ひだか','福岡市早�
 assert.equal(storeCandidateRank(ranked[0],'やきとりひだか').exact,true);
 assert.deepEqual(visibleStoreRows(ranked,'').map(x=>x.i),[2,1,0],'distance orders unfiltered GPS candidates');
 assert.equal(visibleStoreRows(ranked,'').length,3,'ranking never drops GPS candidates');
-console.log('store link search: 12 assertions passed');
+assert.match(storeListStatus(stores,''),/すべて表示/);
+assert.match(storeListStatus(stores,'存在しない'),/一致がありません/);
+assert.match(storeListStatus(stores,'寿司'),/一致する登録店舗/);
+assert.match(storeListStatus([],''),/登録店舗がありません/);
+console.log('store link search: 16 assertions passed');
