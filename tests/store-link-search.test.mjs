@@ -95,3 +95,11 @@ import {recoverStoreLink} from '../store-link-ui.js';
  assert.equal(await recoverStoreLink({client,candidate,onSelect:async()=>{throw Error('stale');},isCurrent:()=>false}),false);
  await assert.rejects(recoverStoreLink({client:{stores:async()=>{throw Error('network');}},candidate,onSelect:async()=>{}}),/network/);
 }
+
+{
+ const candidate={name:'同名の店',latitude:33.59,longitude:130.4};
+ const nearby={id:'11111111-1111-4111-8111-111111111111',name:'同名の店',latitude:33.5901,longitude:130.4};
+ let linked=false;
+ assert.equal(await recoverStoreLink({client:{stores:async()=>[nearby]},candidate,onSelect:async()=>{linked=true;}}),false,'nearby same-name business must not be linked automatically');
+ assert.equal(linked,false);
+}
