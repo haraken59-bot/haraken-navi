@@ -26,3 +26,5 @@ assert.match(clientSource,/photoStoreLookup:'1'/,'named photo lookup requests de
 assert.match(clientSource,/hint/,'named photo lookup passes name hint');
 
 assert.match(clientSource,/hint,photoStoreLookup:'1'/,'dedicated mode requires a name hint');
+
+assert.match(clientSource,/match\(a\)-match\(b\)/,'name matches are ranked ahead of 20-item cap');
