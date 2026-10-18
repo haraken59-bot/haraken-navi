@@ -8,4 +8,10 @@ assert.equal(rank('やきとり','肉')[0],'yakitori','specific dish outranks br
 assert.equal(rank('焼肉','肉')[0],'yakiniku','yakiniku outranks other meat');
 assert.equal(rank('','肉').length,3,'broad meat still returns three stores');
 assert.equal(rank('','おまかせ').length,3,'omakase still returns three stores');
-console.log('recommend integration: 4 assertions passed');
+const fishStores=[...stores,store('sushi','寿司店','寿司',['魚','寿司']),store('seafood','魚料理店','刺身',['魚'])];
+const rankFish=(desire,category)=>recommend(fishStores,{...DEFAULT_CONTEXT,desire,category,storesOnly:true},[],{},[],now).top.map(x=>x.id);
+assert.equal(rankFish('やきとり','魚')[0],'yakitori','specific yakitori overrides conflicting fish category');
+assert.equal(rankFish('寿司','肉')[0],'sushi','specific sushi overrides conflicting meat category');
+assert.ok(['sushi','seafood'].includes(rankFish('','魚')[0]),'fish category works without desire');
+assert.equal(rankFish('','おまかせ').length,3,'omakase still works');
+console.log('recommend integration: 8 assertions passed');
