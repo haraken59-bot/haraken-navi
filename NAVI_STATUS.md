@@ -157,3 +157,7 @@
 
 ### 写真店舗専用の店名未発見判定（開発中）
 - photo-store-lookup-policy.mjs と tests/photo-store-lookup-policy.test.mjs をPR #10ブランチに追加。写真店舗特定で店名一致候補がない場合の判定のみ。Edge Functionへの組み込み・本番配備・Android確認は未実施。通常検索への影響なし（未接続）。
+
+## 2026-10-18 写真履歴専用の店名検索（Edgeソース試作）
+- PR #10ブランチにEdgeのsearch-service.mjs/adaptive-search.mjsを新規配置。photoStoreLookup=1の場合は店名一致を重視し、各検索半径でキーワード検索を試みる。meal-client.jsも専用指定を送信。
+- **重要**：Edgeの全依存ファイルはGitHubに未配置。現在のSupabase本番Edge v22は変更なし。既存の通常検索と本番挙動は変わらない。統合テスト、API呼出回数上限・部分失敗時の挙動、Edge配備、Android確認は未完了。PR未マージ・未公開。
