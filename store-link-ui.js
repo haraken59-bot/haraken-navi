@@ -18,6 +18,14 @@ export function visibleStoreRows(rows,query,referenceAddress=''){
 }
 export function storeListStatus(rows,query){if(!rows.length)return '登録店舗がありません。店舗ID未設定でも保存できます。';if(!storeNameKey(query))return '登録店舗をすべて表示しています。店舗を選び、確認してください。';return visibleStoreRows(rows,query).length?'店名に一致する登録店舗を表示しています。':'登録店舗に店名一致がありません。入力を消すと全店舗を表示します。';}
 export function photoPoint(metadata){return [metadata?.photo_location,...(metadata?.photo_locations||[]).map(x=>x.location)].find(p=>validPoint(p)&&(p.latitude!==0||p.longitude!==0))||null;}
+export function verifiedManualStore(name,latitude,longitude,photo){
+ const lat=String(latitude??'').trim(),lng=String(longitude??'').trim();
+ if(!String(name||'').trim()||!/^[-+]?\\d+(?:\\.\\d+)?$/.test(lat)||!/^[-+]?\\d+(?:\\.\\d+)?$/.test(lng))return null;
+ const candidate={name:String(name).trim().slice(0,120),latitude:Number(lat),longitude:Number(lng)};
+ if(!validPoint(candidate)||(candidate.latitude===0&&candidate.longitude===0))return null;
+ if(validPoint(photo)&&Math.abs(candidate.latitude-photo.latitude)<1e-8&&Math.abs(candidate.longitude-photo.longitude)<1e-8)return null;
+ return candidate;
+}
 export async function chooseStore({client,point,onSelect,initialName='',referenceAddress='',isCurrent=()=>true}){
  if(!client?.session())throw Error('この機能はハラケン本人専用です');
  const dialog=document.createElement('dialog');dialog.innerHTML='<h3>店舗を確認して関連付け</h3><p>GPSだけで店舗を確定しません。店名・所在地を確認してください。</p><input aria-label="店舗名で絞り込み" placeholder="店舗名で絞り込み"><button type="button" data-near>写真の500m以内を検索</button><button type="button" data-manual>候補にない店舗を手動確認</button><p role="status"></p><div data-list></div><button type="button" data-close>閉じる</button>';
@@ -34,9 +42,8 @@ export async function chooseStore({client,point,onSelect,initialName='',referenc
   const link=document.createElement('a');link.href=mapUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent='地図で店舗位置を確認する';status.replaceChildren('住所を確認しました。',link,'。地図の位置を確認し、緯度・経度を入力してください。');
   const latitude=prompt('地図で確認した店舗の緯度を入力してください（写真GPSを転記しないでください）。','');if(latitude===null)return;
   const longitude=prompt('地図で確認した店舗の経度を入力してください。','');if(longitude===null)return;
-  const candidate={name,latitude:Number(latitude),longitude:Number(longitude)};
-  if(validPoint(point)&&Math.abs(candidate.latitude-point.latitude)<0.00000001&&Math.abs(candidate.longitude-point.longitude)<0.00000001){status.textContent='写真GPSと同じ座標は店舗位置として登録できません。地図で店舗の位置を確認してください。';return;}
-  if(!latitude.trim()||!longitude.trim()||!/^[-+]?\d+(?:\.\d+)?$/.test(latitude.trim())||!/^[-+]?\d+(?:\.\d+)?$/.test(longitude.trim())||!validPoint(candidate)||(candidate.latitude===0&&candidate.longitude===0)){status.textContent='緯度・経度が正しくありません。登録していません。';return;}
+  const candidate=verifiedManualStore(name,latitude,longitude,point);
+  if(!candidate){status.textContent='店舗の緯度・経度が不正、または写真GPSと同じです。登録していません。';return;}
   if(!confirm('店舗名：'+name+'\n住所（確認用）：'+address.trim()+'\n緯度：'+candidate.latitude+'\n経度：'+candidate.longitude+'\n\n地図上の店舗位置と一致していますか？登録して食事に関連付けますか？'))return;
   busy=true;try{const id=await client.confirmStore(candidate);if(!current())return;await onSelect({...candidate,id});dialog.close();}catch{status.textContent='店舗登録または関連付けに失敗しました。入力とログイン状態を確認してください。';}finally{busy=false;}
  };
