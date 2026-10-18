@@ -7,14 +7,14 @@ export function searchTerms(input){const q=safeHint(input.hint|| (input.category
 export async function adaptiveNearby({input,center,load,knownStores=async()=>[],now=()=>Date.now()}){
  const terms=searchTerms(input),ctx={desire:safeHint(input.hint),category:input.category||'おまかせ'},genre=requestedGenre(ctx);
  let external=[],known=[],radius=500,partial=false,fetched_at=new Date(now()).toISOString(),failed=false;
- let successes=0;const attempted=[],searched=[],providerKeys=new Set();
+ let successes=0;const attempted=[],searched=[],providerKeys=new Set();const MAX_PROVIDER_REQUESTS=6;
  const add=value=>{external=[...new Map([...external,...value.candidates].map(c=>[c.id,c])).values()];partial=partial||value.partial;fetched_at=value.fetched_at||fetched_at;};
  const pool=()=>withinSearch(mergeKnownStores(external,known),center,radius);
  const eligible=()=>pool().filter(c=>!c.closed&&!c.permanently_closed&&(!c.mode||c.mode==='both'||c.mode===input.mode)&&genreFit(c,genre)?.level!=='mismatch');
  const q=terms[0]||'',matchingTerms=/やきとり|焼き鳥|焼鳥|串焼/.test(q)?['やきとり','焼き鳥','焼鳥','串焼']:/麺|ラーメン|うどん|そば/.test(q)?['麺','ラーメン','うどん','そば']:/中華|餃子|炒飯/.test(q)?['中華','中華料理','餃子','炒飯']:terms.slice(0,1);
  const matches=c=>{if(!terms.length)return true;const text=[c.name,c.dish,c.meal_evidence,...(c.tags||[])].join(' ').normalize('NFKC');return matchingTerms.some(t=>text.includes(t));};
  const enough=()=>{const rows=eligible();if(input.photoStoreLookup&&q)return rows.some(c=>String(c.name||'').normalize('NFKC').replace(/[\s・･ー－-]/g,'').includes(q.replace(/[\s・･ー－-]/g,'')));return rows.length>=6&&(!terms.length||rows.filter(matches).length>=3);};
- const query=async(keyword='')=>{const k=radius+':'+keyword;if(providerKeys.has(k))return true;providerKeys.add(k);try{add(await load(radius,keyword));successes++;if(keyword)searched.push(keyword);return true;}catch{failed=true;return false;}};
+ const query=async(keyword='')=>{const k=radius+':'+keyword;if(providerKeys.has(k))return true;if(providerKeys.size>=MAX_PROVIDER_REQUESTS)return false;providerKeys.add(k);try{add(await load(radius,keyword));successes++;if(keyword)searched.push(keyword);return true;}catch{failed=true;return false;}};
  for(const r of RADII){radius=r;attempted.push(r);try{known=await knownStores(center,r);}catch{known=[];}
   if(!await query())break;
   if(enough())break;
