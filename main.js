@@ -32,7 +32,9 @@ async function calculate(reason='生成',additional=0){
  if(!isMember()&&!guestActive){$('entry-choice').hidden=false;$('entry-choice').scrollIntoView({block:'start'});return;}
  if(['条件変更','食事条件を変更'].includes(reason)&&decision?.initial_choice)beginDecision(false);
  fields();
- if(!localAction(ctx)&&!ctx.location&&!gpsAttempted){gpsAttempted=true;const generation=calculation;const prepared=await prepareNow({...ctx},{preferGps:true});if(generation!==calculation)return;ctx.location=prepared.context.location;$('locate').hidden=Boolean(ctx.location);if(!ctx.location)say('現在地を取得できませんでした。入力したエリアを使います。必要なら接続・設定から再取得できます。');}
+ // A typed area is an explicit search center: never reuse a previous GPS fix.
+ if(ctx.area?.trim()){ctx.location=null;ctx.placeIndex=undefined;}
+ if(!localAction(ctx)&&!ctx.area?.trim()&&!ctx.location&&!gpsAttempted){gpsAttempted=true;const generation=calculation;const prepared=await prepareNow({...ctx},{preferGps:true});if(generation!==calculation)return;ctx.location=prepared.context.location;$('locate').hidden=Boolean(ctx.location);if(!ctx.location)say('現在地を取得できませんでした。入力したエリアを使います。必要なら接続・設定から再取得できます。');}
  const previous=result?.top[0]?.id||decision?.revisions?.at(-1)?.candidates?.[0]?.id||decision?.first_recommendation?.id;const run=++calculation;fields();const key=scopeKey(ctx.location?{...ctx,area:''}:ctx),actionOnly=localAction(ctx);result=null;$('results').hidden=true;$('place-choice').hidden=true;
  if(!key&&!actionOnly){$('search-details').open=true;$('discovery-status').textContent='現在地エリアを入力するか「現在地を使う」を押してください。';return;}
  $('discovery-status').textContent='周辺のお店を探索しています…';
