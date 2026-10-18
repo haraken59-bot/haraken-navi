@@ -5,8 +5,8 @@ import {validOriginalPath} from './meal-photo.js';
 export function auditOriginalReferences({owner,objects,meals,complete=false}){
  const references=new Set();
  for(const meal of meals||[]){
-  for(const photo of meal.navi_metadata?.original_photos||[]){
-   if(validOriginalPath(photo.path,owner,meal.id))references.add(photo.path);
+  for(const photo of Array.isArray(meal?.navi_metadata?.original_photos)?meal.navi_metadata.original_photos:[]){
+   if(validOriginalPath(photo?.path,owner,meal.id))references.add(photo.path);
   }
  }
  const candidates=[],invalid=[];
