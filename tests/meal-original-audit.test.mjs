@@ -8,7 +8,7 @@ const b=original('44444444-4444-4444-8444-444444444444');
 const rows=[{id:meal,navi_metadata:{original_photos:[{path:a}]}}];
 test('audit never deletes referenced originals',()=>{
  const result=auditOriginalReferences({owner,objects:[a,b],meals:rows,complete:true});
- assert.deepEqual(result.candidates,[b]);assert.equal(result.canDelete,false);
+ assert.deepEqual(result.candidates,[]);assert.deepEqual(result.unverified,[b]);assert.equal(result.canDelete,false);
 });
 test('incomplete history cannot mark orphan candidates as confirmed',()=>{
  const result=auditOriginalReferences({owner,objects:[a,b],meals:rows});
@@ -17,5 +17,5 @@ test('incomplete history cannot mark orphan candidates as confirmed',()=>{
 });
 test('foreign and invalid paths cannot be considered cleanup candidates',()=>{
  const result=auditOriginalReferences({owner,objects:[b,'other-user/'+meal+'/x.jpg','../danger'],meals:[],complete:true});
- assert.deepEqual(result.candidates,[b]);assert.equal(result.invalid.length,2);
+ assert.deepEqual(result.candidates,[]);assert.deepEqual(result.unverified,[b]);assert.equal(result.invalid.length,2);
 });
