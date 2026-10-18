@@ -154,3 +154,6 @@
 - feat/photo-name-auto-discovery：店舗確認画面で写真GPSと既存店名がある場合、周辺候補検索を自動開始する変更を作成。店名による独立検索・座標入力撤廃は未実装。CI・Android未確認、本番未公開、DB変更なし。
 
 - PR #10 自動検索と店名一致優先の修正を追加。未対応photoStoreLookup送信は削除済み。GitHub Actions 39103281475 success。通常検索の店名一致保証は未実装、Android・公開未確認。PR #9は既にmainマージ済み（旧記載は履歴）。
+
+### 写真店舗専用の店名未発見判定（開発中）
+- photo-store-lookup-policy.mjs と tests/photo-store-lookup-policy.test.mjs をPR #10ブランチに追加。写真店舗特定で店名一致候補がない場合の判定のみ。Edge Functionへの組み込み・本番配備・Android確認は未実施。通常検索への影響なし（未接続）。
