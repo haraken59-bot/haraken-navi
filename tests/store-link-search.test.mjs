@@ -33,7 +33,7 @@ for(const [lat,lng] of [['','129.876'],['abc','129.876'],['32.744abc','129.876']
 assert.equal(verifiedManualStore('','32.744','129.876',photo),null,'name required');
 
 let writes=0,links=0;
-const client={confirmStore:async()=>{writes++;return 'store-id';}};
+const client={stores:async()=>[],confirmStore:async()=>{writes++;return 'store-id';}};
 const onSelect=async()=>{links++;};
 const candidate={name:'万徳',latitude:32.744,longitude:129.876};
 assert.equal(await confirmManualStore({candidate,approved:false,client,onSelect}),false);
