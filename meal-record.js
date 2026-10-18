@@ -18,11 +18,12 @@ export function parseMealText(draft,text){
  throw Error('「かちかち山へ行きました」「4」「ミックスフライ定食 880」のように入力してください。その他は下の項目へ入力できます。');
 }
 export function duplicateMeals(meal,history){
- const fps=new Set(meal.images.map(i=>i.fingerprint).filter(Boolean));
- return history.filter(r=>r.id!==meal.id&&((r.images||r.meal_images||[]).some(i=>fps.has(i.fingerprint))||
- (meal.eaten_at&&r.eaten_at&&Math.abs(Date.parse(meal.eaten_at)-Date.parse(r.eaten_at))<=30*60000&&
- ((meal.store_id&&meal.store_id===r.store_id)||(normalizeStoreName(meal.unlinked_store_name)&&normalizeStoreName(meal.unlinked_store_name)===normalizeStoreName(r.store_name||r.unlinked_store_name)))&&
- (!meal.dish_name||!r.dish_name||normalizeStoreName(meal.dish_name)===normalizeStoreName(r.dish_name)||meal.amount_jpy===r.amount_jpy))));
+ // Only an identical photo is strong enough to block a new entry.
+ // Similar times, stores and prices may represent separate dishes.
+ const fps=new Set((meal.images||[]).map(i=>i.fingerprint).filter(Boolean));
+ if(!fps.size)return [];
+ return history.filter(r=>r.id!==meal.id&&
+  (r.images||r.meal_images||[]).some(i=>i.fingerprint&&fps.has(i.fingerprint)));
 }
 export function buildMeal(input,{id=crypto.randomUUID(),photos=[],current=null,store=null,decision=null,context={},isTest=false}={}){
  if(!input.eaten_at||!Number.isFinite(Date.parse(input.eaten_at)))throw Error('食事日時を入力してください。');
