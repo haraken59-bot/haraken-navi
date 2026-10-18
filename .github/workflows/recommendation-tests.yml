@@ -7,6 +7,8 @@ on:
     paths:
       - 'domain.js'
       - 'genre-fit.js'
+      - 'meal-client.js'
+      - 'store-link-ui.js'
       - 'tests/**'
       - '.github/workflows/recommendation-tests.yml'
 jobs:
