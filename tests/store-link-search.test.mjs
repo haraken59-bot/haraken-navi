@@ -53,3 +53,5 @@ const coordinatePrompt=uiSource.indexOf("const latitude=prompt(",manualStart);
 assert.ok(manualStart>=0&&mapLink>manualStart&&nextClick>mapLink&&coordinatePrompt>nextClick,'map link is presented before coordinates are prompted on a separate click');
 assert.match(uiSource,/if\(!confirm\('店舗名：'/,'manual registration requires explicit final confirmation');
 assert.match(uiSource,/confirmManualStore\(\{candidate,approved:true,client,onSelect,isCurrent:current\}\)/,'manual registration uses guarded write helper');
+
+assert.match(uiSource,/if\(validPoint\(point\)&&String\(initialName\|\|''\)\.trim\(\)\)await near\.onclick\(\)/,'auto-search when both photo GPS and saved name exist');
