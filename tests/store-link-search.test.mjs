@@ -77,7 +77,7 @@ assert.equal(linkedStoreId({id:'hotpepper:J0001'}),null,'provider ID must not be
 assert.equal(linkedStoreId({id:'hotpepper:J0001',store_id:existingId}),existingId,'existing store UUID takes priority');
 assert.equal(linkedStoreId({id:existingId}),existingId,'registered store row ID remains valid');
 let externalConfirms=0;
-const lookupClient={confirmStore:async()=>{externalConfirms++;return existingId;}};
+const lookupClient={stores:async()=>[],confirmStore:async()=>{externalConfirms++;return existingId;}};
 assert.equal(await resolveStoreSelection(lookupClient,{id:'hotpepper:J0001',name:'External'}),existingId);
 assert.equal(externalConfirms,1,'external candidates must be explicitly confirmed');
 assert.equal(await resolveStoreSelection(lookupClient,{id:'hotpepper:J0001',store_id:existingId}),existingId);
@@ -102,4 +102,19 @@ import {recoverStoreLink} from '../store-link-ui.js';
  let linked=false;
  assert.equal(await recoverStoreLink({client:{stores:async()=>[nearby]},candidate,onSelect:async()=>{linked=true;}}),false,'nearby same-name business must not be linked automatically');
  assert.equal(linked,false);
+}
+
+{
+ const {sameStoreLocation}=await import('../store-link-ui.js');
+ const id='11111111-1111-4111-8111-111111111111';
+ const candidate={id:'hotpepper:J001',name:'同じ店舗',latitude:33.59,longitude:130.4};
+ let creates=0;
+ const existing={id,name:'同じ店舗',latitude:33.59,longitude:130.4};
+ assert.equal(sameStoreLocation(existing,candidate),true);
+ assert.equal(await resolveStoreSelection({stores:async()=>[existing],confirmStore:async()=>{creates++;}},candidate),id);
+ assert.equal(creates,0,'registered store is reused without a write');
+ await assert.rejects(resolveStoreSelection({stores:async()=>[existing,existing],confirmStore:async()=>{creates++;}},candidate),/複数/);
+ assert.equal(creates,0,'ambiguous same-name stores must not create or link');
+ const other={...existing,latitude:33.5901};
+ assert.equal(sameStoreLocation(other,candidate),false,'different floor/building location is not silently matched');
 }
