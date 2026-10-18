@@ -54,3 +54,15 @@ test('account switch during upload prevents DB write',async()=>{
  assert.equal(c.calls.saves.length,0);
  assert.equal(c.calls.deletes.length,0);
 });
+
+test('missing authenticated owner stops before uploads',async()=>{
+ const c=client({fresh:async()=>({user:{}})});
+ await assert.rejects(saveMealWithPhotos(c,meal,[photo]),/ログイン状態/);
+ assert.equal(c.calls.uploads.length,0);assert.equal(c.calls.saves.length,0);
+});
+test('logout after upload stops before DB write',async()=>{
+ let n=0;
+ const c=client({fresh:async()=>++n===1?{user:{id:owner}}:{user:null}});
+ await assert.rejects(saveMealWithPhotos(c,meal,[photo]),/アカウントが変わりました/);
+ assert.equal(c.calls.saves.length,0);assert.equal(c.calls.deletes.length,0);
+});
