@@ -20,7 +20,7 @@ export function storeListStatus(rows,query){if(!rows.length)return '登録店舗
 export function photoPoint(metadata){return [metadata?.photo_location,...(metadata?.photo_locations||[]).map(x=>x.location)].find(p=>validPoint(p)&&(p.latitude!==0||p.longitude!==0))||null;}
 export function verifiedManualStore(name,latitude,longitude,photo){
  const lat=String(latitude??'').trim(),lng=String(longitude??'').trim();
- if(!String(name||'').trim()||!/^[-+]?\\d+(?:\\.\\d+)?$/.test(lat)||!/^[-+]?\\d+(?:\\.\\d+)?$/.test(lng))return null;
+ if(!String(name||'').trim()||!/^[-+]?\d+(?:\.\d+)?$/.test(lat)||!/^[-+]?\d+(?:\.\d+)?$/.test(lng))return null;
  const candidate={name:String(name).trim().slice(0,120),latitude:Number(lat),longitude:Number(lng)};
  if(!validPoint(candidate)||(candidate.latitude===0&&candidate.longitude===0))return null;
  if(validPoint(photo)&&Math.abs(candidate.latitude-photo.latitude)<1e-8&&Math.abs(candidate.longitude-photo.longitude)<1e-8)return null;
