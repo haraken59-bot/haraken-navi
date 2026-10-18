@@ -10,7 +10,7 @@ export function createKnownStoreReader(database,ownerId){
 }
 // Identity alone must not merge different branches. Ambiguous links remain unlinked.
 export function mergeKnownStores(external,known){
- const matches=(a,b)=>a.store_id&&a.store_id===b.store_id||a.id===b.id||a.hotpepper_id&&a.hotpepper_id===b.hotpepper_id||normalizeName(a.name)===normalizeName(b.name)&&distanceKm(a,b)*1000<=1;
+ const matches=(a,b)=>a.store_id&&a.store_id===b.store_id||a.id===b.id||a.hotpepper_id&&a.hotpepper_id===b.hotpepper_id||normalizeName(a.name)===normalizeName(b.name)&&distanceKm(a,b)*1000<=0.5;
  const links=known.map(k=>external.filter(e=>matches(k,e)));
  const result=external.map(e=>({...e}));
  for(let i=0;i<known.length;i++){
