@@ -60,7 +60,7 @@ assert.match(uiSource,/const matched=visibleStoreRows\(rows,initialName,referenc
 assert.match(uiSource,/input\.value=matched\.length\?String\(initialName\|\|''\):''/,'show all nearby candidates when name match is absent');
 
 assert.match(uiSource,/registeredRows=rows/,'registered stores retained as fallback');
-assert.match(uiSource,/rows=found\.length\?found:registeredRows/,'empty photo lookup does not erase registered stores');
+assert.match(uiSource,/rows=found\.length\?\[\.\.\.found,\.\.\.registeredRows\.filter/,'registered stores remain available beside external photo results');
 
 assert.match(clientSource,/distanceKm\(point,c\)<=1/,'named store may be up to 1km away');
 assert.match(clientSource,/distanceKm\(point,c\)<=0\.5/,'unnamed candidates remain within 500m');
