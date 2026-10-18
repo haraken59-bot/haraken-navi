@@ -40,7 +40,7 @@ export async function recoverStoreLink({client,candidate,onSelect,isCurrent=()=>
  // Re-read the registered stores; do not issue a second registration blindly.
  const stores=await client.stores();
  if(!isCurrent())return false;
- const matching=stores.filter(s=>storeNameKey(s.name)===storeNameKey(candidate.name)&&validPoint(s)&&validPoint(candidate)&&Math.abs(s.latitude-candidate.latitude)<0.000225&&Math.abs(s.longitude-candidate.longitude)<0.000225);
+ const matching=stores.filter(s=>storeNameKey(s.name)===storeNameKey(candidate.name)&&validPoint(s)&&validPoint(candidate)&&Math.abs(s.latitude-candidate.latitude)<0.00001&&Math.abs(s.longitude-candidate.longitude)<0.00001);
  if(matching.length!==1)return false;
  await onSelect({...candidate,id:matching[0].id});
  return isCurrent();
