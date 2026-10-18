@@ -105,3 +105,9 @@
 ## 12. 矛盾するジャンルと料理希望の回帰確認（2026-10-18）
 - PR #3 をmainへsquash merge、e14eed9ecdb27239cc345a2f524f28d6204d015c。推薦ロジック変更なし、tests/recommend-specific.test.mjsの条件追加のみ。
 - GitHub Actions run 39098279017 success。魚＋やきとり、肉＋寿司、魚のみ、おまかせの追加条件を含む推薦テスト成功。Android実機で矛盾条件の検索は未確認。
+
+## 13. 食事履歴・店舗ID連携の読み取り調査（2026-10-18）
+- Supabase public.meal_details 20件：store_id連携0件、未連携店名あり20件。public.historical_reviews 185件：matched_store_id連携0件、原店名あり185件。いずれも本番DBの読取集計。
+- is_test=falseの共通storesとの店名完全一致はmeal_details 0件、historical_reviews 2件。名前の一致は店舗同一性の証明ではなく、住所・GPSの裏付けと本人確認が必要。
+- GitHub meal-ui.jsには既存食事の店舗関連付け操作が存在。新規画面を一から作る必要なし。過去レビューの本番ランキング学習は保留継続。
+- 今回はSQL SELECTとソース閲覧のみ。店舗ID・食事・レビュー・DBスキーマ・アプリコード・公開物の変更なし。次は住所/GPS/表記揺れ候補の安全な提示方式を設計。
