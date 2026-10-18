@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {storeNameKey,matchingStores,visibleStoreRows,storeCandidateRank,storeListStatus} from '../store-link-ui.js';
+import {storeNameKey,matchingStores,visibleStoreRows,storeCandidateRank,storeListStatus,verifiedManualStore,confirmManualStore} from '../store-link-ui.js';
 const stores=[{name:'焼鳥 にわ とりのすけ 西新店'},{name:'やきとり ひだか'},{name:'寿司の店'}];
 assert.equal(storeNameKey(' やきとり・ひだか '),storeNameKey('焼鳥ひだか'));
 assert.equal(matchingStores(stores,'焼き鳥 ひだか')[0]?.name,'やきとり ひだか');
@@ -19,3 +19,37 @@ assert.match(storeListStatus(stores,'存在しない'),/一致がありません
 assert.match(storeListStatus(stores,'寿司'),/一致する登録店舗/);
 assert.match(storeListStatus([],''),/登録店舗がありません/);
 console.log('store link search: 16 assertions passed');
+
+import {readFileSync} from 'node:fs';
+const clientSource=readFileSync(new URL('../meal-client.js',import.meta.url),'utf8');
+assert.match(clientSource,/\.\.\.\(hint\?\{hint\}:\{\}\)/,'named photo lookup passes optional hint');
+
+
+assert.match(clientSource,/match\(a\)-match\(b\)/,'name matches are ranked ahead of 20-item cap');
+
+const photo={latitude:32.74333,longitude:129.8757236111111};
+assert.deepEqual(verifiedManualStore('万徳','32.744','129.876',photo),{name:'万徳',latitude:32.744,longitude:129.876});
+for(const [lat,lng] of [['','129.876'],['abc','129.876'],['32.744abc','129.876'],['91','129.876'],['32.744','181'],['0','0'],[String(photo.latitude),String(photo.longitude)]])assert.equal(verifiedManualStore('万徳',lat,lng,photo),null,'invalid manual coordinate rejected');
+assert.equal(verifiedManualStore('','32.744','129.876',photo),null,'name required');
+
+let writes=0,links=0;
+const client={confirmStore:async()=>{writes++;return 'store-id';}};
+const onSelect=async()=>{links++;};
+const candidate={name:'万徳',latitude:32.744,longitude:129.876};
+assert.equal(await confirmManualStore({candidate,approved:false,client,onSelect}),false);
+assert.equal(await confirmManualStore({candidate:null,approved:true,client,onSelect}),false);
+assert.equal(await confirmManualStore({candidate,approved:true,client,onSelect,isCurrent:()=>false}),false);
+assert.equal(writes,0,'cancel and stale dialogs must not write');
+assert.equal(links,0,'cancel and stale dialogs must not link');
+assert.equal(await confirmManualStore({candidate,approved:true,client,onSelect}),true);
+assert.equal(writes,1,'explicit approval writes once');
+assert.equal(links,1,'explicit approval links once');
+
+const uiSource=readFileSync(new URL('../store-link-ui.js',import.meta.url),'utf8');
+const manualStart=uiSource.indexOf("dialog.querySelector('[data-manual]').onclick");
+const mapLink=uiSource.indexOf("status.replaceChildren('住所を確認しました。'",manualStart);
+const nextClick=uiSource.indexOf('next.onclick=async()=>',manualStart);
+const coordinatePrompt=uiSource.indexOf("const latitude=prompt(",manualStart);
+assert.ok(manualStart>=0&&mapLink>manualStart&&nextClick>mapLink&&coordinatePrompt>nextClick,'map link is presented before coordinates are prompted on a separate click');
+assert.match(uiSource,/if\(!confirm\('店舗名：'/,'manual registration requires explicit final confirmation');
+assert.match(uiSource,/confirmManualStore\(\{candidate,approved:true,client,onSelect,isCurrent:current\}\)/,'manual registration uses guarded write helper');
