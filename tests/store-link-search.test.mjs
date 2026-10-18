@@ -24,3 +24,5 @@ import {readFileSync} from 'node:fs';
 const clientSource=readFileSync(new URL('../meal-client.js',import.meta.url),'utf8');
 assert.match(clientSource,/photoStoreLookup:'1'/,'named photo lookup requests dedicated server mode');
 assert.match(clientSource,/hint/,'named photo lookup passes name hint');
+
+assert.match(clientSource,/hint,photoStoreLookup:'1'/,'dedicated mode requires a name hint');
