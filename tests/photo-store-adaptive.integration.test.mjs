@@ -31,3 +31,10 @@ const run=async(load,hint='万徳')=>adaptiveNearby({input:{hint,category:'お�
  assert.equal(photo.partial,true,'no name match is reported as incomplete');
  assert.equal(guest.candidates.some(c=>c.name.includes('万徳')),false);
 }
+
+{
+ const storeId='11111111-1111-4111-8111-111111111111';
+ const known={...candidate('known:'+storeId,'登録済み店舗'),store_id:storeId,source_kind:'known_store'};
+ const result=await adaptiveNearby({input:{category:'おまかせ',mode:'eat'},center,knownStores:async()=>[known],load:async()=>({candidates:[],partial:false})});
+ assert.equal(result.candidates.some(c=>c.store_id===storeId),true,'known store must be returned, not just used to stop search');
+}
