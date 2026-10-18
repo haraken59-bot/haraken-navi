@@ -19,6 +19,15 @@ export function desireMatch(c,ctx,options={}){const hay=norm([c.name,c.dish,...(
  for(const group of families){if(group.some(x=>q.includes(norm(x)))&&group.some(x=>hay.includes(norm(x))))return group.length<=4?2:1;}
  return 0;
 }
+// Specific dish requests outrank broad genre matches only when supported by store evidence.
+export function specificDishMatch(c,ctx){
+ const q=norm(ctx.desire||'');
+ if(!q)return 0;
+ const groups=[/焼き?鳥|やきとり|焼鳥|yakitori/,/ラーメン|らーめん|ramen/,/焼肉|やきにく/,/ステーキ|steak/,/寿司|すし|鮨|sushi/,/うどん|udon/,/そば|蕎麦|soba/,/カレー|curry/,/餃子|ぎょうざ/,/チャーハン|炒飯|やきめし/];
+ const requested=groups.find(re=>re.test(q));if(!requested)return 0;
+ const evidence=[c.name,c.dish,c.menu,c.cuisine,c.hotpepper?.genre,c.hotpepper?.sub_genre,...(c.tags||[]),...(c.owner_genres||[])].filter(Boolean).map(norm);
+ return evidence.some(x=>requested.test(x))?1:0;
+}
 export function trustedValue(row,key){if(Object.hasOwn(row.confirmed_values||{},key))return row.confirmed_values[key];return row[key];}
 export function provenance(row,key){return Object.hasOwn(row.confirmed_values||{},key)?'本人確定':row.field_provenance?.[key]?.state==='estimated'?'推定':'確度未確認';}
 export function ageFactor(date,days,now=new Date()){if(!date)return 0.5;const age=(now-new Date(date))/86400000;return Number.isFinite(age)?Math.pow(0.5,Math.max(0,age)/days):0.5;}
@@ -141,7 +150,7 @@ export function recommend(candidates,ctx,records=[],food={},events=[],now=new Da
  const fitRank=c=>c.portion_fit==='fit'?2:c.portion_fit==='unsuitable'?0:1;
  const hasPortion=ctx.mode==='eat'&&Boolean(ctx.portion);
  if(hasPortion&&ctx.portion==='ガッツリ'&&!ctx.relaxPortion){for(let i=scored.length-1;i>=0;i--)if(scored[i].portion_fit==='unsuitable')scored.splice(i,1);}
- const explicit=Boolean(ctx.desire.trim()||ctx.category!=='おまかせ');scored.sort((a,b)=>(ctx.direction==='wait'?Number(b.id==='wait')-Number(a.id==='wait'):0)||(explicit?b.match-a.match:0)||(hasPortion?fitRank(b)-fitRank(a):0)||b.score-a.score||a.id.localeCompare(b.id));
+ const explicit=Boolean(ctx.desire.trim()||ctx.category!=='おまかせ');scored.sort((a,b)=>(ctx.direction==='wait'?Number(b.id==='wait')-Number(a.id==='wait'):0)||(ctx.desire.trim()?specificDishMatch(b,ctx)-specificDishMatch(a,ctx):0)||(explicit?b.match-a.match:0)||(hasPortion?fitRank(b)-fitRank(a):0)||b.score-a.score||a.id.localeCompare(b.id));
  const unique=[];for(const c of scored)if(!unique.some(x=>x.kind==='store'&&c.kind==='store'&&sameStore(x,c)))unique.push(c);
  let top=unique.slice(0,3);if(ctx.direction!=='wait'){
   const fresh=c=>c.kind==='store'&&c.visited!==true&&!c.satisfaction&&!learned.some(r=>sameStore(c,r));
