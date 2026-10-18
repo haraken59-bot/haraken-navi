@@ -79,3 +79,6 @@
 
 ## 2026-10-18 店舗検索の案内文同期
 - PR #7 squash merge：64131e0c2d8725e240d4da2781868d45f2984bee。Androidで発見した、絞り込み解除後も不一致案内が残る問題を修正。GitHub Actions run 39099512864 success。DB変更なし。
+
+## 2026-10-18 写真GPS検索に店名ヒント追加
+- PR #8（52c8ea7）：履歴の店名を周辺検索のhintとして送信。CI対象に店舗関連付け2ファイルを追加。Actions run 39100303365 成功。Pages/Android未確認、DB変更なし。
