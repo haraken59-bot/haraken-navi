@@ -95,3 +95,8 @@
 ## 2026-10-18 写真履歴専用の店名検索（Edgeソース試作）
 - PR #10ブランチにEdgeのsearch-service.mjs/adaptive-search.mjsを新規配置。photoStoreLookup=1の場合は店名一致を重視し、各検索半径でキーワード検索を試みる。meal-client.jsも専用指定を送信。
 - **重要**：Edgeの全依存ファイルはGitHubに未配置。現在のSupabase本番Edge v22は変更なし。既存の通常検索と本番挙動は変わらない。統合テスト、API呼出回数上限・部分失敗時の挙動、Edge配備、Android確認は未完了。PR未マージ・未公開。
+
+## 2026-10-18 PR #10 最新検証と店名API調査
+- Edgeの16ファイル配置、相対import、検索パラメータ、模擬検索、0件時の登録店舗候補維持、選択時の所在地・距離確認を追加。GitHub Actions run 39105302102 success。
+- Hot Pepper公式仕様に店名サーチAPI（/hotpepper/shop/v1/、店名部分一致）が存在することを確認。現実装はグルメサーチAPI（/hotpepper/gourmet/v1/）のみ。店名サーチAPIは**未実装・未検証**、万徳のAPI取得は未確認。
+- 本番Edge配備、PRマージ、Pages公開、Android確認、本番DB変更は未実施。上記の「未配置」は当時の履歴。
