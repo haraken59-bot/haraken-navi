@@ -86,17 +86,8 @@ export function createHandler({ verifyUser, database, discover, guestDiscover, u
       try {
         // Never fall back to the member service: its cache/lease adapter writes DB state.
         const data = publicSearchResult(await guestDiscover(input));
-        let badges = [];
-        if (UUID.test(ownerId || '')) {
-          try { badges = await usage(data.candidates.map(c => c.id), data.candidates); } catch { /* Unknown is not never visited. */ }
-        }
-        for (const candidate of data.candidates) {
-          const badge = badges.find(b => b.id === candidate.id);
-          if (badge?.used === true) candidate.haraken_usage = badge.revisited === true ? 'revisited' : 'used';
-        }
-        if(UUID.test(ownerId||'')&&data.center&&!data.needs_choice){
-          try{data.candidates=mergeKnownStores(data.candidates,await knownStores(data.center,data.radius_m));}catch{/* External search remains available; no private errors returned. */}
-        }
+        // Guest results must contain public provider fields only.
+        // Never attach owner usage badges, private known stores or store IDs.
         if(data.center)data.candidates=withinSearch(data.candidates,data.center,data.radius_m);
         return Response.json(data, { status: 200, headers });
       } catch { return reply(503, 'search_unavailable'); }
