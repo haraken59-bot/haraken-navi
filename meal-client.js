@@ -61,7 +61,7 @@ export class MealClient extends ReadOnlyClient{
   if(!validPoint(point)||(point.latitude===0&&point.longitude===0))throw Error('写真GPSが正しくありません。');
   const session=await this.fresh(),url=new URL(this.config.url+'/functions/v1/navi-discover');
   const hint=String(name||'').normalize('NFKC').trim().slice(0,60);
-  for(const [k,v] of Object.entries({mode:'discover',latitude:point.latitude,longitude:point.longitude,direction:'near',preference:'おまかせ',...(hint?{hint,photoStoreLookup:'1'}:{})}))url.searchParams.set(k,String(v));
+  for(const [k,v] of Object.entries({mode:'discover',latitude:point.latitude,longitude:point.longitude,direction:'near',preference:'おまかせ',...(hint?{hint}:{})}))url.searchParams.set(k,String(v));
   const response=await this.request(url,{headers:{Authorization:'Bearer '+session.access_token},signal:AbortSignal.timeout(30000)});
   if(!response.ok)throw Error('写真周辺の店舗を取得できません。');
   const data=await response.json();if(this.session()?.user?.id!==session.user.id)throw Error('ログイン状態が変わりました。');
