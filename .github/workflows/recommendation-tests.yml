@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - fix/specific-food-preference-20261018
+      - prep/known-stores-release-20261020
   pull_request:
     paths:
       - 'domain.js'
