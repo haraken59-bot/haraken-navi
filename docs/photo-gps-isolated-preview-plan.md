@@ -16,3 +16,10 @@
 - The production function is still the old inner-join/planar-distance version.
 - A known store must already be registered in the owner's database. This does not discover unregistered shops absent from external APIs.
 - Guest endpoint behavior needs privacy review before any preview deployment: `handler.mjs` merges owner-known stores into `guest-discover` responses.
+
+## CI evidence
+- Recommendation regression workflow run #154 (39265684250) completed successfully, including guest privacy and photo GPS owner/guest integration tests.
+- These tests use mocks; they do not prove that the currently deployed Edge Function uses the test-only database function.
+- **Blocking discrepancy:** `index.ts` currently constructs `createKnownStoreReader(database, ownerId)`, which defaults to production `guest_known_stores`. Therefore the fixed unvisited behavior is NOT available from the deployed function yet. Do not claim the smartphone preview is ready.
+- The explicit `{testFunction:true}` selector exists for an isolated harness, not for browser-controlled toggles.
+- Next safe verification: run a full handler → search service → reader integration using a mock DB, then review a dedicated authenticated preview deployment. Deployment requires separate authorization.
