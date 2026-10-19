@@ -23,7 +23,7 @@ export async function cacheKey(provider, input) {
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical));
   return 'v1:'+provider+':'+Array.from(new Uint8Array(digest),v=>v.toString(16).padStart(2,'0')).join('');
 }
-export function createSearchService({state,readEnv,request=fetch,uuid=()=>crypto.randomUUID(),now=()=>Date.now(),log,knownStores=async()=>[],sleep=ms=>new Promise(r=>setTimeout(r,ms))}) {
+export function createSearchService({state,readEnv,request=fetch,uuid=()=>crypto.randomUUID(),now=()=>Date.now(),log,knownStores=async()=>[],includeKnownStores=false,sleep=ms=>new Promise(r=>setTimeout(r,ms))}) {
   const stage=stageLogger(log);
   let lastProviderFinished=null;
   async function stateCall(method,...args) {
@@ -126,7 +126,7 @@ export function createSearchService({state,readEnv,request=fetch,uuid=()=>crypto
     if(!center)throw Error('invalid_search');
     const key=readEnv('HOTPEPPER_API_KEY');if(!key){stage('config_missing');throw Error('search_unavailable');}
     let calls=0;const started=now();
-    const value=await adaptiveNearby({input,center,knownStores,now,load:async(radius,keyword)=>{
+    const value=await adaptiveNearby({input,center,knownStores:includeKnownStores?knownStores:async()=>[],includeKnownStores,now,load:async(radius,keyword)=>{
       const params={lat:String(center.latitude),lng:String(center.longitude),range:String({500:2,1000:3,2000:4,3000:5}[radius]),count:'100',start:'1',datum:'world',...(keyword?{keyword}:{})};
       return cachedCall('hotpepper',{...params,radius_m:radius,category:input.category||'',policy:'adaptive-v1'},1800,async()=>{
         if(calls>=6||now()-started>18000)throw Error('search_budget');
