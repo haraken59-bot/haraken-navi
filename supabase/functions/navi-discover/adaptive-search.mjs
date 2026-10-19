@@ -16,10 +16,16 @@ export async function adaptiveNearby({input,center,load,knownStores=async()=>[],
  const enough=()=>{const rows=eligible();if(input.photoStoreLookup&&q)return rows.some(c=>String(c.name||'').normalize('NFKC').replace(/[\s・･ー－-]/g,'').includes(q.replace(/[\s・･ー－-]/g,'')));return rows.length>=6&&(!terms.length||rows.filter(matches).length>=3);};
  const query=async(keyword='')=>{const k=radius+':'+keyword;if(providerKeys.has(k))return true;if(providerKeys.size>=MAX_PROVIDER_REQUESTS){partial=true;return false;}providerKeys.add(k);try{add(await load(radius,keyword));successes++;if(keyword)searched.push(keyword);return true;}catch{failed=true;return false;}};
  for(const r of RADII){radius=r;attempted.push(r);try{known=await knownStores(center,r);}catch{known=[];}
+  // Photo identification prioritizes the exact saved name before broad results.
+  // This keeps the same six-request ceiling while avoiding a broad 100-item cap first.
+  if(input.photoStoreLookup&&terms.length){
+   if(!await query(terms[0]))break;
+   if(enough())break;
+  }
   if(!await query())break;
   if(enough())break;
-  // One original-keyword request near the user, only if broad retrieval is insufficient.
-  if(terms.length&&(r===500||input.photoStoreLookup)&&!enough()){if(!await query(terms[0]))break;if(enough())break;}
+  // Ordinary discovery keeps its existing broad-first policy.
+  if(!input.photoStoreLookup&&terms.length&&r===500){if(!await query(terms[0]))break;if(enough())break;}
  }
  // At most one related term: never turn an AND keyword query into an unrelated genre.
  if(!enough()&&terms.length>1&&!failed)await query(terms[1]);
