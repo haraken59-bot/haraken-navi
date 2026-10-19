@@ -1,0 +1,15 @@
+-- TEST BRANCH ONLY. Review before applying; never run against production without approval.
+-- Preserve owner scoping, location freshness, closure filtering and visit history.
+-- The production guest_known_stores function currently joins visit days and drops unvisited stores.
+-- In a dedicated TEST DATABASE, change its final SELECT to LEFT JOIN days:
+--
+-- SELECT s.id,s.name,s.latitude,s.longitude,
+--        count(DISTINCT d.visit_day)>0 AS used,
+--        count(DISTINCT d.visit_day)>=2 AS revisited
+-- FROM nearby s LEFT JOIN days d ON d.store_id=s.id
+-- GROUP BY s.id,s.name,s.latitude,s.longitude,s.distance2
+-- ORDER BY s.distance2,s.id LIMIT 50;
+--
+-- Keep the existing nearby and days CTEs unchanged. Do not remove
+-- user_id, is_test, GPS validity, location_updated_at or closure filters.
+-- This is a patch specification, not an executable migration.
