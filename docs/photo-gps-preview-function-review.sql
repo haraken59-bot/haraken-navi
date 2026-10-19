@@ -1,0 +1,50 @@
+-- REVIEW-ONLY TEMPLATE. DO NOT EXECUTE OR APPLY AS A MIGRATION.
+-- Requires explicit approval and separate security review before any DB change.
+-- The existing production and test functions remain untouched.
+--
+-- Intended deployment: dedicated preview function, same verified read logic as
+-- navi_internal.guest_known_stores_unvisited_test, but SECURITY DEFINER.
+-- All owner / excluded-store / date / radius / nearest-50 predicates must
+-- remain identical to the reviewed test function.
+--
+-- CRITICAL: do not simply grant EXECUTE on the existing SECURITY INVOKER
+-- test function: navi_discover_runtime has no direct SELECT on its tables.
+--
+-- Proposed *reviewed* SQL shape (not runnable as written):
+--
+-- CREATE FUNCTION navi_internal.guest_known_stores_unvisited_preview(
+--   owner_id uuid, lat float8, lng float8, radius_m integer
+-- ) RETURNS TABLE (
+--   store_id uuid, name text, latitude float8, longitude float8,
+--   used boolean, revisited boolean
+-- )
+-- LANGUAGE sql STABLE SECURITY DEFINER
+-- SET search_path = pg_catalog
+-- SET statement_timeout = '3s'
+-- AS $function$
+--   <INSERT EXACT REVIEWED BODY OF guest_known_stores_unvisited_test HERE>
+-- $function$;
+--
+-- REVOKE ALL ON FUNCTION navi_internal.guest_known_stores_unvisited_preview(
+--   uuid,float8,float8,integer) FROM PUBLIC;
+-- REVOKE ALL ON FUNCTION navi_internal.guest_known_stores_unvisited_preview(
+--   uuid,float8,float8,integer) FROM anon, authenticated;
+-- GRANT EXECUTE ON FUNCTION navi_internal.guest_known_stores_unvisited_preview(
+--   uuid,float8,float8,integer) TO navi_discover_runtime;
+--
+-- REVIEW BLOCKER: a SECURITY DEFINER function accepting owner_id from a
+-- caller is NOT independently owner-scoped. Any holder of EXECUTE could
+-- supply a different owner UUID and retrieve their store information.
+-- Production's owner_id is injected server-side after JWT owner verification,
+-- but a leaked runtime DB credential could still query arbitrary owner UUIDs.
+-- Before deploying, choose a robust DB-side owner binding / single-owner
+-- allowlist strategy, and add a negative test using a second owner UUID.
+-- Do NOT deploy the above template as-is.
+--
+-- Preview Edge Function must use a distinct endpoint and require a verified
+-- JWT for the configured owner. Never expose preview through guest-discover.
+-- Never modify production guest_known_stores, grant direct table SELECT to
+-- navi_discover_runtime, or deploy public preview without approval.
+--
+-- Teardown after approved test: remove the preview endpoint; REVOKE its
+-- EXECUTE and DROP only the preview function. Verify production ACL unchanged.
