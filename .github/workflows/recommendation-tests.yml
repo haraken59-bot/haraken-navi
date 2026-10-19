@@ -59,3 +59,6 @@ jobs:
 
       - name: Owner-bound preview reader isolation
         run: node --experimental-default-type=module --test tests/photo-gps-owner-bound-reader.test.mjs
+
+      - name: Photo GPS preview endpoint authorization
+        run: node --experimental-default-type=module --test tests/photo-gps-preview-handler.test.mjs
