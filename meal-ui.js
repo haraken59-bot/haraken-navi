@@ -94,7 +94,7 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
     const point=photoPoint(saved.navi_metadata);
     if(row&&!saved.store_id&&saved.unlinked_store_name&&point&&!isRecommended&&startOwner===getOwner()){
      try{
-      await chooseStore({client:getClient(),point,initialName:saved.unlinked_store_name,isCurrent:()=>startOwner===getOwner()&&!!getClient()?.session(),onSelect:async store=>{
+      await chooseStore({client:getClient(),point,initialName:saved.unlinked_store_name,allowManual:false,isCurrent:()=>startOwner===getOwner()&&!!getClient()?.session(),onSelect:async store=>{
        await getClient().editMeal(row,{store_id:store.id});
        await onRefresh();await reload();
        status('保存済みの食事履歴に店舗を関連付けました。');
