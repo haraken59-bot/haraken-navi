@@ -62,3 +62,6 @@ jobs:
 
       - name: Photo GPS preview endpoint authorization
         run: node --experimental-default-type=module --test tests/photo-gps-preview-handler.test.mjs
+
+      - name: Isolated preview entrypoint contract
+        run: node --experimental-default-type=module --test tests/photo-gps-preview-entrypoint.test.mjs
