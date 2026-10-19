@@ -4,6 +4,7 @@ import {canRestoreMealLearning} from './meal-client.js';
 import {prepareMealPhoto,saveMealWithPhotos,downloadMealPhoto} from './meal-photo.js';
 import {buildMeal,parseMealText,gpsComparison,duplicateMeals} from './meal-record.js';
 import {normalizeStoreName} from './importer/records.js';
+import {shouldOfferPostSaveStoreLink} from './post-save-store-policy.js';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,onSaved,onRefresh,onDeleted=()=>{}}){
  let photos=[],current=null,history=[],stores=[],pending=null,busy=false,photoBusy=false,account=getOwner();
@@ -88,11 +89,9 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
     status('共通の食事履歴に保存しました。'+(saved.navi_metadata.exclude_from_learning?'学習には使いません。':'次回の推薦に反映します。'));
     // Only manually named, unlinked meals need post-save photo-GPS identification.
     // A recommended venue is already known to the decision; never replace it from GPS alone.
-    const suggested=saved.navi_metadata?.latest_choice;
-    const isRecommended=suggested?.name&&normalizeStoreName(suggested.name)===normalizeStoreName(saved.unlinked_store_name);
     const row=history.find(r=>r.id===saved.id);
     const point=photoPoint(saved.navi_metadata);
-    if(row&&!saved.store_id&&saved.unlinked_store_name&&point&&!isRecommended&&startOwner===getOwner()){
+    if(row&&shouldOfferPostSaveStoreLink(saved)&&startOwner===getOwner()){
      try{
       await chooseStore({client:getClient(),point,initialName:saved.unlinked_store_name,allowManual:false,isCurrent:()=>startOwner===getOwner()&&!!getClient()?.session(),onSelect:async store=>{
        await getClient().editMeal(row,{store_id:store.id});
