@@ -9,11 +9,11 @@ const run=async(load,hint='万徳')=>adaptiveNearby({input:{hint,category:'お�
 }
 {
  let calls=0;const result=await run(async(radius,keyword)=>{calls++;return {candidates:keyword?[candidate('one','万徳')]:[candidate('other','別の店')],partial:false};});
- assert.equal(calls,2);assert.equal(result.candidates.some(c=>c.name==='万徳'),true);
+ assert.equal(calls,1,'exact name is searched before broad results');assert.equal(result.candidates.some(c=>c.name==='万徳'),true);
 }
 {
- let calls=0;const result=await run(async(radius,keyword)=>{calls++;if(keyword)throw Error('provider unavailable');return {candidates:[candidate('other','別の店')],partial:false};});
- assert.equal(calls,2);assert.equal(result.partial,true);assert.equal(result.candidates.length,1);
+ let calls=0;await assert.rejects(run(async(radius,keyword)=>{calls++;if(keyword)throw Error('provider unavailable');return {candidates:[candidate('other','別の店')],partial:false};}),/search_unavailable/);
+ assert.equal(calls,1,'failed exact-name request does not fall back to uncontrolled calls');
 }
 {
  let calls=0;await assert.rejects(run(async()=>{calls++;throw Error('provider unavailable');}),/search_unavailable/);assert.equal(calls,1);
@@ -30,4 +30,12 @@ const run=async(load,hint='万徳')=>adaptiveNearby({input:{hint,category:'お�
  assert.equal(photoCalls,6,'photo mode checks bounded provider queries');
  assert.equal(photo.partial,true,'no name match is reported as incomplete');
  assert.equal(guest.candidates.some(c=>c.name.includes('万徳')),false);
+}
+
+// Exact-name success avoids an unnecessary broad query even when many generic shops exist.
+{
+ const seen=[];
+ const result=await run(async(radius,keyword)=>{seen.push({radius,keyword});return {candidates:keyword==='万徳'?[candidate('target','万徳')]:Array.from({length:100},(_,i)=>candidate('generic-'+i,'別の店'+i)),partial:false};});
+ assert.deepEqual(seen,[{radius:500,keyword:'万徳'}]);
+ assert.equal(result.candidates[0].name,'万徳');
 }
