@@ -53,3 +53,6 @@ jobs:
 
       - name: Preview SQL security design static gates
         run: node --test tests/photo-gps-preview-security-plan.test.mjs
+
+      - name: Owner-bound preview SQL and access denial tests
+        run: node --experimental-default-type=module --test tests/photo-gps-owner-bound-preview.test.mjs
