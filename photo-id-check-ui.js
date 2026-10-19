@@ -13,7 +13,25 @@ export function mountPhotoIdCheck({client,isMember,container=document.getElement
  const compareButton=document.createElement('button');
  compareButton.type='button';
  compareButton.textContent='店名3方式を比較';
- section.append(title,button,compareButton,result);
+ const nominatimButton=document.createElement('button');
+ nominatimButton.type='button';
+ nominatimButton.textContent='Nominatimで万徳を検索';
+ section.append(title,button,compareButton,nominatimButton,result);
+ nominatimButton.addEventListener('click',async()=>{
+  if(!isMember()){result.textContent='本人ログインが必要です';return;}
+  nominatimButton.disabled=true;
+  result.textContent='Nominatimで検索中…';
+  try{
+   const session=await client.fresh();
+   const url=new URL(PROJECT+'/functions/v1/navi-discover-photo-test');
+   url.searchParams.set('mode','photo-nominatim-check');
+   const response=await fetch(url,{headers:{Authorization:'Bearer '+session.access_token},cache:'no-store',signal:AbortSignal.timeout(12000)});
+   if(!response.ok)throw Error('検索に失敗しました（HTTP '+response.status+'）');
+   const data=await response.json();
+   result.textContent=JSON.stringify({query:data.query,count:data.count,results:data.results},null,2);
+  }catch(error){result.textContent=error.message||'検索に失敗しました';}
+  finally{nominatimButton.disabled=false;}
+ });
  compareButton.addEventListener('click',async()=>{
   if(!isMember()){result.textContent='本人ログインが必要です';return;}
   compareButton.disabled=true;
