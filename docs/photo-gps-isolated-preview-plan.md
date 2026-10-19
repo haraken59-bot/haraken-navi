@@ -23,3 +23,11 @@
 - **Blocking discrepancy:** `index.ts` currently constructs `createKnownStoreReader(database, ownerId)`, which defaults to production `guest_known_stores`. Therefore the fixed unvisited behavior is NOT available from the deployed function yet. Do not claim the smartphone preview is ready.
 - The explicit `{testFunction:true}` selector exists for an isolated harness, not for browser-controlled toggles.
 - Next safe verification: run a full handler → search service → reader integration using a mock DB, then review a dedicated authenticated preview deployment. Deployment requires separate authorization.
+
+## Live read-only permissions check (2026-10-19)
+- CI run #157 (39266109837) completed successfully, including HTTP handler → search service → mocked DB reader.
+- Database role `navi_discover_runtime` has EXECUTE on production `navi_internal.guest_known_stores`, but **does not** have EXECUTE on `guest_known_stores_unvisited_test`.
+- The runtime role has **no SELECT** on `public.stores`, `public.store_visits`, `public.meals`, or `public.meal_details`.
+- The test function is SECURITY INVOKER, so granting only EXECUTE would still not suffice to read these tables. Do not grant direct SELECT to this restricted runtime role as a shortcut.
+- A real preview requires a separately reviewed, owner-scoped SECURITY DEFINER test function with narrowly scoped EXECUTE, or a truly isolated database environment, plus separate deployment authorization.
+- **No DB privilege, function, secret, or deployed endpoint was changed by this inspection.**
