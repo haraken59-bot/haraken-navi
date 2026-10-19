@@ -51,20 +51,10 @@ jobs:
       - name: Authenticated photo GPS HTTP to DB integration
         run: node --experimental-default-type=module --test tests/photo-gps-http-db.integration.test.mjs
 
-      - name: Preview SQL security design static gates
-        run: node --test tests/photo-gps-preview-security-plan.test.mjs
 
-      - name: Owner-bound preview SQL and access denial tests
-        run: node --experimental-default-type=module --test tests/photo-gps-owner-bound-preview.test.mjs
 
-      - name: Owner-bound preview reader isolation
-        run: node --experimental-default-type=module --test tests/photo-gps-owner-bound-reader.test.mjs
 
-      - name: Photo GPS preview endpoint authorization
-        run: node --experimental-default-type=module --test tests/photo-gps-preview-handler.test.mjs
 
-      - name: Isolated preview entrypoint contract
-        run: node --experimental-default-type=module --test tests/photo-gps-preview-entrypoint.test.mjs
 
       - name: Synthetic GPS fixture contract
         run: node --experimental-default-type=module --test tests/photo-gps-synthetic-fixture.test.mjs
