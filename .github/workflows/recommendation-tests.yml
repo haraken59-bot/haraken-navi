@@ -32,3 +32,45 @@ jobs:
       - name: Photo store Edge and API integration tests
         run: |
           node --experimental-default-type=module --test tests/photo-store-lookup-policy.test.mjs tests/photo-store-edge-source.test.mjs tests/photo-store-adaptive.integration.test.mjs tests/edge-files-present.test.mjs tests/edge-imports.test.mjs tests/photo-store-parse-search.test.mjs tests/photo-store-service.integration.test.mjs
+
+      - name: Known unvisited store tests
+        run: node --experimental-default-type=module --test tests/known-unvisited-stores.test.mjs
+
+      - name: Unvisited store SQL plan static checks
+        run: node --test tests/unvisited-store-sql-plan.test.mjs
+
+      - name: Six-area known-store regression tests
+        run: node --experimental-default-type=module --test tests/known-unvisited-six-areas.test.mjs
+
+      - name: Guest GPS privacy regression
+        run: node --experimental-default-type=module --test tests/guest-known-store-privacy.test.mjs
+
+      - name: Photo GPS known-store owner versus guest integration
+        run: node --experimental-default-type=module --test tests/photo-gps-known-store.integration.test.mjs
+
+      - name: Authenticated photo GPS HTTP to DB integration
+        run: node --experimental-default-type=module --test tests/photo-gps-http-db.integration.test.mjs
+
+      - name: Preview SQL security design static gates
+        run: node --test tests/photo-gps-preview-security-plan.test.mjs
+
+      - name: Owner-bound preview SQL and access denial tests
+        run: node --experimental-default-type=module --test tests/photo-gps-owner-bound-preview.test.mjs
+
+      - name: Owner-bound preview reader isolation
+        run: node --experimental-default-type=module --test tests/photo-gps-owner-bound-reader.test.mjs
+
+      - name: Photo GPS preview endpoint authorization
+        run: node --experimental-default-type=module --test tests/photo-gps-preview-handler.test.mjs
+
+      - name: Isolated preview entrypoint contract
+        run: node --experimental-default-type=module --test tests/photo-gps-preview-entrypoint.test.mjs
+
+      - name: Synthetic GPS fixture contract
+        run: node --experimental-default-type=module --test tests/photo-gps-synthetic-fixture.test.mjs
+
+      - name: Synthetic registered stores through real GPS adaptive search
+        run: node --experimental-default-type=module --test tests/photo-gps-fixture-adaptive.integration.test.mjs
+
+      - name: Live synthetic DB fixture through adaptive GPS search
+        run: node --experimental-default-type=module --test tests/photo-gps-live-fixture.integration.test.mjs

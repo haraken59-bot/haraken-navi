@@ -1,0 +1,85 @@
+-- TEST BRANCH ONLY. Design specification, NOT an executable migration.
+-- Do not change production navi_internal.guest_known_stores without explicit approval.
+-- Preserve owner user_id, is_test, GPS validity, location_updated_at, closure
+-- filtering, visit history, and the 3000m maximum radius.
+--
+-- IMPORTANT: The old SQL used an equirectangular approximation for distance2,
+-- ORDER BY distance2, LIMIT 50. The app uses Haversine; expanding the radius
+-- while keeping that old LIMIT 50 can discard truly closer stores.
+--
+-- Recommended DB change in a TEST DATABASE:
+-- 1. Replace the planar nearby distance2 with the Haversine distance in METERS
+--    using the same earth radius as app/places.js (12742km diameter).
+-- 2. Apply the requested radius to the Haversine distance itself.
+-- 3. Sort by this exact distance BEFORE LIMIT 50.
+-- 4. LEFT JOIN days so unvisited stores are not dropped.
+--
+-- Example replacement for the nearby CTE (keep existing exclusion predicates):
+-- WITH eligible AS (
+--   SELECT s.id, s.name, s.latitude, s.longitude,
+--          12742000 * asin(least(1.0, sqrt(
+--            power(sin(radians(s.latitude - lat) / 2), 2)
+--            + cos(radians(lat)) * cos(radians(s.latitude))
+--              * power(sin(radians(s.longitude - lng) / 2), 2)
+--          ))) AS distance_m
+--   FROM public.stores s
+--   WHERE s.user_id = owner_id
+--     AND NOT s.is_test
+--     AND s.location_updated_at IS NOT NULL
+--     AND s.latitude BETWEEN -90 AND 90
+--     AND s.longitude BETWEEN -180 AND 180
+--     AND NOT (s.latitude = 0 AND s.longitude = 0)
+--     AND length(btrim(s.name)) BETWEEN 1 AND 200
+--     AND NOT (
+--       coalesce(s.notes,'') ~* '(閉店|閉業|廃業|permanently[ _-]*closed)'
+--       OR s.name ~ '(閉店|閉業|廃業)'
+--     )
+--     AND owner_id IS NOT NULL
+--     AND lat BETWEEN -90 AND 90 AND lng BETWEEN -180 AND 180
+--     AND radius_m BETWEEN 1 AND 3000
+-- ), nearby AS (
+--   SELECT * FROM eligible WHERE distance_m <= radius_m
+-- ), days AS (
+--   ... retain the existing visit-history CTE unchanged ...
+-- )
+-- SELECT s.id, s.name, s.latitude, s.longitude,
+--        count(DISTINCT d.visit_day)>0 AS used,
+--        count(DISTINCT d.visit_day)>=2 AS revisited
+-- FROM nearby s LEFT JOIN days d ON d.store_id=s.id
+-- GROUP BY s.id,s.name,s.latitude,s.longitude,s.distance_m
+-- ORDER BY s.distance_m,s.id LIMIT 50;
+--
+-- The SQL limit is SAFE only when the SQL filter/order and the application
+-- agree on distance. It bounds output without truncating closer candidates.
+-- For a truly dense dataset, test 51+ eligible stores, with row insertion
+-- order deliberately different from distance order. Expect the nearest 50.
+-- Also test 499/500/501m by app Haversine, both longitude directions,
+-- and near the +/-180 longitude seam; do not use nominal planar meters.
+-- At exact floating-point boundaries, use the SAME distance formula as the app
+-- and validate observed SQL/JS precision before choosing a tiny tolerance.
+--
+-- NOTE: Current test-only DB function has not been modified by this document.
+-- Current app reader sends a padded radius, but DB's old planar LIMIT 50
+-- remains an unresolved production risk until DB logic is aligned.
+
+-- Read-only Supabase verification (2026-10-19): 80 generated candidates in
+-- reverse distance order; Haversine ORDER BY distance_m LIMIT 50 selected
+-- candidate numbers 31..80, count 50. No table data was inserted.
+-- This proves the ranking expression, NOT the existing DB function's behavior.
+
+-- 2026-10-19 TEST FUNCTION INTEGRATION: executed a single transaction
+-- inserting 80 temporary stores in reverse-distance order, queried
+-- guest_known_stores_unvisited_test(500m), and asserted exactly 50 results,
+-- all temporary stores, none of the farther 30. The DO block returned
+-- successfully. ROLLBACK executed in the same request; independent SELECT
+-- verified remaining HKN_80_DISTANCE_TEST_% rows = 0 (pre-test also 0).
+-- Production function and published app remain unchanged.
+
+-- 2026-10-19 LIVE FUNCTION DIFF (read-only inspection):
+-- production: SECURITY DEFINER, INNER JOIN days, used=true,
+--             planar distance2 WHERE/ORDER BY, LIMIT 50.
+-- test-only: SECURITY INVOKER, LEFT JOIN days, used=count(distinct)>0,
+--            Haversine distance_m WHERE/ORDER BY, LIMIT 50.
+-- Both retain owner and closure filters, 3000m cap, and 3s timeout.
+-- DO NOT copy test function security mode into production. A production
+-- migration requires independent authorization and privileges review.

@@ -4,7 +4,7 @@ import {mergeKnownStores} from './known-stores.mjs';
 export const RADII=[500,1000,2000,3000];
 export const safeHint=v=>String(v||'').normalize('NFKC').replace(/[^\p{L}\p{N}\sー]/gu,' ').replace(/\s+/g,' ').trim().slice(0,60);
 export function searchTerms(input){const q=safeHint(input.hint|| (input.category==='おまかせ'?'':input.category));if(!q)return [];const family=/やきとり|焼き鳥|焼鳥|串焼/.test(q)?['焼き鳥','串焼き','居酒屋']:/麺|ラーメン|うどん|そば/.test(q)?['ラーメン','うどん','そば','麺類']:/中華|餃子|炒飯/.test(q)?['中華料理','餃子','炒飯']:[];return [...new Set([q,...family])];}
-export async function adaptiveNearby({input,center,load,knownStores=async()=>[],now=()=>Date.now()}){
+export async function adaptiveNearby({input,center,load,knownStores=async()=>[],includeKnownStores=false,now=()=>Date.now()}){
  const terms=searchTerms(input),ctx={desire:safeHint(input.hint),category:input.category||'おまかせ'},genre=requestedGenre(ctx);
  let external=[],known=[],radius=500,partial=false,fetched_at=new Date(now()).toISOString(),failed=false;
  let successes=0;const attempted=[],searched=[],providerKeys=new Set();const MAX_PROVIDER_REQUESTS=6;
@@ -15,7 +15,7 @@ export async function adaptiveNearby({input,center,load,knownStores=async()=>[],
  const matches=c=>{if(!terms.length)return true;const text=[c.name,c.dish,c.meal_evidence,...(c.tags||[])].join(' ').normalize('NFKC');return matchingTerms.some(t=>text.includes(t));};
  const enough=()=>{const rows=eligible();if(input.photoStoreLookup&&q)return rows.some(c=>String(c.name||'').normalize('NFKC').replace(/[\s・･ー－-]/g,'').includes(q.replace(/[\s・･ー－-]/g,'')));return rows.length>=6&&(!terms.length||rows.filter(matches).length>=3);};
  const query=async(keyword='')=>{const k=radius+':'+keyword;if(providerKeys.has(k))return true;if(providerKeys.size>=MAX_PROVIDER_REQUESTS){partial=true;return false;}providerKeys.add(k);try{add(await load(radius,keyword));successes++;if(keyword)searched.push(keyword);return true;}catch{failed=true;return false;}};
- for(const r of RADII){radius=r;attempted.push(r);try{known=await knownStores(center,r);}catch{known=[];}
+ for(const r of RADII){radius=r;attempted.push(r);if(includeKnownStores){try{known=await knownStores(center,r);}catch{known=[];}}
   // Photo identification prioritizes the exact saved name before broad results.
   // This keeps the same six-request ceiling while avoiding a broad 100-item cap first.
   if(input.photoStoreLookup&&terms.length){
@@ -30,5 +30,5 @@ export async function adaptiveNearby({input,center,load,knownStores=async()=>[],
  // At most one related term: never turn an AND keyword query into an unrelated genre.
  if(!enough()&&terms.length>1&&!failed)await query(terms[1]);
  if(!successes&&!known.length)throw Error('search_unavailable');
- return {candidates:withinSearch(external,center,radius),radius_m:radius,search_radii:attempted,search_terms:searched,partial:partial||failed||Boolean(input.photoStoreLookup&&q&&!enough()),fetched_at};
+ return {candidates:withinSearch(includeKnownStores?mergeKnownStores(external,known):external,center,radius),radius_m:radius,search_radii:attempted,search_terms:searched,partial:partial||failed||Boolean(input.photoStoreLookup&&q&&!enough()),fetched_at};
 }

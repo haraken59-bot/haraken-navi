@@ -1,0 +1,80 @@
+-- REVIEW-ONLY SQL TEMPLATE. NEVER RUN THIS FILE AS-IS.
+-- All lines are commented out; this is not a migration.
+-- Replace placeholder with a migration-injected owner UUID only after approval.
+-- Do not commit a real owner UUID or execute against production.
+--
+-- CREATE FUNCTION navi_internal.guest_known_stores_unvisited_preview(
+--   lat double precision, lng double precision, radius_m integer
+-- ) RETURNS TABLE(
+--   store_id uuid, name text, latitude double precision,
+--   longitude double precision, used boolean, revisited boolean
+-- )
+-- LANGUAGE sql STABLE SECURITY DEFINER
+-- SET search_path = pg_catalog
+-- SET statement_timeout = '3s'
+-- AS $preview$
+-- WITH owner_scope AS (
+--   SELECT '<MIGRATION_INJECTED_OWNER_UUID>'::uuid AS owner_id
+-- ),
+-- eligible AS (
+--   SELECT s.id,s.name,s.latitude,s.longitude,
+--     12742000 * asin(least(1.0,sqrt(
+--       power(sin(radians(s.latitude-lat)/2),2)
+--       +cos(radians(lat))*cos(radians(s.latitude))
+--       *power(sin(radians(s.longitude-lng)/2),2)
+--     ))) AS distance_m
+--   FROM public.stores s CROSS JOIN owner_scope o
+--   WHERE s.user_id=o.owner_id AND NOT s.is_test
+--     AND lat BETWEEN -90 AND 90 AND lng BETWEEN -180 AND 180
+--     AND radius_m BETWEEN 1 AND 3000
+--     AND s.latitude BETWEEN -90 AND 90 AND s.longitude BETWEEN -180 AND 180
+--     AND NOT(s.latitude=0 AND s.longitude=0)
+--     AND s.location_updated_at IS NOT NULL
+--     AND length(btrim(s.name)) BETWEEN 1 AND 200
+--     AND NOT (
+--       coalesce(s.notes,'') ~* '(閉店|閉業|廃業|permanently[ _-]*closed)'
+--       OR s.name ~ '(閉店|閉業|廃業)'
+--     )
+-- ), nearby AS (
+--   SELECT * FROM eligible WHERE distance_m<=radius_m
+-- ), days AS (
+--   SELECT v.store_id,v.visited_on AS visit_day
+--   FROM public.store_visits v JOIN nearby s ON s.id=v.store_id
+--   CROSS JOIN owner_scope o
+--   WHERE v.user_id=o.owner_id AND v.source='remaining_updated'
+--     AND v.visited_on <= (statement_timestamp() AT TIME ZONE 'Asia/Tokyo')::date
+--   UNION
+--   SELECT d.store_id,(m.eaten_at AT TIME ZONE 'Asia/Tokyo')::date
+--   FROM public.meals m
+--   JOIN public.meal_details d ON d.meal_id=m.id AND d.user_id=m.user_id
+--   JOIN nearby s ON s.id=d.store_id
+--   CROSS JOIN owner_scope o
+--   WHERE m.user_id=o.owner_id AND m.eaten_at<=statement_timestamp()
+--     AND coalesce(m.navi_metadata->>'is_test','false')='false'
+--     AND coalesce(m.navi_metadata->>'exclude_from_learning','false')='false'
+--     AND navi_internal.store_name_key(m.navi_metadata->>'actual_visit')
+--         =navi_internal.store_name_key(s.name)
+-- )
+-- SELECT s.id,s.name,s.latitude,s.longitude,
+--        count(DISTINCT d.visit_day)>0 AS used,
+--        count(DISTINCT d.visit_day)>=2 AS revisited
+-- FROM nearby s LEFT JOIN days d ON d.store_id=s.id
+-- GROUP BY s.id,s.name,s.latitude,s.longitude,s.distance_m
+-- ORDER BY s.distance_m,s.id LIMIT 50;
+-- $preview$;
+--
+-- REVOKE ALL ON FUNCTION navi_internal.guest_known_stores_unvisited_preview(
+--   double precision,double precision,integer) FROM PUBLIC;
+-- REVOKE ALL ON FUNCTION navi_internal.guest_known_stores_unvisited_preview(
+--   double precision,double precision,integer) FROM anon,authenticated;
+-- GRANT EXECUTE ON FUNCTION navi_internal.guest_known_stores_unvisited_preview(
+--   double precision,double precision,integer) TO navi_discover_runtime;
+--
+-- SECURITY REVIEW BLOCKERS:
+-- 1. A migration-controlled fixed owner must be injected; do not use an HTTP
+--    parameter or mutable PostgreSQL session variable.
+-- 2. A separate JWT-authenticated owner-only Edge preview must be reviewed.
+-- 3. Ensure this three-argument function has NO four-argument owner-id overload.
+-- 4. Review owner UUID handling in migration logs and function definitions.
+-- 5. Privileged role/credential compromise can still reveal this one owner's data.
+-- 6. Revoke/drop only preview objects during teardown; production unchanged.
