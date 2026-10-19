@@ -56,3 +56,6 @@ jobs:
 
       - name: Owner-bound preview SQL and access denial tests
         run: node --experimental-default-type=module --test tests/photo-gps-owner-bound-preview.test.mjs
+
+      - name: Owner-bound preview reader isolation
+        run: node --experimental-default-type=module --test tests/photo-gps-owner-bound-reader.test.mjs
