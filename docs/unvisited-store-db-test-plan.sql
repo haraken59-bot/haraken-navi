@@ -66,3 +66,11 @@
 -- reverse distance order; Haversine ORDER BY distance_m LIMIT 50 selected
 -- candidate numbers 31..80, count 50. No table data was inserted.
 -- This proves the ranking expression, NOT the existing DB function's behavior.
+
+-- 2026-10-19 TEST FUNCTION INTEGRATION: executed a single transaction
+-- inserting 80 temporary stores in reverse-distance order, queried
+-- guest_known_stores_unvisited_test(500m), and asserted exactly 50 results,
+-- all temporary stores, none of the farther 30. The DO block returned
+-- successfully. ROLLBACK executed in the same request; independent SELECT
+-- verified remaining HKN_80_DISTANCE_TEST_% rows = 0 (pre-test also 0).
+-- Production function and published app remain unchanged.
