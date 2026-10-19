@@ -36,6 +36,10 @@ form.addEventListener('submit',async event=>{
   const title=document.createElement('h2');title.textContent='店名照合結果';diagnostic.append(title);
   const summary=document.createElement('p');summary.textContent='完全一致 '+exact.length+' 件／部分一致 '+partial.length+' 件／全候補 '+rows.length+' 件';diagnostic.append(summary);
   const match=document.createElement('pre');match.style.whiteSpace='pre-wrap';match.textContent=partial.length?partial.map(c=>c.name+'（写真・地域基準から約'+Math.round(distanceMeters(point,c))+'m） '+c.address).join('\\n'):'一致候補なし。APIの店舗ID直接照会は未実施のため、掲載有無は未確定です。';diagnostic.append(match);
+  const idUrl=new URL(config.url+'/functions/v1/navi-discover-photo-test');
+  for(const [k,v] of Object.entries({mode:'photo-id-check',id:'J000113208',latitude,longitude}))idUrl.searchParams.set(k,String(v));
+  const idInfo=document.createElement('p');diagnostic.append(idInfo);
+  try { const idResponse=await fetch(idUrl,{headers:{Authorization:'Bearer '+session.access_token},signal:AbortSignal.timeout(12000)});if(!idResponse.ok)throw Error('HTTP '+idResponse.status);const d=await idResponse.json();idInfo.textContent=d.found?('ID直接照会: '+d.name+' / 距離 '+d.distance_m+'m / 3km以内 '+d.within_3km):'ID直接照会: 店舗なし'; }catch(e){idInfo.textContent='ID直接照会失敗: '+e.message;}
   status.textContent='検証用Edge応答。候補 '+rows.length+' 件／位置の基準：'+locationSource+'（店舗登録・保存なし）';
   output.textContent=JSON.stringify({location_source:locationSource,notice:locationSource==='写真GPS'?'写真位置から検索':'地域中心から最大3kmの検索です。地域内全店の検索ではありません',radius_m:result.radius_m,search_radii:result.search_radii,search_terms:result.search_terms,partial:result.partial,candidates:rows},null,2);
  }catch(error){status.textContent='検索できませんでした：'+error.message+'。通常画面で本人ログイン済みか確認してください。';}
