@@ -61,3 +61,8 @@
 -- NOTE: Current test-only DB function has not been modified by this document.
 -- Current app reader sends a padded radius, but DB's old planar LIMIT 50
 -- remains an unresolved production risk until DB logic is aligned.
+
+-- Read-only Supabase verification (2026-10-19): 80 generated candidates in
+-- reverse distance order; Haversine ORDER BY distance_m LIMIT 50 selected
+-- candidate numbers 31..80, count 50. No table data was inserted.
+-- This proves the ranking expression, NOT the existing DB function's behavior.
