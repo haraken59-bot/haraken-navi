@@ -44,3 +44,6 @@ jobs:
 
       - name: Guest GPS privacy regression
         run: node --experimental-default-type=module --test tests/guest-known-store-privacy.test.mjs
+
+      - name: Photo GPS known-store owner versus guest integration
+        run: node --experimental-default-type=module --test tests/photo-gps-known-store.integration.test.mjs
