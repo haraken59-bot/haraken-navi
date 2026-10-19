@@ -68,3 +68,6 @@ jobs:
 
       - name: Synthetic GPS fixture contract
         run: node --experimental-default-type=module --test tests/photo-gps-synthetic-fixture.test.mjs
+
+      - name: Synthetic registered stores through real GPS adaptive search
+        run: node --experimental-default-type=module --test tests/photo-gps-fixture-adaptive.integration.test.mjs
