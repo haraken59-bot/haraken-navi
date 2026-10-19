@@ -11,3 +11,13 @@ test('DB patch plan explicitly retains safety filters',()=>{
  for(const term of ['user_id','is_test','location_updated_at','closure']) assert.ok(sql.includes(term),term);
  assert.match(sql,/TEST DATABASE/i);
 });
+
+test('DB plan filters and sorts by Haversine before limiting 50',()=>{
+ assert.match(sql,/12742000\s*\*\s*asin/i);
+ assert.match(sql,/WHERE distance_m <= radius_m/i);
+ assert.match(sql,/ORDER BY s\.distance_m,s\.id LIMIT 50/i);
+ assert.doesNotMatch(sql,/ORDER BY s\.distance2,s\.id LIMIT 50/i);
+});
+test('DB plan covers 51+ stores and both radius and longitude boundaries',()=>{
+ for(const term of ['51+','499/500/501m','longitude','TEST DATABASE']) assert.ok(sql.includes(term),term);
+});
