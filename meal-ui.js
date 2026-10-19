@@ -83,7 +83,25 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
    const saved=pending;status('共通履歴へ保存しています…');await saveMealWithPhotos(getClient(),saved,photos);
    if(startOwner!==getOwner())throw Error('保存中にアカウントが変わりました。元のアカウントで履歴を確認してください。');
    pending=null;photos=[];current=null;form.reset();$('meal-date').value=nowInput();$('meal-gps-status').textContent='現在地は未取得です。写真GPS・店舗GPSと別々に保存します。';showPhotos();
-   try{await onSaved(saved);await onRefresh();await reload();status('共通の食事履歴に保存しました。'+(saved.navi_metadata.exclude_from_learning?'学習には使いません。':'次回の推薦に反映します。'));}catch{status('クラウド保存は完了しました。履歴の再取得に失敗したため「履歴を再取得」を押してください。再登録は不要です。');}
+   try{
+    await onSaved(saved);await onRefresh();await reload();
+    status('共通の食事履歴に保存しました。'+(saved.navi_metadata.exclude_from_learning?'学習には使いません。':'次回の推薦に反映します。'));
+    // Only manually named, unlinked meals need post-save photo-GPS identification.
+    // A recommended venue is already known to the decision; never replace it from GPS alone.
+    const suggested=saved.navi_metadata?.latest_choice;
+    const isRecommended=suggested?.name&&normalizeStoreName(suggested.name)===normalizeStoreName(saved.unlinked_store_name);
+    const row=history.find(r=>r.id===saved.id);
+    const point=photoPoint(saved.navi_metadata);
+    if(row&&!saved.store_id&&saved.unlinked_store_name&&point&&!isRecommended&&startOwner===getOwner()){
+     try{
+      await chooseStore({client:getClient(),point,initialName:saved.unlinked_store_name,isCurrent:()=>startOwner===getOwner()&&!!getClient()?.session(),onSelect:async store=>{
+       await getClient().editMeal(row,{store_id:store.id});
+       await onRefresh();await reload();
+       status('保存済みの食事履歴に店舗を関連付けました。');
+      }});
+     }catch{status('食事記録は保存済みです。店舗候補の確認は履歴の「店舗を関連付け」から再試行できます。');}
+    }
+   }catch{status('クラウド保存は完了しました。履歴の再取得に失敗したため「履歴を再取得」を押してください。再登録は不要です。');}
   }finally{busy=false;button.disabled=false;}
  });
  return {async refresh(){if(account!==getOwner()){deletionNotice(0);account=getOwner();photos=[];current=null;history=[];pending=null;form.reset();$('meal-date').value=nowInput();showPhotos();renderHistory();}if(!getClient()?.session()){history=[];renderHistory();return;}await reload();void resumeDeletions();stores=await getClient().stores();$('meal-store-id').innerHTML='<option value="">店名で記録（店舗マスタは変更しません）</option>'+stores.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} ${esc(s.area)}</option>`).join('');}};
