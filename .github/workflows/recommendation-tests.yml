@@ -38,3 +38,6 @@ jobs:
 
       - name: Unvisited store SQL plan static checks
         run: node --test tests/unvisited-store-sql-plan.test.mjs
+
+      - name: Six-area known-store regression tests
+        run: node --experimental-default-type=module --test tests/known-unvisited-six-areas.test.mjs
