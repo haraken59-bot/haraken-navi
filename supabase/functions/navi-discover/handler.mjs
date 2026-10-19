@@ -1,7 +1,6 @@
 import { stageLogger } from './diagnostics.mjs';
 import { parseSearch } from './search-service.mjs';
 import { parseGuestSearch, guestAdmission, publicSearchResult } from './guest-search.mjs';
-import { mergeKnownStores } from './known-stores.mjs';
 import { withinSearch } from '../../../app/places.js';
 
 const LOCAL_ORIGINS = ['http://127.0.0.1:8140', 'http://localhost:8140'];
@@ -94,9 +93,7 @@ export function createHandler({ verifyUser, database, discover, guestDiscover, u
           const badge = badges.find(b => b.id === candidate.id);
           if (badge?.used === true) candidate.haraken_usage = badge.revisited === true ? 'revisited' : 'used';
         }
-        if(UUID.test(ownerId||'')&&data.center&&!data.needs_choice){
-          try{data.candidates=mergeKnownStores(data.candidates,await knownStores(data.center,data.radius_m));}catch{/* External search remains available; no private errors returned. */}
-        }
+        // Never attach private owner-known stores to an unauthenticated response.
         if(data.center)data.candidates=withinSearch(data.candidates,data.center,data.radius_m);
         return Response.json(data, { status: 200, headers });
       } catch { return reply(503, 'search_unavailable'); }
