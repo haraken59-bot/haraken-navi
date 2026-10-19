@@ -33,3 +33,34 @@ test('unauthenticated HTTP GPS request cannot read known-store DB',async()=>{
  assert.equal(res.status,401);
  assert.equal(reads,0);
 });
+
+test('owner-authenticated HTTP GPS search reads three synthetic DB visit states, never production RPC',async()=>{
+ const fakeRows=[
+  {store_id:'33333333-3333-4333-8333-333333333333',name:'架空・未訪問',latitude:32.74001,longitude:129.88,used:false,revisited:false},
+  {store_id:'44444444-4444-4444-8444-444444444444',name:'架空・訪問済',latitude:32.7402,longitude:129.88,used:true,revisited:false},
+  {store_id:'55555555-5555-4555-8555-555555555555',name:'架空・再訪問',latitude:32.7403,longitude:129.88,used:true,revisited:true},
+  {store_id:'66666666-6666-4666-8666-666666666666',name:'架空・範囲外',latitude:32.77,longitude:129.88,used:false,revisited:false},
+ ];
+ const queries=[];
+ const db={withConnection:async cb=>cb({query:async(sql,args)=>{queries.push({sql,args});return {rows:fakeRows};}})};
+ const knownStores=createKnownStoreReader(db,owner,{testFunction:true});
+ const discover=createSearchService({state,knownStores,includeKnownStores:true,request,readEnv:key=>key==='HOTPEPPER_API_KEY'?'mock-key':undefined});
+ const handler=createHandler({ownerId:owner,verifyUser:async()=>({user_id:owner}),database:db,discover,guestDiscover:async()=>{throw Error('guest not expected');}});
+ const res=await handler(new Request('https://example.test/?mode=discover&photoStoreLookup=1&gpsLatitude=32.74&gpsLongitude=129.88',{headers:{authorization:'Bearer abc.def.ghi'}}));
+ assert.equal(res.status,200);
+ const data=await res.json();
+ assert.deepEqual(data.candidates.map(c=>c.haraken_usage),['unvisited','used','revisited']);
+ assert.equal(data.candidates.some(c=>c.name.includes('範囲外')),false);
+ assert.ok(queries.length>0);
+ assert.ok(queries.every(q=>q.sql.includes('guest_known_stores_unvisited_test(')&&!q.sql.includes('guest_known_stores(')));
+ assert.ok(queries.every(q=>q.args[0]===owner));
+});
+test('wrong-owner authenticated HTTP request is denied before synthetic DB read',async()=>{
+ let reads=0,searches=0;
+ const db={withConnection:async()=>{reads++;throw Error('should not read DB')}};
+ const handler=createHandler({ownerId:owner,database:db,verifyUser:async()=>({user_id:'77777777-7777-4777-8777-777777777777'}),discover:async()=>{searches++;}});
+ const res=await handler(new Request('https://example.test/?mode=discover&gpsLatitude=32.74&gpsLongitude=129.88',{headers:{authorization:'Bearer abc.def.ghi'}}));
+ assert.equal(res.status,403);
+ assert.equal(reads,0);
+ assert.equal(searches,0);
+});
