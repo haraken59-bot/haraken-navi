@@ -1,3 +1,4 @@
+import {mountPhotoIdCheck} from './photo-id-check-ui.js';
 import {hidakaOrderUrl} from './hidaka-context.js';
 import {renderCandidate} from './candidate-card.js';
 import {actionAlternatives} from './action-options.js';
@@ -154,4 +155,5 @@ let redirectTokens=null,redirectError=null;try{redirectTokens=consumeAuthRedirec
 otpRender();$('auth-message').textContent='接続設定を確認しています…';
 try{const config=await loadPublicConfig(window.location.href);client=new MealClient(config,localStorage);$('auth-message').textContent='メールアドレスを入力して認証コードを送信してください。';otpRender();hidakaUrl=config.links?.hidaka||null;for(const [id,key] of [['hidaka-link','hidaka'],['shochu-link','shochu']]){const url=config.links?.[key];if(url&&/^https:\/\//.test(url))$(id).href=url;else $(id).textContent=key==='hidaka'?'日高オーダー：入口未設定':'焼酎キープ帖：入口未設定';}if(redirectError)throw redirectError;if(redirectTokens){await client.acceptRedirect(redirectTokens);$('settings').hidden=false;$('auth-message').textContent='ログインしました。本人の履歴を確認しています。';}if(client.session())await refresh();}catch(e){$('settings').hidden=false;const message=client?'履歴を取得できませんでした。再ログインまたは履歴の再取得をお試しください。':'接続設定を読み込めませんでした。外出テストを確認して再読み込みしてください。';$('auth-message').textContent=message;say(message);otpRender();}
 
+mountPhotoIdCheck({client,isMember});
 window.addEventListener('storage',safe(async e=>{if(e.key!==SESSION_KEY)return;if(client?.session()){await refresh();}else{authGeneration++;guestActive=false;calculation++;owner='guest';cloud={};decision=null;result=null;renderSelection();$('results').hidden=true;$('auth-state').textContent='未ログイン';$('record-form').reset();load();renderContext();await mealUI?.refresh();say('別のタブでログアウトしました。');}}));
