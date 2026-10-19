@@ -24,7 +24,7 @@ Deno.serve(createHandler({
   ownerId,
   usage: createUsageReader(database, ownerId),
   knownStores,
-  discover: createSearchService({ knownStores, state, readEnv: (name: string) => Deno.env.get(name) }),
-  guestDiscover: createSearchService({ knownStores, state: createGuestState((key: string) => state.cached(key)), readEnv: (name: string) => Deno.env.get(name) }),
+  discover: createSearchService({ knownStores, includeKnownStores:true, state, readEnv: (name: string) => Deno.env.get(name) }),
+  guestDiscover: createSearchService({ state: createGuestState((key: string) => state.cached(key)), readEnv: (name: string) => Deno.env.get(name) }),
   origins: allowedOrigins(Deno.env.get('NAVI_ALLOWED_ORIGINS')),
 }));
