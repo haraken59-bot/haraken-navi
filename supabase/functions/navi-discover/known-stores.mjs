@@ -2,11 +2,12 @@ import {distanceKm,normalizeName,officialStoreName} from '../../../app/places.js
 // Allow the SQL approximation to retrieve a slightly wider set; Haversine is authoritative.
 const candidateRadius=radius=>Math.min(3000,Math.ceil(radius*1.003+1));
 const uuid=value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value||'');
-export function createKnownStoreReader(database,ownerId){
+export function createKnownStoreReader(database,ownerId,{testFunction=false}={}){
+ const functionName=testFunction?'guest_known_stores_unvisited_test':'guest_known_stores';
  return async(center,radius)=>{
   if(!uuid(ownerId)||![center?.latitude,center?.longitude,radius].every(Number.isFinite)||radius<=0||radius>3000)return [];
   let rows=[];
-  await database.withConnection(async client=>{rows=(await client.query('SELECT store_id,name,latitude,longitude,used,revisited FROM navi_internal.guest_known_stores($1::uuid,$2::double precision,$3::double precision,$4::integer)',[ownerId,center.latitude,center.longitude,candidateRadius(radius)])).rows;});
+  await database.withConnection(async client=>{rows=(await client.query(`SELECT store_id,name,latitude,longitude,used,revisited FROM navi_internal.${functionName}($1::uuid,$2::double precision,$3::double precision,$4::integer)`,[ownerId,center.latitude,center.longitude,candidateRadius(radius)])).rows;});
   return rows.filter(r=>uuid(r.store_id)&&typeof r.name==='string'&&r.name.trim().length>0&&r.name.length<=200&&[r.latitude,r.longitude].every(Number.isFinite)&&Math.abs(r.latitude)<=90&&Math.abs(r.longitude)<=180&&distanceKm(center,r)*1000<=radius).sort((a,b)=>distanceKm(center,a)-distanceKm(center,b)||a.store_id.localeCompare(b.store_id)).slice(0,50).map(r=>({id:'known:'+r.store_id,store_id:r.store_id,name:officialStoreName(r.name),latitude:r.latitude,longitude:r.longitude,kind:'store',mode:'both',tags:[],dish:'料理・営業状況は要確認',discovered:true,source_kind:'known_store',source:'ハラケン既知店舗',confidence:'店舗所在地確認済み・現在の営業は要確認',haraken_usage:r.revisited===true?'revisited':r.used===true?'used':'unvisited'}));
  };
 }
