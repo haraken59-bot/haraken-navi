@@ -50,3 +50,6 @@ jobs:
 
       - name: Authenticated photo GPS HTTP to DB integration
         run: node --experimental-default-type=module --test tests/photo-gps-http-db.integration.test.mjs
+
+      - name: Preview SQL security design static gates
+        run: node --test tests/photo-gps-preview-security-plan.test.mjs
