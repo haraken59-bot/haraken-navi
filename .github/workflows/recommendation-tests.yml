@@ -41,3 +41,6 @@ jobs:
 
       - name: Six-area known-store regression tests
         run: node --experimental-default-type=module --test tests/known-unvisited-six-areas.test.mjs
+
+      - name: Guest GPS privacy regression
+        run: node --experimental-default-type=module --test tests/guest-known-store-privacy.test.mjs
