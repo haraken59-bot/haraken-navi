@@ -16,4 +16,4 @@ jobs:
         with:
           node-version: '22'
       - name: Run isolated known-store tests
-        run: node --test tests/known-unvisited-stores.test.mjs tests/post-save-store-policy.test.mjs
+        run: node --test tests/known-unvisited-stores.test.mjs tests/post-save-store-policy.test.mjs tests/photo-store-candidates.test.mjs
