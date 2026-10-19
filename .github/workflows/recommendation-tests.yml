@@ -65,3 +65,6 @@ jobs:
 
       - name: Isolated preview entrypoint contract
         run: node --experimental-default-type=module --test tests/photo-gps-preview-entrypoint.test.mjs
+
+      - name: Synthetic GPS fixture contract
+        run: node --experimental-default-type=module --test tests/photo-gps-synthetic-fixture.test.mjs
