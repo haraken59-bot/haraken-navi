@@ -74,3 +74,12 @@
 -- successfully. ROLLBACK executed in the same request; independent SELECT
 -- verified remaining HKN_80_DISTANCE_TEST_% rows = 0 (pre-test also 0).
 -- Production function and published app remain unchanged.
+
+-- 2026-10-19 LIVE FUNCTION DIFF (read-only inspection):
+-- production: SECURITY DEFINER, INNER JOIN days, used=true,
+--             planar distance2 WHERE/ORDER BY, LIMIT 50.
+-- test-only: SECURITY INVOKER, LEFT JOIN days, used=count(distinct)>0,
+--            Haversine distance_m WHERE/ORDER BY, LIMIT 50.
+-- Both retain owner and closure filters, 3000m cap, and 3s timeout.
+-- DO NOT copy test function security mode into production. A production
+-- migration requires independent authorization and privileges review.
