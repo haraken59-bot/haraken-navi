@@ -2,16 +2,18 @@
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>写真店舗検索・検証専用</title><link rel="stylesheet" href="./style.css"><meta name="robots" content="noindex,nofollow"></head>
 <body><main><h1>写真店舗検索・検証専用</h1><p><strong>検証用 Edge: navi-discover-photo-test</strong>（本番 navi-discover には送信しません）</p><p>読み取り専用です。店舗登録・食事履歴保存は行いません。写真を選ぶとGPSを自動取得します。GPSがない場合は地域名から検索します。写真はサーバーに送信しません。</p>
 <form id="test-search"><label>店名<input name="name" value="万徳" maxlength="60" required></label><label>写真（任意）<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></label><label>地域（GPSがない場合）<input name="region" value="長崎市" maxlength="80" required></label><button type="submit">検証用Edgeで検索</button></form>
-<p id="status" role="status"></p><pre id="results" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><p><a href="./index.html">通常のハラケンナビへ戻る</a></p></main><script type="module">
+<p id="status" role="status"></p><section id="diagnostic" aria-live="polite"></section><pre id="results" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><p><a href="./index.html">通常のハラケンナビへ戻る</a></p></main><script type="module">
 const PROJECT='https://vflxbadvyilfjoypnhtx.supabase.co';
 const SESSION_KEY='haraken-navi-supabase-session-v1';
 async function loadPublicConfig(){const r=await fetch('./public-config.json',{cache:'no-store'});if(!r.ok)throw Error('公開設定を読み込めません');const c=await r.json();if(c.url!==PROJECT)throw Error('接続先不一致');return c;}
 async function fresh(){const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');if(!s?.access_token||!s?.user?.id)throw Error('通常画面で本人ログインしてください');if(s.expires_at<=Date.now()/1000+60)throw Error('通常画面でログインを更新してください');return s;}
 async function verifyNaviOwner(session){const r=await fetch(PROJECT+'/functions/v1/navi-discover?mode=owner-check',{headers:{Authorization:'Bearer '+session.access_token},cache:'no-store'});if(!r.ok)throw Error('本人確認に失敗しました');const data=await r.json();if(data.ok!==true||data.authenticated!==true)throw Error('本人確認に失敗しました');}
 import {inspectGps} from './importer/gps-diagnostics.js';
-const form=document.querySelector('#test-search'),status=document.querySelector('#status'),output=document.querySelector('#results');
+const form=document.querySelector('#test-search'),status=document.querySelector('#status'),output=document.querySelector('#results'),diagnostic=document.querySelector('#diagnostic');
+const normalize=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[\\p{P}\\p{S}\\s]/gu,'');
+function distanceMeters(a,b){const rad=x=>x*Math.PI/180,dlat=rad(b.latitude-a.latitude),dlng=rad(b.longitude-a.longitude),h=Math.sin(dlat/2)**2+Math.cos(rad(a.latitude))*Math.cos(rad(b.latitude))*Math.sin(dlng/2)**2;return 12742000*Math.asin(Math.sqrt(h));}
 form.addEventListener('submit',async event=>{
- event.preventDefault();output.textContent='';status.textContent='検証用Edgeへ問い合わせ中…';
+ event.preventDefault();output.textContent='';diagnostic.textContent='';status.textContent='検証用Edgeへ問い合わせ中…';
  const data=new FormData(form),hint=String(data.get('name')||'').trim(),region=String(data.get('region')||'').trim(),photo=data.get('photo');
  if(!hint||!region){status.textContent='店名と地域を確認してください。';return;}
  const button=form.querySelector('button');button.disabled=true;
@@ -30,6 +32,10 @@ form.addEventListener('submit',async event=>{
   const result=await response.json();
   if((await fresh()).user.id!==session.user.id)throw Error('ログイン状態が変わりました');
   const rows=(Array.isArray(result.candidates)?result.candidates:[]).filter(c=>c&&typeof c.name==='string').map(c=>({name:c.name,address:c.address||c.hotpepper?.address||'',latitude:c.latitude,longitude:c.longitude}));
+  const exact=rows.filter(c=>normalize(c.name)===normalize(hint));const partial=rows.filter(c=>normalize(c.name).includes(normalize(hint))||normalize(hint).includes(normalize(c.name)));
+  const title=document.createElement('h2');title.textContent='店名照合結果';diagnostic.append(title);
+  const summary=document.createElement('p');summary.textContent='完全一致 '+exact.length+' 件／部分一致 '+partial.length+' 件／全候補 '+rows.length+' 件';diagnostic.append(summary);
+  const match=document.createElement('pre');match.style.whiteSpace='pre-wrap';match.textContent=partial.length?partial.map(c=>c.name+'（写真・地域基準から約'+Math.round(distanceMeters(point,c))+'m） '+c.address).join('\\n'):'一致候補なし。APIの店舗ID直接照会は未実施のため、掲載有無は未確定です。';diagnostic.append(match);
   status.textContent='検証用Edge応答。候補 '+rows.length+' 件／位置の基準：'+locationSource+'（店舗登録・保存なし）';
   output.textContent=JSON.stringify({location_source:locationSource,notice:locationSource==='写真GPS'?'写真位置から検索':'地域中心から最大3kmの検索です。地域内全店の検索ではありません',radius_m:result.radius_m,search_radii:result.search_radii,search_terms:result.search_terms,partial:result.partial,candidates:rows},null,2);
  }catch(error){status.textContent='検索できませんでした：'+error.message+'。通常画面で本人ログイン済みか確認してください。';}
