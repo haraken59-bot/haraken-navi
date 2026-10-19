@@ -58,3 +58,17 @@ test('6: many candidates remain bounded and merge output stable',async()=>{
  assert.equal(merged.length,50);
  assert.equal(new Set(merged.map(x=>x.id)).size,50);
 });
+
+test('7: candidate radius is widened while final Haversine radius remains strict',async()=>{
+ const {read,calls}=mock([row(1,'inside',32.74449),row(2,'outside',32.74451)]);
+ const found=await read(center,500);
+ assert.ok(calls[0].args[3]>500);
+ assert.ok(found.every(x=>x.name!=='outside'));
+});
+test('8: the closest 50 by Haversine win regardless of database row order',async()=>{
+ const rows=Array.from({length:80},(_,i)=>row(i+1,'候補'+i,center.latitude+(80-i)*0.00001));
+ const {read}=mock(rows);const found=await read(center,500);
+ assert.equal(found.length,50);
+ assert.equal(found[0].name,'候補79');
+ assert.equal(found.at(-1).name,'候補30');
+});
