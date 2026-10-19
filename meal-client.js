@@ -1,6 +1,7 @@
 import {ReadOnlyClient} from './api.js';
 import {validPoint,distanceKm} from './places.js';
 import {PHOTO_BUCKET} from './meal-photo.js';
+const photoNameKey=value=>String(value||'').normalize('NFKC').replace(/[\s・･ー－-]/g,'').toLowerCase();
 export const canRestoreMealLearning=row=>row?.navi_metadata?.is_test===true&&row?.navi_metadata?.exclude_from_learning===true;
 export class MealClient extends ReadOnlyClient{
  async mealDeleteRequest(action,row){
@@ -60,12 +61,12 @@ export class MealClient extends ReadOnlyClient{
  async nearbyPhotoStores(point,name=''){
   if(!validPoint(point)||(point.latitude===0&&point.longitude===0))throw Error('写真GPSが正しくありません。');
   const session=await this.fresh(),url=new URL(this.config.url+'/functions/v1/navi-discover');
-  const hint=String(name||'').normalize('NFKC').trim().slice(0,60);
-  for(const [k,v] of Object.entries({mode:'discover',latitude:point.latitude,longitude:point.longitude,direction:'near',preference:'おまかせ',...(hint?{hint}:{})}))url.searchParams.set(k,String(v));
+  const hint=String(name||'').normalize('NFKC').trim().slice(0,60),hintKey=photoNameKey(hint);
+  for(const [k,v] of Object.entries({mode:'discover',latitude:point.latitude,longitude:point.longitude,direction:'near',preference:'おまかせ',...(hint?{hint,photoStoreLookup:'1'}:{})}))url.searchParams.set(k,String(v));
   const response=await this.request(url,{headers:{Authorization:'Bearer '+session.access_token},signal:AbortSignal.timeout(30000)});
   if(!response.ok)throw Error('写真周辺の店舗を取得できません。');
   const data=await response.json();if(this.session()?.user?.id!==session.user.id)throw Error('ログイン状態が変わりました。');
-  return (data.candidates||[]).filter(c=>validPoint(c)&&distanceKm(point,c)<=0.5&&!c.closed&&!c.permanently_closed).sort((a,b)=>{const match=c=>hint&&String(c.name||'').normalize('NFKC').includes(hint)?0:1;return match(a)-match(b)||distanceKm(point,a)-distanceKm(point,b);}).slice(0,20).map(c=>({name:c.name,latitude:c.latitude,longitude:c.longitude,address:c.address||c.hotpepper?.address||'',distance_m:Math.round(distanceKm(point,c)*1000)}));
+  return (Array.isArray(data.candidates)?data.candidates:[]).filter(c=>c&&typeof c.name==='string'&&c.name.trim()&&validPoint(c)&&(distanceKm(point,c)<=0.5||(hint&&photoNameKey(c.name).includes(hintKey)&&distanceKm(point,c)<=1))&&!c.closed&&!c.permanently_closed).sort((a,b)=>{const match=c=>hint&&photoNameKey(c.name).includes(hintKey)?0:1;return match(a)-match(b)||distanceKm(point,a)-distanceKm(point,b);}).slice(0,20).map(c=>({name:c.name,latitude:c.latitude,longitude:c.longitude,address:c.address||c.hotpepper?.address||'',distance_m:Math.round(distanceKm(point,c)*1000)}));
  }
  async confirmStore(candidate){
   await this.verifyNaviOwner();const session=await this.fresh();

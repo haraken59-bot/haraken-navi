@@ -149,3 +149,36 @@
 - 未使用photoStoreLookup指定を削除し、実装済みhintのみを維持。座標入力の検証をverifiedManualStoreに分離し正常・不正値を自動テスト。キャンセル／無効画面ではDB書込しないconfirmManualStore単体テストを追加。
 - Googleマップのリンクを表示した後、別ボタンで座標入力を開始する二段階操作に修正。画面コード上の操作順を検査する回帰テストを追加（commit ae0acad）。Androidの実画面操作・Googleマップとの連携・本番DBへの登録は未検証。
 - commit 0c8fdc6 の Actions run 39101790815 は成功。commit ae0acad のCIは確認待ち。未マージ・未公開。
+
+### 写真店名自動検索（開発中・2026-10-18）
+- feat/photo-name-auto-discovery：店舗確認画面で写真GPSと既存店名がある場合、周辺候補検索を自動開始する変更を作成。店名による独立検索・座標入力撤廃は未実装。CI・Android未確認、本番未公開、DB変更なし。
+
+- PR #10 自動検索と店名一致優先の修正を追加。未対応photoStoreLookup送信は削除済み。GitHub Actions 39103281475 success。通常検索の店名一致保証は未実装、Android・公開未確認。PR #9は既にmainマージ済み（旧記載は履歴）。
+
+### 写真店舗専用の店名未発見判定（開発中）
+- photo-store-lookup-policy.mjs と tests/photo-store-lookup-policy.test.mjs をPR #10ブランチに追加。写真店舗特定で店名一致候補がない場合の判定のみ。Edge Functionへの組み込み・本番配備・Android確認は未実施。通常検索への影響なし（未接続）。
+
+## 2026-10-18 写真履歴専用の店名検索（Edgeソース試作）
+- PR #10ブランチにEdgeのsearch-service.mjs/adaptive-search.mjsを新規配置。photoStoreLookup=1の場合は店名一致を重視し、各検索半径でキーワード検索を試みる。meal-client.jsも専用指定を送信。
+- **重要**：Edgeの全依存ファイルはGitHubに未配置。現在のSupabase本番Edge v22は変更なし。既存の通常検索と本番挙動は変わらない。統合テスト、API呼出回数上限・部分失敗時の挙動、Edge配備、Android確認は未完了。PR未マージ・未公開。
+
+### PR #10 検証状況の更新（2026-10-18）
+- Edge構成16ファイルを開発ブランチに配置。ファイル存在・相対import・検索パラメータ・模擬プロバイダによる検索／0件／失敗／上限テストのGitHub Actions成功を確認。
+- 店名検索の上限6回、途中失敗時の部分結果、0件時の登録店舗一覧維持、選択前の所在地・距離確認を実装。直近のCI run 39105241180 success。
+- **未検証**：実Hot Pepper APIで万徳が取得できるか、実Supabase Edgeの配備と本番応答、Android操作、Pages配信、実データ連携。Hot Pepper未収録店舗の発見は保証できない。
+- **未実施**：PR #10のマージ、Edge配備、本番DB書き込み。上記の古い「未配置」「未接続」等は当時の履歴であり、現在状態ではない。
+
+### PR #10 公開前検証（2026-10-18）
+- Supabase本番Edge v22の全16ファイルとPRブランチを照合：14ファイル完全一致、差分はsearch-service.mjsとadaptive-search.mjsのみ。
+- CI対象漏れを発見し修正。追加7種のEdge関連テストをGitHub Actionsへ組み込み、run 39105943675で全ジョブ成功を確認。
+- 未実施・公開阻害：本番APIキーを用いたHot Pepper実応答確認、配備したEdgeの認証付きE2E、Android実機操作。実API・実機が未検証のため「公開前の検証すべて完了」とは判定しない。PR未マージ、Edge未配備、DB変更なし。
+
+### 検証用Edge実通信（2026-10-18）
+- `navi-discover-photo-test` v2を本番と同じverify_jwt=falseで別名配備（本番v22は不変）。
+- GET認証なし通常経路はHTTP 401 `unauthorized`、ゲスト検索はHTTP 200・候補100件。長崎GPSとhint=万徳を指定し検索語には含まれたが、候補名に万徳なし。
+- これはゲスト検索経路のみの検証。会員向けphotoStoreLookup経路・Android実機は未検証。万徳が見つからない問題があるため公開保留。
+
+### 2026-10-18 写真店舗照合の追加検証
+- 店名照合をmeal-client.jsでEdgeと同じ記号・空白除去方式に統一（47aa258c）。store-link-search.test.mjsに回帰検査追加（80bca544）。GitHub Actions 39114417657 success。
+- ゲスト検索と写真専用検索の継続条件を区別するテスト追加（359b1625）、GitHub Actions 39106546622 success。
+- 本人JWTでの検証用Edge実検索とAndroid実機操作は未確認。PR #10は未マージ・Pages未公開、本番navi-discover v22は不変。検証用Edge navi-discover-photo-test v2のみ稼働。

@@ -22,7 +22,7 @@ console.log('store link search: 16 assertions passed');
 
 import {readFileSync} from 'node:fs';
 const clientSource=readFileSync(new URL('../meal-client.js',import.meta.url),'utf8');
-assert.match(clientSource,/\.\.\.\(hint\?\{hint\}:\{\}\)/,'named photo lookup passes optional hint');
+assert.match(clientSource,/photoStoreLookup:'1'/,'photo lookup passes dedicated mode to staged backend');
 
 
 assert.match(clientSource,/match\(a\)-match\(b\)/,'name matches are ranked ahead of 20-item cap');
@@ -53,3 +53,20 @@ const coordinatePrompt=uiSource.indexOf("const latitude=prompt(",manualStart);
 assert.ok(manualStart>=0&&mapLink>manualStart&&nextClick>mapLink&&coordinatePrompt>nextClick,'map link is presented before coordinates are prompted on a separate click');
 assert.match(uiSource,/if\(!confirm\('店舗名：'/,'manual registration requires explicit final confirmation');
 assert.match(uiSource,/confirmManualStore\(\{candidate,approved:true,client,onSelect,isCurrent:current\}\)/,'manual registration uses guarded write helper');
+
+assert.match(uiSource,/if\(validPoint\(point\)&&String\(initialName\|\|''\)\.trim\(\)\)await near\.onclick\(\)/,'auto-search when both photo GPS and saved name exist');
+
+assert.match(uiSource,/const matched=visibleStoreRows\(rows,initialName,referenceAddress\)/,'prefer name-matching nearby candidates');
+assert.match(uiSource,/input\.value=matched\.length\?String\(initialName\|\|''\):''/,'show all nearby candidates when name match is absent');
+
+assert.match(uiSource,/registeredRows=rows/,'registered stores retained as fallback');
+assert.match(uiSource,/rows=found\.length\?found:registeredRows/,'empty photo lookup does not erase registered stores');
+
+assert.match(clientSource,/distanceKm\(point,c\)<=1/,'named store may be up to 1km away');
+assert.match(clientSource,/distanceKm\(point,c\)<=0\.5/,'unnamed candidates remain within 500m');
+
+assert.match(clientSource,/Array\.isArray\(data\.candidates\)/,'malformed candidate container rejected');
+assert.match(clientSource,/typeof c\.name==='string'/,'nameless candidate rejected');
+
+assert.match(clientSource,/const photoNameKey=/,'photo store name normalizer present');
+assert.match(clientSource,/photoNameKey\(c\.name\)\.includes\(hintKey\)/,'photo filtering and sorting use normalized names');
