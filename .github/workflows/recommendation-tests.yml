@@ -71,3 +71,6 @@ jobs:
 
       - name: Synthetic registered stores through real GPS adaptive search
         run: node --experimental-default-type=module --test tests/photo-gps-fixture-adaptive.integration.test.mjs
+
+      - name: Live synthetic DB fixture through adaptive GPS search
+        run: node --experimental-default-type=module --test tests/photo-gps-live-fixture.integration.test.mjs
