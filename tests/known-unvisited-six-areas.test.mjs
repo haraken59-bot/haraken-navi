@@ -72,3 +72,14 @@ test('8: the closest 50 by Haversine win regardless of database row order',async
  assert.equal(found[0].name,'候補79');
  assert.equal(found.at(-1).name,'候補30');
 });
+
+test('9: test function selection is explicit and production remains the default',async()=>{
+ const db={withConnection:async fn=>fn({query:async(sql,args)=>{calls.push({sql,args});return {rows:[row(1,'検証店舗')]};}})};
+ const calls=[];
+ await createKnownStoreReader(db,owner)(center,500);
+ assert.match(calls[0].sql,/navi_internal\.guest_known_stores\(/);
+ assert.doesNotMatch(calls[0].sql,/unvisited_test/);
+ await createKnownStoreReader(db,owner,{testFunction:true})(center,500);
+ assert.match(calls[1].sql,/navi_internal\.guest_known_stores_unvisited_test\(/);
+ assert.equal(calls[1].args[0],owner);
+});
