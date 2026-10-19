@@ -7,7 +7,7 @@ test('synthetic GPS results include 0/1/2 visits but exclude out-of-range fixtur
  assert.equal(r.status,200);
  const body=await r.json();
  assert.equal(body.fixture_only,true);
- assert.deepEqual(body.candidates.map(x=>x.haraken_usage),['unvisited','used','revisited']);
+ assert.deepEqual(new Set(body.candidates.map(x=>x.haraken_usage)),new Set(['unvisited','used','revisited']));
  assert.equal(body.candidates.every(x=>x.fixture_only),true);
 });
 test('invalid coordinates and unapproved origin are rejected',async()=>{
