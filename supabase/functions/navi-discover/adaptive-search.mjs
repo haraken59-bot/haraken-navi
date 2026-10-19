@@ -15,7 +15,7 @@ export async function adaptiveNearby({input,center,load,knownStores=async()=>[],
  const matches=c=>{if(!terms.length)return true;const text=[c.name,c.dish,c.meal_evidence,...(c.tags||[])].join(' ').normalize('NFKC');return matchingTerms.some(t=>text.includes(t));};
  const enough=()=>{const rows=eligible();if(input.photoStoreLookup&&q)return rows.some(c=>String(c.name||'').normalize('NFKC').replace(/[\s・･ー－-]/g,'').includes(q.replace(/[\s・･ー－-]/g,'')));return rows.length>=6&&(!terms.length||rows.filter(matches).length>=3);};
  const query=async(keyword='')=>{const k=radius+':'+keyword;if(providerKeys.has(k))return true;if(providerKeys.size>=MAX_PROVIDER_REQUESTS){partial=true;return false;}providerKeys.add(k);try{add(await load(radius,keyword));successes++;if(keyword)searched.push(keyword);return true;}catch{failed=true;return false;}};
- for(const r of RADII){radius=r;attempted.push(r);try{known=await knownStores(center,r);}catch{known=[];}
+ for(const r of RADII){radius=r;attempted.push(r);if(includeKnownStores){try{known=await knownStores(center,r);}catch{known=[];}}
   // Photo identification prioritizes the exact saved name before broad results.
   // This keeps the same six-request ceiling while avoiding a broad 100-item cap first.
   if(input.photoStoreLookup&&terms.length){
