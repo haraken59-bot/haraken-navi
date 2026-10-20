@@ -23,3 +23,10 @@ test('photo without GPS remains safely unlinked',()=>{
 test('empty store name remains safely unlinked',()=>{
  assert.equal(shouldOfferPostSaveStoreLink(meal({unlinked_store_name:''})),false);
 });
+
+test('missing photo metadata leaves meal unlinked',()=>{
+ assert.equal(shouldOfferPostSaveStoreLink(meal({navi_metadata:null})),false);
+});
+test('variant kanji are not treated as an exact recommendation match',()=>{
+ assert.equal(shouldOfferPostSaveStoreLink(meal({navi_metadata:{photo_location:photo,latest_choice:{name:'萬徳'}}})),true);
+});
