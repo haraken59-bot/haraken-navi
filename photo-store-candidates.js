@@ -1,4 +1,4 @@
-import {validPoint,distanceKm} from './app/places.js';
+import {validPoint,distanceKm} from './places.js';
 export const photoNameKey=value=>String(value||'').normalize('NFKC').replace(/[\s・･ー－-]/g,'').toLowerCase();
 export function filterNearbyPhotoStores(candidates,point,name=''){
  if(!validPoint(point)||(point.latitude===0&&point.longitude===0))return [];
