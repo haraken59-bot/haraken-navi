@@ -1,6 +1,7 @@
 import {ReadOnlyClient} from './api.js';
 import {validPoint,distanceKm} from './places.js';
 import {PHOTO_BUCKET} from './meal-photo.js';
+import {filterNearbyPhotoStores} from './photo-store-candidates.js';
 export const canRestoreMealLearning=row=>row?.navi_metadata?.is_test===true&&row?.navi_metadata?.exclude_from_learning===true;
 export class MealClient extends ReadOnlyClient{
  async mealDeleteRequest(action,row){
@@ -65,7 +66,7 @@ export class MealClient extends ReadOnlyClient{
   const response=await this.request(url,{headers:{Authorization:'Bearer '+session.access_token},signal:AbortSignal.timeout(30000)});
   if(!response.ok)throw Error('写真周辺の店舗を取得できません。');
   const data=await response.json();if(this.session()?.user?.id!==session.user.id)throw Error('ログイン状態が変わりました。');
-  return (data.candidates||[]).filter(c=>validPoint(c)&&distanceKm(point,c)<=0.5&&!c.closed&&!c.permanently_closed).sort((a,b)=>{const match=c=>hint&&String(c.name||'').normalize('NFKC').includes(hint)?0:1;return match(a)-match(b)||distanceKm(point,a)-distanceKm(point,b);}).slice(0,20).map(c=>({name:c.name,latitude:c.latitude,longitude:c.longitude,address:c.address||c.hotpepper?.address||'',distance_m:Math.round(distanceKm(point,c)*1000)}));
+  return filterNearbyPhotoStores(data.candidates,point,hint);
  }
  async confirmStore(candidate){
   await this.verifyNaviOwner();const session=await this.fresh();
