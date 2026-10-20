@@ -1,13 +1,16 @@
+import {createMealSaveJournal} from './meal-save-journal.js';
+import {saveMealRecoverably} from './meal-save-recovery.js';
 import {chooseStore,photoPoint} from './store-link-ui.js';
 import {resolveMealStoreId} from './meal-store-id.js';
 import {officialStoreName} from './places.js';
 import {canRestoreMealLearning} from './meal-client.js';
-import {prepareMealPhoto,saveMealWithPhotos,downloadMealPhoto} from './meal-photo.js';
+import {prepareMealPhoto,downloadMealPhoto} from './meal-photo.js';
 import {buildMeal,parseMealText,gpsComparison,duplicateMeals} from './meal-record.js';
 import {normalizeStoreName} from './importer/records.js';
 import {shouldOfferPostSaveStoreLink} from './post-save-store-policy.js';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,onSaved,onRefresh,onDeleted=()=>{}}){
+ const journal=createMealSaveJournal();
  let photos=[],current=null,history=[],stores=[],pending=null,busy=false,photoBusy=false,account=getOwner();
  const form=$('record-form'),legacySubmit=form.onsubmit;
  const status=text=>$('meal-status').textContent=text;
@@ -17,7 +20,7 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
  form.insertAdjacentHTML('afterbegin',`<p>食事は既存の共通履歴へ保存します。食事日時と満足度は必須です。店・料理・写真・金額・感想は空欄でも記録できます。</p><label>ひとこと入力<input id="meal-talk" placeholder="ミックスフライ定食 880" maxlength="300"></label><button type="button" id="meal-parse" class="secondary">入力欄に反映</button><p class="muted">「かちかち山へ行きました」→「4」→「ミックスフライ定食 880」の順でも入力できます。内容を確認してから保存してください。</p><div class="grid"><label>食事日時<input id="meal-date" type="datetime-local"></label><label>料理ジャンル<select id="meal-genre"><option>不明</option>${['定食','ラーメン','うどん','そば','寿司','焼き鳥','中華','カレー','丼','洋食','居酒屋料理','軽食','その他'].map(x=>'<option>'+x+'</option>').join('')}</select></label></div>`);
  $('actual-store').insertAdjacentHTML('afterend','<select id="meal-store-id" aria-label="既存店舗"><option value="">店名で記録（店舗マスタは変更しません）</option></select>');
  $('change-reason').closest('label').insertAdjacentHTML('afterend',`<label>食事の感想・コメント<textarea id="meal-comment" maxlength="2000" placeholder="味は美味しかった。量がもう少しあれば5。"></textarea></label><label>同行者・状況（任意）<input id="meal-companion" maxlength="200"></label><div class="grid"><label>写真を選ぶ<input id="meal-files" type="file" accept="image/*" multiple></label><label>カメラで撮る<input id="meal-camera" type="file" accept="image/*" capture="environment"></label></div><p class="muted">最大5枚・1枚20MB／合計50MBまで。原画を非公開で保存し、履歴には軽量画像を表示します。写真GPSなしでも保存できます。</p><div id="meal-photos"></div><button id="meal-gps" type="button" class="secondary">記録時の現在地を取得</button><p id="meal-gps-status">現在地は未取得です。写真GPS・店舗GPSと別々に保存します。</p>`);
- form.insertAdjacentHTML('afterend','<p id="meal-status" role="status"></p><p id="meal-delete-status" role="status"></p><button type="button" id="meal-delete-retry" hidden>未完了の写真削除を再試行</button><div id="meal-cloud-history"></div><button id="meal-more" class="quiet" hidden>過去の食事をさらに表示</button>');
+ form.insertAdjacentHTML('afterend','<p id="meal-status" role="status"></p><button type="button" id="meal-save-recovery" hidden>未確認の保存を確認・再試行</button><p id="meal-delete-status" role="status"></p><button type="button" id="meal-delete-retry" hidden>未完了の写真削除を再試行</button><div id="meal-cloud-history"></div><button id="meal-more" class="quiet" hidden>過去の食事をさらに表示</button>');
 
  const nowInput=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};$('meal-date').value=nowInput();
  const invalidate=()=>{if(!busy)pending=null;};form.addEventListener('input',invalidate);form.addEventListener('change',invalidate);
@@ -81,12 +84,13 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
  form.onsubmit=guard(async e=>{e.preventDefault();if($('actual-kind').value==='action')return legacySubmit(e);if(busy)return;if(photoBusy)throw Error('写真の確認が終わるまでお待ちください。');if(!getClient()?.session())throw Error('共通履歴への保存には「接続・設定」からログインしてください。');
   const button=form.querySelector('button[type=submit]'),startOwner=getOwner();busy=true;button.disabled=true;
   try{
+   const stored=await journal.read(startOwner);if(startOwner!==getOwner())throw Error('ログイン状態が変わりました。');if(stored)pending=stored.meal;
    if(!pending){const input={eaten_at:$('meal-date').value,store_name:$('actual-store').value,store_id:resolveMealStoreId(stores,$('meal-store-id').value,$('actual-store').value,getDecision()?.latest_choice),dish_name:$('actual-dish').value,amount_jpy:$('actual-amount').value,satisfaction:$('actual-rating').value,comment:$('meal-comment').value,genre:$('meal-genre').value,companion:$('meal-companion').value,change_reason:[$('change-reason-type').value,$('change-reason').value].filter(Boolean).join('：'),exclude_from_learning:false};pending=buildMeal(input,{photos,current,store:selectedStore(),decision:getDecision(),context:getContext(),isTest:getTest()});const dup=duplicateMeals(pending,history);if(dup.length){pending=null;throw Error('同じ時間帯・店舗の記録があります。共通の食事履歴を確認してください。');}}
-   const saved=pending;status('共通履歴へ保存しています…');await saveMealWithPhotos(getClient(),saved,photos);
+   status('共通履歴へ保存しています…');const result=await saveMealRecoverably({client:getClient(),journal,owner:startOwner,meal:pending,photos,isCurrent:()=>getOwner()===startOwner,approveRetry:()=>confirm('前回の保存結果をまだ確認できません。同じ記録ID・内容で再試行します。現在の入力変更は適用されません。続けますか？')});const saved=result.meal;
    if(startOwner!==getOwner())throw Error('保存中にアカウントが変わりました。元のアカウントで履歴を確認してください。');
-   pending=null;photos=[];current=null;form.reset();$('meal-date').value=nowInput();$('meal-gps-status').textContent='現在地は未取得です。写真GPS・店舗GPSと別々に保存します。';showPhotos();
+   $('meal-save-recovery').hidden=true;pending=null;photos=[];current=null;form.reset();$('meal-date').value=nowInput();$('meal-gps-status').textContent='現在地は未取得です。写真GPS・店舗GPSと別々に保存します。';showPhotos();
    try{
-    await onSaved(saved);await onRefresh();await reload();
+    if(!result.recovered)await onSaved(saved);await onRefresh();await reload();
     status('共通の食事履歴に保存しました。'+(saved.navi_metadata.exclude_from_learning?'学習には使いません。':'次回の推薦に反映します。'));
     // Only manually named, unlinked meals need post-save photo-GPS identification.
     // A recommended venue is already known to the decision; never replace it from GPS alone.
@@ -102,9 +106,12 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
      }catch{status('食事記録は保存済みです。店舗候補の確認は履歴の「店舗を関連付け」から再試行できます。');}
     }
    }catch{status('クラウド保存は完了しました。履歴の再取得に失敗したため「履歴を再取得」を押してください。再登録は不要です。');}
-  }finally{busy=false;button.disabled=false;}
+  }finally{busy=false;button.disabled=false;void showPendingSave();}
  });
- return {async refresh(){if(account!==getOwner()){deletionNotice(0);account=getOwner();photos=[];current=null;history=[];pending=null;form.reset();$('meal-date').value=nowInput();showPhotos();renderHistory();}if(!getClient()?.session()){history=[];renderHistory();return;}await reload();void resumeDeletions();stores=await getClient().stores();$('meal-store-id').innerHTML='<option value="">店名で記録（店舗マスタは変更しません）</option>'+stores.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} ${esc(s.area)}</option>`).join('');}};
+ async function showPendingSave(){const who=getOwner();if(!getClient()?.session()){$('meal-save-recovery').hidden=true;return;}try{const entry=await journal.read(who);if(who!==getOwner())return;$('meal-save-recovery').hidden=!entry;if(entry)status('結果未確認の保存があります。新規保存は停止し、前回の記録を確認・再試行します。');}catch{if(who===getOwner())status('端末の保存待ち領域を確認できません。保存は送信前に停止します。');}}
+ $('meal-save-recovery').onclick=()=>{if(!busy){$('actual-kind').value='store';void form.onsubmit({preventDefault(){}});}};
+ void showPendingSave();
+ return {async refresh(){void showPendingSave();if(account!==getOwner()){deletionNotice(0);account=getOwner();photos=[];current=null;history=[];pending=null;form.reset();$('meal-date').value=nowInput();showPhotos();renderHistory();}if(!getClient()?.session()){history=[];renderHistory();return;}await reload();void resumeDeletions();stores=await getClient().stores();$('meal-store-id').innerHTML='<option value="">店名で記録（店舗マスタは変更しません）</option>'+stores.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} ${esc(s.area)}</option>`).join('');}};
 }
 
 
