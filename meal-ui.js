@@ -1,4 +1,5 @@
 import {chooseStore,photoPoint} from './store-link-ui.js';
+import {resolveMealStoreId} from './meal-store-id.js';
 import {officialStoreName} from './places.js';
 import {canRestoreMealLearning} from './meal-client.js';
 import {prepareMealPhoto,saveMealWithPhotos,downloadMealPhoto} from './meal-photo.js';
@@ -79,7 +80,7 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
  form.onsubmit=guard(async e=>{e.preventDefault();if($('actual-kind').value==='action')return legacySubmit(e);if(busy)return;if(photoBusy)throw Error('写真の確認が終わるまでお待ちください。');if(!getClient()?.session())throw Error('共通履歴への保存には「接続・設定」からログインしてください。');
   const button=form.querySelector('button[type=submit]'),startOwner=getOwner();busy=true;button.disabled=true;
   try{
-   if(!pending){const input={eaten_at:$('meal-date').value,store_name:$('actual-store').value,store_id:stores.find(s=>s.id===$('meal-store-id').value&&normalizeStoreName(s.name)===normalizeStoreName($('actual-store').value))?.id||null,dish_name:$('actual-dish').value,amount_jpy:$('actual-amount').value,satisfaction:$('actual-rating').value,comment:$('meal-comment').value,genre:$('meal-genre').value,companion:$('meal-companion').value,change_reason:[$('change-reason-type').value,$('change-reason').value].filter(Boolean).join('：'),exclude_from_learning:false};pending=buildMeal(input,{photos,current,store:selectedStore(),decision:getDecision(),context:getContext(),isTest:getTest()});const dup=duplicateMeals(pending,history);if(dup.length){pending=null;throw Error('同じ時間帯・店舗の記録があります。共通の食事履歴を確認してください。');}}
+   if(!pending){const input={eaten_at:$('meal-date').value,store_name:$('actual-store').value,store_id:resolveMealStoreId(stores,$('meal-store-id').value,$('actual-store').value,getDecision()?.latest_choice),dish_name:$('actual-dish').value,amount_jpy:$('actual-amount').value,satisfaction:$('actual-rating').value,comment:$('meal-comment').value,genre:$('meal-genre').value,companion:$('meal-companion').value,change_reason:[$('change-reason-type').value,$('change-reason').value].filter(Boolean).join('：'),exclude_from_learning:false};pending=buildMeal(input,{photos,current,store:selectedStore(),decision:getDecision(),context:getContext(),isTest:getTest()});const dup=duplicateMeals(pending,history);if(dup.length){pending=null;throw Error('同じ時間帯・店舗の記録があります。共通の食事履歴を確認してください。');}}
    const saved=pending;status('共通履歴へ保存しています…');await saveMealWithPhotos(getClient(),saved,photos);
    if(startOwner!==getOwner())throw Error('保存中にアカウントが変わりました。元のアカウントで履歴を確認してください。');
    pending=null;photos=[];current=null;form.reset();$('meal-date').value=nowInput();$('meal-gps-status').textContent='現在地は未取得です。写真GPS・店舗GPSと別々に保存します。';showPhotos();
