@@ -1,9 +1,11 @@
 import {chooseStore,photoPoint} from './store-link-ui.js';
+import {resolveMealStoreId} from './meal-store-id.js';
 import {officialStoreName} from './places.js';
 import {canRestoreMealLearning} from './meal-client.js';
 import {prepareMealPhoto,saveMealWithPhotos,downloadMealPhoto} from './meal-photo.js';
 import {buildMeal,parseMealText,gpsComparison,duplicateMeals} from './meal-record.js';
 import {normalizeStoreName} from './importer/records.js';
+import {shouldOfferPostSaveStoreLink} from './post-save-store-policy.js';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,onSaved,onRefresh,onDeleted=()=>{}}){
  let photos=[],current=null,history=[],stores=[],pending=null,busy=false,photoBusy=false,account=getOwner();
@@ -79,11 +81,27 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
  form.onsubmit=guard(async e=>{e.preventDefault();if($('actual-kind').value==='action')return legacySubmit(e);if(busy)return;if(photoBusy)throw Error('写真の確認が終わるまでお待ちください。');if(!getClient()?.session())throw Error('共通履歴への保存には「接続・設定」からログインしてください。');
   const button=form.querySelector('button[type=submit]'),startOwner=getOwner();busy=true;button.disabled=true;
   try{
-   if(!pending){const input={eaten_at:$('meal-date').value,store_name:$('actual-store').value,store_id:stores.find(s=>s.id===$('meal-store-id').value&&normalizeStoreName(s.name)===normalizeStoreName($('actual-store').value))?.id||null,dish_name:$('actual-dish').value,amount_jpy:$('actual-amount').value,satisfaction:$('actual-rating').value,comment:$('meal-comment').value,genre:$('meal-genre').value,companion:$('meal-companion').value,change_reason:[$('change-reason-type').value,$('change-reason').value].filter(Boolean).join('：'),exclude_from_learning:false};pending=buildMeal(input,{photos,current,store:selectedStore(),decision:getDecision(),context:getContext(),isTest:getTest()});const dup=duplicateMeals(pending,history);if(dup.length){pending=null;throw Error('同じ時間帯・店舗の記録があります。共通の食事履歴を確認してください。');}}
+   if(!pending){const input={eaten_at:$('meal-date').value,store_name:$('actual-store').value,store_id:resolveMealStoreId(stores,$('meal-store-id').value,$('actual-store').value,getDecision()?.latest_choice),dish_name:$('actual-dish').value,amount_jpy:$('actual-amount').value,satisfaction:$('actual-rating').value,comment:$('meal-comment').value,genre:$('meal-genre').value,companion:$('meal-companion').value,change_reason:[$('change-reason-type').value,$('change-reason').value].filter(Boolean).join('：'),exclude_from_learning:false};pending=buildMeal(input,{photos,current,store:selectedStore(),decision:getDecision(),context:getContext(),isTest:getTest()});const dup=duplicateMeals(pending,history);if(dup.length){pending=null;throw Error('同じ時間帯・店舗の記録があります。共通の食事履歴を確認してください。');}}
    const saved=pending;status('共通履歴へ保存しています…');await saveMealWithPhotos(getClient(),saved,photos);
    if(startOwner!==getOwner())throw Error('保存中にアカウントが変わりました。元のアカウントで履歴を確認してください。');
    pending=null;photos=[];current=null;form.reset();$('meal-date').value=nowInput();$('meal-gps-status').textContent='現在地は未取得です。写真GPS・店舗GPSと別々に保存します。';showPhotos();
-   try{await onSaved(saved);await onRefresh();await reload();status('共通の食事履歴に保存しました。'+(saved.navi_metadata.exclude_from_learning?'学習には使いません。':'次回の推薦に反映します。'));}catch{status('クラウド保存は完了しました。履歴の再取得に失敗したため「履歴を再取得」を押してください。再登録は不要です。');}
+   try{
+    await onSaved(saved);await onRefresh();await reload();
+    status('共通の食事履歴に保存しました。'+(saved.navi_metadata.exclude_from_learning?'学習には使いません。':'次回の推薦に反映します。'));
+    // Only manually named, unlinked meals need post-save photo-GPS identification.
+    // A recommended venue is already known to the decision; never replace it from GPS alone.
+    const row=history.find(r=>r.id===saved.id);
+    const point=photoPoint(saved.navi_metadata);
+    if(row&&shouldOfferPostSaveStoreLink(saved)&&startOwner===getOwner()){
+     try{
+      await chooseStore({client:getClient(),point,initialName:saved.unlinked_store_name,allowManual:false,isCurrent:()=>startOwner===getOwner()&&!!getClient()?.session(),onSelect:async store=>{
+       await getClient().editMeal(row,{store_id:store.id});
+       await onRefresh();await reload();
+       status('保存済みの食事履歴に店舗を関連付けました。');
+      }});
+     }catch{status('食事記録は保存済みです。店舗候補の確認は履歴の「店舗を関連付け」から再試行できます。');}
+    }
+   }catch{status('クラウド保存は完了しました。履歴の再取得に失敗したため「履歴を再取得」を押してください。再登録は不要です。');}
   }finally{busy=false;button.disabled=false;}
  });
  return {async refresh(){if(account!==getOwner()){deletionNotice(0);account=getOwner();photos=[];current=null;history=[];pending=null;form.reset();$('meal-date').value=nowInput();showPhotos();renderHistory();}if(!getClient()?.session()){history=[];renderHistory();return;}await reload();void resumeDeletions();stores=await getClient().stores();$('meal-store-id').innerHTML='<option value="">店名で記録（店舗マスタは変更しません）</option>'+stores.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} ${esc(s.area)}</option>`).join('');}};

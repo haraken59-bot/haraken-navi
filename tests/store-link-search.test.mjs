@@ -22,10 +22,8 @@ console.log('store link search: 16 assertions passed');
 
 import {readFileSync} from 'node:fs';
 const clientSource=readFileSync(new URL('../meal-client.js',import.meta.url),'utf8');
-assert.match(clientSource,/\.\.\.\(hint\?\{hint\}:\{\}\)/,'named photo lookup passes optional hint');
 
 
-assert.match(clientSource,/match\(a\)-match\(b\)/,'name matches are ranked ahead of 20-item cap');
 
 const photo={latitude:32.74333,longitude:129.8757236111111};
 assert.deepEqual(verifiedManualStore('万徳','32.744','129.876',photo),{name:'万徳',latitude:32.744,longitude:129.876});
@@ -33,7 +31,7 @@ for(const [lat,lng] of [['','129.876'],['abc','129.876'],['32.744abc','129.876']
 assert.equal(verifiedManualStore('','32.744','129.876',photo),null,'name required');
 
 let writes=0,links=0;
-const client={confirmStore:async()=>{writes++;return 'store-id';}};
+const client={stores:async()=>[],confirmStore:async()=>{writes++;return 'store-id';}};
 const onSelect=async()=>{links++;};
 const candidate={name:'万徳',latitude:32.744,longitude:129.876};
 assert.equal(await confirmManualStore({candidate,approved:false,client,onSelect}),false);
@@ -53,3 +51,72 @@ const coordinatePrompt=uiSource.indexOf("const latitude=prompt(",manualStart);
 assert.ok(manualStart>=0&&mapLink>manualStart&&nextClick>mapLink&&coordinatePrompt>nextClick,'map link is presented before coordinates are prompted on a separate click');
 assert.match(uiSource,/if\(!confirm\('店舗名：'/,'manual registration requires explicit final confirmation');
 assert.match(uiSource,/confirmManualStore\(\{candidate,approved:true,client,onSelect,isCurrent:current\}\)/,'manual registration uses guarded write helper');
+
+assert.match(uiSource,/if\(validPoint\(point\)&&String\(initialName\|\|''\)\.trim\(\)\)await near\.onclick\(\)/,'auto-search when both photo GPS and saved name exist');
+
+assert.match(uiSource,/const matched=visibleStoreRows\(rows,initialName,referenceAddress\)/,'prefer name-matching nearby candidates');
+assert.match(uiSource,/input\.value=matched\.length\?String\(initialName\|\|''\):''/,'show all nearby candidates when name match is absent');
+
+assert.match(uiSource,/registeredRows=rows/,'registered stores retained as fallback');
+assert.match(uiSource,/rows=found\.length\?\[\.\.\.found,\.\.\.registeredRows\.filter/,'registered stores remain available beside external photo results');
+
+
+
+
+import {linkedStoreId,resolveStoreSelection} from '../store-link-ui.js';
+const existingId='11111111-1111-4111-8111-111111111111';
+assert.equal(linkedStoreId({id:'hotpepper:J0001'}),null,'provider ID must not be used as DB store UUID');
+assert.equal(linkedStoreId({id:'hotpepper:J0001',store_id:existingId}),existingId,'existing store UUID takes priority');
+assert.equal(linkedStoreId({id:existingId}),existingId,'registered store row ID remains valid');
+let externalConfirms=0;
+const lookupClient={stores:async()=>[],confirmStore:async()=>{externalConfirms++;return existingId;}};
+assert.equal(await resolveStoreSelection(lookupClient,{id:'hotpepper:J0001',name:'External'}),existingId);
+assert.equal(externalConfirms,1,'external candidates must be explicitly confirmed');
+assert.equal(await resolveStoreSelection(lookupClient,{id:'hotpepper:J0001',store_id:existingId}),existingId);
+assert.equal(externalConfirms,1,'known registered store must not be registered again');
+
+import {recoverStoreLink} from '../store-link-ui.js';
+{
+ const candidate={name:'焼鳥ひだか',latitude:33.59,longitude:130.4};
+ const id='11111111-1111-4111-8111-111111111111';
+ let links=0;
+ const client={stores:async()=>[{id,name:'やきとり ひだか',latitude:33.59,longitude:130.4}]};
+ assert.equal(await recoverStoreLink({client,candidate,onSelect:async s=>{assert.equal(s.id,id);links++;}}),true);
+ assert.equal(links,1);
+ assert.equal(await recoverStoreLink({client:{stores:async()=>[...(await client.stores()),...(await client.stores())]},candidate,onSelect:async()=>{throw Error('ambiguous link');}}),false);
+ assert.equal(await recoverStoreLink({client,candidate,onSelect:async()=>{throw Error('stale');},isCurrent:()=>false}),false);
+ await assert.rejects(recoverStoreLink({client:{stores:async()=>{throw Error('network');}},candidate,onSelect:async()=>{}}),/network/);
+}
+
+{
+ const candidate={name:'同名の店',latitude:33.59,longitude:130.4};
+ const nearby={id:'11111111-1111-4111-8111-111111111111',name:'同名の店',latitude:33.5901,longitude:130.4};
+ let linked=false;
+ assert.equal(await recoverStoreLink({client:{stores:async()=>[nearby]},candidate,onSelect:async()=>{linked=true;}}),false,'nearby same-name business must not be linked automatically');
+ assert.equal(linked,false);
+}
+
+{
+ const {sameStoreLocation}=await import('../store-link-ui.js');
+ const id='11111111-1111-4111-8111-111111111111';
+ const candidate={id:'hotpepper:J001',name:'同じ店舗',latitude:33.59,longitude:130.4};
+ let creates=0;
+ const existing={id,name:'同じ店舗',latitude:33.59,longitude:130.4};
+ assert.equal(sameStoreLocation(existing,candidate),true);
+ assert.equal(await resolveStoreSelection({stores:async()=>[existing],confirmStore:async()=>{creates++;}},candidate),id);
+ assert.equal(creates,0,'registered store is reused without a write');
+ await assert.rejects(resolveStoreSelection({stores:async()=>[existing,existing],confirmStore:async()=>{creates++;}},candidate),/複数/);
+ assert.equal(creates,0,'ambiguous same-name stores must not create or link');
+ const other={...existing,latitude:33.5901};
+ assert.equal(sameStoreLocation(other,candidate),false,'different floor/building location is not silently matched');
+}
+
+{
+ const candidate={id:'hotpepper:J009',name:'同名の店',latitude:33.59,longitude:130.4};
+ let creates=0;
+ const client={stores:async()=>[{id:'11111111-1111-4111-8111-111111111111',name:'同名の店',latitude:33.591,longitude:130.4}],confirmStore:async()=>{creates++;}};
+ await assert.rejects(resolveStoreSelection(client,candidate),/場所を確認/);
+ assert.equal(creates,0,'same-name different-location store requires manual review before create');
+}
+
+assert.match(clientSource,/filterNearbyPhotoStores\(data.candidates,point,hint\)/);

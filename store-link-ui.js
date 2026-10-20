@@ -26,21 +26,53 @@ export function verifiedManualStore(name,latitude,longitude,photo){
  if(validPoint(photo)&&Math.abs(candidate.latitude-photo.latitude)<1e-8&&Math.abs(candidate.longitude-photo.longitude)<1e-8)return null;
  return candidate;
 }
+const storeUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function linkedStoreId(candidate){
+ return [candidate?.store_id,candidate?.id].find(id=>typeof id==='string'&&storeUuid.test(id))||null;
+}
+export async function resolveStoreSelection(client,candidate,isCurrent=()=>true){
+ if(!isCurrent())throw Error('ログイン状態が変わりました。');
+ const existing=linkedStoreId(candidate);
+ if(existing)return existing;
+ // Reuse a uniquely matching registered store before any new registration.
+ const stores=await client.stores();
+ if(!isCurrent())throw Error('ログイン状態が変わりました。');
+ const matches=stores.filter(s=>sameStoreLocation(s,candidate));
+ if(matches.length===1)return matches[0].id;
+ if(matches.length>1)throw Error('同名の登録店舗が複数あります。店舗を確認してください。');
+ if(stores.some(s=>storeNameKey(s.name)===storeNameKey(candidate.name)))throw Error('同名の登録店舗があります。場所を確認してから紐付けしてください。');
+ return client.confirmStore(candidate);
+}
+export function sameStoreLocation(store,candidate){
+ return storeNameKey(store?.name)===storeNameKey(candidate?.name)&&validPoint(store)&&validPoint(candidate)&&Math.abs(store.latitude-candidate.latitude)<0.00001&&Math.abs(store.longitude-candidate.longitude)<0.00001;
+}
+export async function recoverStoreLink({client,candidate,onSelect,isCurrent=()=>true}){
+ if(!isCurrent())return false;
+ // A previous confirm may have committed before the response was lost.
+ // Re-read the registered stores; do not issue a second registration blindly.
+ const stores=await client.stores();
+ if(!isCurrent())return false;
+ const matching=stores.filter(s=>sameStoreLocation(s,candidate));
+ if(matching.length!==1)return false;
+ await onSelect({...candidate,id:matching[0].id});
+ return isCurrent();
+}
 export async function confirmManualStore({candidate,approved,client,onSelect,isCurrent=()=>true}){
  if(!candidate||approved!==true||!isCurrent())return false;
- const id=await client.confirmStore(candidate);
+ const id=await resolveStoreSelection(client,candidate,isCurrent);
  if(!isCurrent())return false;
  await onSelect({...candidate,id});
  return true;
 }
-export async function chooseStore({client,point,onSelect,initialName='',referenceAddress='',isCurrent=()=>true}){
+export async function chooseStore({client,point,onSelect,initialName='',referenceAddress='',allowManual=true,isCurrent=()=>true}){
  if(!client?.session())throw Error('この機能はハラケン本人専用です');
  const dialog=document.createElement('dialog');dialog.innerHTML='<h3>店舗を確認して関連付け</h3><p>GPSだけで店舗を確定しません。店名・所在地を確認してください。</p><input aria-label="店舗名で絞り込み" placeholder="店舗名で絞り込み"><button type="button" data-near>写真の500m以内を検索</button><button type="button" data-manual>候補にない店舗を手動確認</button><p role="status"></p><div data-list></div><button type="button" data-close>閉じる</button>';
- document.body.append(dialog);dialog.showModal();const status=dialog.querySelector('[role=status]'),list=dialog.querySelector('[data-list]'),input=dialog.querySelector('input'),near=dialog.querySelector('[data-near]');let rows=[],busy=false;input.value=String(initialName||'').slice(0,120);
+ if(!allowManual)dialog.querySelector('[data-manual]').remove();
+ document.body.append(dialog);dialog.showModal();const status=dialog.querySelector('[role=status]'),list=dialog.querySelector('[data-list]'),input=dialog.querySelector('input'),near=dialog.querySelector('[data-near]');let rows=[],registeredRows=[],busy=false;input.value=String(initialName||'').slice(0,120);
  const current=()=>dialog.isConnected&&isCurrent();
  const draw=()=>{list.innerHTML=visibleStoreRows(rows,input.value,referenceAddress).map(({r,i,rank})=>'<p><button type="button" data-select="'+i+'">'+escape(r.name)+'</button> '+escape(r.address||r.area||'')+(r.distance_m!=null?' / 約'+r.distance_m+'m':'')+(rank.exact?' / 店名一致':'')+(rank.addressMatch?' / 所在地一致':'')+'</p>').join('');};
  dialog.querySelector('[data-close]').onclick=()=>{if(!busy)dialog.close();};dialog.onclose=()=>dialog.remove();dialog.oncancel=e=>{if(busy)e.preventDefault();};input.oninput=()=>{draw();status.textContent=storeListStatus(rows,input.value);};
- dialog.querySelector('[data-manual]').onclick=async()=>{if(busy||!current())return;
+ if(allowManual)dialog.querySelector('[data-manual]').onclick=async()=>{if(busy||!current())return;
   const name=String(input.value||initialName||'').trim().slice(0,120);
   const address=prompt('店舗の住所を入力してください（地図で確認するために使用。DBには保存されません）。','');
   if(address===null)return;
@@ -54,13 +86,14 @@ export async function chooseStore({client,point,onSelect,initialName='',referenc
   const candidate=verifiedManualStore(name,latitude,longitude,point);
   if(!candidate){status.textContent='店舗の緯度・経度が不正、または写真GPSと同じです。登録していません。';return;}
   if(!confirm('店舗名：'+name+'\n住所（確認用）：'+address.trim()+'\n緯度：'+candidate.latitude+'\n経度：'+candidate.longitude+'\n\n地図上の店舗位置と一致していますか？登録して食事に関連付けますか？'))return;
-  busy=true;try{const saved=await confirmManualStore({candidate,approved:true,client,onSelect,isCurrent:current});if(saved)dialog.close();}catch{status.textContent='店舗登録または関連付けに失敗しました。入力とログイン状態を確認してください。';}finally{busy=false;}
+  busy=true;try{const saved=await confirmManualStore({candidate,approved:true,client,onSelect,isCurrent:current});if(saved)dialog.close();}catch{try{if(await recoverStoreLink({client,candidate,onSelect,isCurrent:current})){dialog.close();return;}}catch{}status.textContent='関連付けの完了を確認できません。履歴と登録店舗を再取得し、同じ店舗を選び直してください。';}finally{busy=false;}
   };
 
  };
  near.hidden=!validPoint(point);
- near.onclick=async()=>{if(busy)return;busy=true;near.disabled=true;status.textContent='写真周辺を検索しています…';try{const found=await client.nearbyPhotoStores(point,initialName);if(!current())return;rows=found;input.value='';draw();status.textContent=rows.length?'候補を選び、確認してください。':'写真周辺に候補がありません。店舗ID未設定のまま保存できます。';}catch{status.textContent='候補を取得できません。未連携のまま保存できます。';}finally{busy=false;near.disabled=false;}};
- list.onclick=async e=>{const button=e.target.closest('[data-select]');if(!button||busy||!current())return;const candidate=rows[Number(button.dataset.select)];if(!candidate||!confirm('「'+candidate.name+'」をこの食事の店舗として関連付けますか？'))return;busy=true;button.disabled=true;
- try{const id=candidate.id||await client.confirmStore(candidate);if(!current())return;await onSelect({...candidate,id});dialog.close();}catch{status.textContent='関連付けを確認できません。履歴・店舗を再取得してください。';}finally{busy=false;button.disabled=false;}};
- try{rows=await client.stores();if(!current())return;draw();status.textContent=storeListStatus(rows,input.value);}catch{status.textContent='登録店舗を取得できません。';}
+ if(validPoint(point)&&String(initialName||'').trim())near.textContent='店名と写真位置から自動検索';
+ near.onclick=async()=>{if(busy)return;busy=true;near.disabled=true;status.textContent='写真周辺を検索しています…';try{const found=await client.nearbyPhotoStores(point,initialName);if(!current())return;rows=found.length?[...found,...registeredRows.filter(s=>!found.some(c=>linkedStoreId(c)===s.id||sameStoreLocation(c,s)))]:registeredRows;const matched=visibleStoreRows(rows,initialName,referenceAddress);input.value=matched.length?String(initialName||''):'';draw();status.textContent=matched.length?'店名が一致する候補を優先表示しています。店舗を確認してください。':rows.length?'店名一致の候補はありません。写真周辺の店舗を表示しています。' :registeredRows.length?'写真周辺に候補がありません。登録済み店舗を表示しています。該当店舗がなければ未連携のまま保存できます。':'写真周辺に候補がありません。店舗ID未設定のまま保存できます。';}catch{status.textContent='候補を取得できません。未連携のまま保存できます。';}finally{busy=false;near.disabled=false;}};
+ list.onclick=async e=>{const button=e.target.closest('[data-select]');if(!button||busy||!current())return;const candidate=rows[Number(button.dataset.select)];if(!candidate||!confirm('店舗名：'+candidate.name+'\n所在地：'+(candidate.address||candidate.area||'不明')+'\n'+(candidate.distance_m!=null?'写真位置から約'+candidate.distance_m+'m\n':'')+'\nこの店舗で間違いありませんか？'))return;busy=true;button.disabled=true;
+ try{const id=await resolveStoreSelection(client,candidate);if(!current())return;await onSelect({...candidate,id});dialog.close();}catch{try{if(await recoverStoreLink({client,candidate,onSelect,isCurrent:current})){dialog.close();return;}}catch{}status.textContent='関連付けを確認できません。履歴・登録店舗を再取得して同じ店舗を選び直してください。';}finally{busy=false;button.disabled=false;}};
+ try{rows=await client.stores();registeredRows=rows;if(!current())return;draw();status.textContent=storeListStatus(rows,input.value);if(validPoint(point)&&String(initialName||'').trim())await near.onclick();}catch{status.textContent='登録店舗を取得できません。';}
 }
