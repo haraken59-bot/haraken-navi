@@ -53,3 +53,8 @@ const coordinatePrompt=uiSource.indexOf("const latitude=prompt(",manualStart);
 assert.ok(manualStart>=0&&mapLink>manualStart&&nextClick>mapLink&&coordinatePrompt>nextClick,'map link is presented before coordinates are prompted on a separate click');
 assert.match(uiSource,/if\(!confirm\('店舗名：'/,'manual registration requires explicit final confirmation');
 assert.match(uiSource,/confirmManualStore\(\{candidate,approved:true,client,onSelect,isCurrent:current\}\)/,'manual registration uses guarded write helper');
+
+// Post-save confirmation must not offer manual creation when allowManual is false.
+const linkUiSource=readFileSync(new URL('../store-link-ui.js',import.meta.url),'utf8');
+assert.match(linkUiSource,/allowManual=true/,'manual registration is opt-in configurable');
+assert.match(linkUiSource,/if\(!allowManual\)dialog\.querySelector\('\[data-manual\]'\)\.remove\(\)/,'post-save flow hides manual store creation');
