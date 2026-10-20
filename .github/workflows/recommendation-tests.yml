@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - fix/specific-food-preference-20261018
+      - test/photo-store-policy-isolated-20261020
   pull_request:
     paths:
       - 'domain.js'
@@ -28,3 +29,6 @@ jobs:
 
       - name: Store linking name search tests
         run: node --experimental-default-type=module --test tests/store-link-search.test.mjs
+
+      - name: Photo store candidate and post-save policy tests
+        run: node --experimental-default-type=module --test tests/photo-store-candidates.test.mjs tests/post-save-store-policy.test.mjs
