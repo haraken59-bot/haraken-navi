@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - fix/specific-food-preference-20261018
+      - fix/meal-store-id-isolated-20261020
   pull_request:
     paths:
       - 'domain.js'
@@ -28,3 +29,6 @@ jobs:
 
       - name: Store linking name search tests
         run: node --experimental-default-type=module --test tests/store-link-search.test.mjs
+
+      - name: Safe meal store ID tests
+        run: node --experimental-default-type=module --test tests/meal-store-id.test.mjs
