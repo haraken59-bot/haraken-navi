@@ -25,7 +25,7 @@ const clientSource=readFileSync(new URL('../meal-client.js',import.meta.url),'ut
 assert.match(clientSource,/\.\.\.\(hint\?\{hint\}:\{\}\)/,'named photo lookup passes optional hint');
 
 
-assert.match(clientSource,/match\(a\)-match\(b\)/,'name matches are ranked ahead of 20-item cap');
+assert.match(clientSource,/filterNearbyPhotoStores\(data\.candidates,point,hint\)/,'photo candidates are ranked and capped by the tested shared helper');
 
 const photo={latitude:32.74333,longitude:129.8757236111111};
 assert.deepEqual(verifiedManualStore('万徳','32.744','129.876',photo),{name:'万徳',latitude:32.744,longitude:129.876});
