@@ -33,9 +33,10 @@ export async function confirmManualStore({candidate,approved,client,onSelect,isC
  await onSelect({...candidate,id});
  return true;
 }
-export async function chooseStore({client,point,onSelect,initialName='',referenceAddress='',isCurrent=()=>true}){
+export async function chooseStore({client,point,onSelect,initialName='',referenceAddress='',allowManual=true,isCurrent=()=>true}){
  if(!client?.session())throw Error('この機能はハラケン本人専用です');
  const dialog=document.createElement('dialog');dialog.innerHTML='<h3>店舗を確認して関連付け</h3><p>GPSだけで店舗を確定しません。店名・所在地を確認してください。</p><input aria-label="店舗名で絞り込み" placeholder="店舗名で絞り込み"><button type="button" data-near>写真の500m以内を検索</button><button type="button" data-manual>候補にない店舗を手動確認</button><p role="status"></p><div data-list></div><button type="button" data-close>閉じる</button>';
+ if(!allowManual)dialog.querySelector('[data-manual]').remove();
  document.body.append(dialog);dialog.showModal();const status=dialog.querySelector('[role=status]'),list=dialog.querySelector('[data-list]'),input=dialog.querySelector('input'),near=dialog.querySelector('[data-near]');let rows=[],busy=false;input.value=String(initialName||'').slice(0,120);
  const current=()=>dialog.isConnected&&isCurrent();
  const draw=()=>{list.innerHTML=visibleStoreRows(rows,input.value,referenceAddress).map(({r,i,rank})=>'<p><button type="button" data-select="'+i+'">'+escape(r.name)+'</button> '+escape(r.address||r.area||'')+(r.distance_m!=null?' / 約'+r.distance_m+'m':'')+(rank.exact?' / 店名一致':'')+(rank.addressMatch?' / 所在地一致':'')+'</p>').join('');};
