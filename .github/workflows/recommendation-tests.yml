@@ -5,6 +5,7 @@ on:
       - fix/specific-food-preference-20261018
       - test/photo-store-policy-isolated-20261020
       - test/photo-search-ui-isolated-20261020
+      - test/post-save-link-isolated-20261020
   pull_request:
     paths:
       - 'domain.js'
@@ -36,3 +37,6 @@ jobs:
 
       - name: Check photo lookup client syntax
         run: node --experimental-default-type=module --check meal-client.js
+
+      - name: Check post-save meal UI syntax
+        run: node --experimental-default-type=module --check meal-ui.js
