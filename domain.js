@@ -126,6 +126,8 @@ export function recommend(candidates,ctx,records=[],food={},events=[],now=new Da
   const travel=travelMinutes(c,ctx),stay=c.kind==='action'?0:ctx.mode==='drink'?(ctx.round===2?40:70):30;
   if(c.kind==='store'&&travel!=null&&travel*2+stay>maxMinutes)continue;
   const genre_fit=genreFit(c,requestedGenre(ctx),{now,owner:ctx.owner,history:food.meal_history||[],historyOwner:food.history_owner});if(genre_fit?.level==='mismatch')continue;
+  // An explicit dish request must have dish-specific evidence, not merely a broad noodle genre.
+  if(c.kind==='store'&&/うどん|udon/i.test(norm(ctx.desire||''))&&!specificDishMatch(c,ctx))continue;
   const match=desireMatch(c,ctx,{now,fit:genre_fit}),portion_fit=ctx.mode==='eat'?portionFit(c,ctx.portion):'neutral',past=learned.filter(r=>sameStore(c,r)&&(!r.dish_name||norm(r.dish_name)===norm(c.dish)));
   let rating=c.satisfaction??3,weight=1;for(const r of past){const w=ageFactor(r.created_at,365,now);rating+=r.satisfaction*w;weight+=w;}rating/=weight;
   const recentRows=[...(food.recent7||[]),...learned.map(r=>({eaten_at:r.created_at,dish_name:r.dish_name,genre:r.tags?.[0]}))].filter(r=>!r.eaten_at||new Date(r.eaten_at)<=now).sort((a,b)=>String(b.eaten_at||'').localeCompare(String(a.eaten_at||''))).slice(0,7);
