@@ -26,7 +26,7 @@ export function specificDishMatch(c,ctx){
  const groups=[/焼き?鳥|やきとり|焼鳥|yakitori/,/ラーメン|らーめん|ramen/,/焼肉|やきにく/,/ステーキ|steak/,/寿司|すし|鮨|sushi/,/うどん|udon/,/そば|蕎麦|soba/,/カレー|curry/,/餃子|ぎょうざ/,/チャーハン|炒飯|やきめし/];
  const requested=groups.find(re=>re.test(q));if(!requested)return 0;
  const evidence=[c.name,c.dish,c.menu,c.cuisine,c.hotpepper?.genre,c.hotpepper?.sub_genre,...(c.tags||[]),...(c.owner_genres||[])].filter(Boolean).map(norm);
- return evidence.some(x=>requested.test(x))?1:0;
+ return evidence.some(x=>requested.test(x)&&!(requested.source==='うどん|udon'&&/(?:うどん|udon)(?:の)?(?:提供)?(?:は)?(?:なし|無し|ありません|していません|終了|中止|休止|取り扱いなし)/i.test(x)))?1:0;
 }
 export function trustedValue(row,key){if(Object.hasOwn(row.confirmed_values||{},key))return row.confirmed_values[key];return row[key];}
 export function provenance(row,key){return Object.hasOwn(row.confirmed_values||{},key)?'本人確定':row.field_provenance?.[key]?.state==='estimated'?'推定':'確度未確認';}
