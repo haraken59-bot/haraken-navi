@@ -15,3 +15,9 @@ test('broad noodle wish does not exclude ramen by specific udon filter',()=>{
  const result=recommend([ramen],{...base,desire:'麺類'});
  assert.equal(result.ranked.some(c=>c.id==='ramen'),true);
 });
+
+test('explicit no-udon statement is not treated as udon availability',()=>{
+ const noUdon={...candidate('no-udon','ラーメン専門店',['麺']),menu:'うどんの提供なし'};
+ const result=recommend([noUdon],{...base,desire:'うどん'});
+ assert.equal(result.ranked.some(c=>c.id==='no-udon'),false);
+});
