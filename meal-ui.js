@@ -1,6 +1,6 @@
-import {chooseStore,photoPoint} from './store-link-ui.js';
+import {chooseStore,photoPoint} from './store-link-ui.js?v=20261022-photo500m';
 import {officialStoreName} from './places.js';
-import {canRestoreMealLearning} from './meal-client.js';
+import {canRestoreMealLearning} from './meal-client.js?v=20261022-photo500m';
 import {prepareMealPhoto,saveMealWithPhotos,downloadMealPhoto} from './meal-photo.js';
 import {buildMeal,parseMealText,gpsComparison,duplicateMeals} from './meal-record.js';
 import {normalizeStoreName} from './importer/records.js';
@@ -68,7 +68,7 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
  $('meal-delete-retry').onclick=()=>void resumeDeletions();
  async function reload(reset=true){if(!getClient()?.session())return;const startOwner=getOwner();const rows=await getClient().historyPage(reset?0:history.length);if(startOwner!==getOwner())return;history=reset?rows:[...history,...rows];$('meal-more').hidden=rows.length<100;renderHistory();}
  $('meal-more').onclick=guard(()=>reload(false));
- $('meal-cloud-history').onclick=guard(async e=>{const link=e.target.closest('[data-link-store]');if(link&&!busy){const row=history.find(r=>r.id===link.dataset.linkStore),who=getOwner();if(!row)return;await chooseStore({client:getClient(),point:photoPoint(row.navi_metadata),initialName:row.store_name||'',isCurrent:()=>getOwner()===who&&!!getClient(),onSelect:async store=>{await getClient().editMeal(row,{store_id:store.id});await onRefresh();await reload();status('店舗を関連付けました。写真・食事内容は変更していません。');}});return;}const restore=e.target.closest('[data-restore-learning]');if(restore){
+ $('meal-cloud-history').onclick=guard(async e=>{const link=e.target.closest('[data-link-store]');if(link&&!busy){const row=history.find(r=>r.id===link.dataset.linkStore),who=getOwner();if(!row)return;await chooseStore({client:getClient(),point:photoPoint(row.navi_metadata),initialName:row.store_name||'',isCurrent:()=>getOwner()===who&&!!getClient(),onSelect:async store=>{await getClient().editMeal(row,{store_id:store.id,unlinked_store_name:null});await onRefresh();await reload();status('店舗を関連付けました。写真・食事内容は変更していません。');}});return;}const restore=e.target.closest('[data-restore-learning]');if(restore){
  const row=history.find(r=>r.id===restore.dataset.restoreLearning);
  if(busy||!canRestoreMealLearning(row)||!confirm('この記録を学習対象に戻しますか？'))return;
  const owner=getOwner();busy=true;restore.disabled=true;
