@@ -1,4 +1,4 @@
-import {prepare,createRow,thumbnail} from './importer/photos.js';
+import {prepare,createRow,thumbnail} from './importer/photos.js?v=20261025-camera-gps';
 export const PHOTO_BUCKET='navi-meal-originals';
 export const MAX_PHOTO_BYTES=20*1024*1024;
 export const MAX_MEAL_BYTES=50*1024*1024;
@@ -7,7 +7,7 @@ export async function prepareMealPhoto(file){
  if(file.size>MAX_PHOTO_BYTES)throw Error('原画は1枚20MBまでです。写真を選び直してください。');
  const row=await prepare(file,createRow(file),{keepOriginal:true});
  try{
-  const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});
+  let bitmap;try{bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});}catch{throw Error('写真を読み込めませんでした');}
   try{if(bitmap.width*bitmap.height>50_000_000)throw Error('5000万画素以下の写真を選んでください。');row.original_info={width:bitmap.width,height:bitmap.height,size:file.size,type:file.type,orientation:row.orientation};}finally{bitmap.close();}
   try{row.thumbnail=await thumbnail(file);}catch{row.thumbnail=null;row.preview_failed=true;}
   return row;

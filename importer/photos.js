@@ -1,5 +1,5 @@
 import exifr from "../vendor/exifr.mjs";
-import { inspectGps } from "./gps-diagnostics.js";
+import { inspectGps } from "./gps-diagnostics.js?v=20261025-camera-gps";
 import { inferPeriod, emptyClassification } from "./domain.js";
 export async function resize(file, max = 1280, quality = 0.8) {
   let bitmap;
@@ -34,25 +34,28 @@ export async function resize(file, max = 1280, quality = 0.8) {
 export async function prepare(file, row, {keepOriginal=false}={}) {
   if (file.size > 60 * 1024 * 1024)
     throw new Error("1枚60MB以下の写真を選択してください。");
+  let originalBytes;
+  try { originalBytes = await file.arrayBuffer(); }
+  catch { throw new Error('写真を読み込めませんでした'); }
+  const inspected = await inspectGps(file, undefined, originalBytes);
+  row.gps = inspected.gps;
+  row.gpsDiagnostic = inspected.diagnostic;
   row.fingerprint = [
     ...new Uint8Array(
-      await crypto.subtle.digest("SHA-256", await file.arrayBuffer()),
+      await crypto.subtle.digest("SHA-256", originalBytes),
     ),
   ]
     .map((v) => v.toString(16).padStart(2, "0"))
     .join("");
   let meta = null;
   try {
-    meta = await exifr.parse(file, {
+    meta = await exifr.parse(originalBytes, {
       pick: ["DateTimeOriginal", "CreateDate", "OffsetTimeOriginal", "Orientation"],
     });
   } catch {
     /* Missing EXIF is expected for screenshots. */
   }
   let date = meta?.DateTimeOriginal || meta?.CreateDate;
-  const inspected = await inspectGps(file);
-  row.gps = inspected.gps;
-  row.gpsDiagnostic = inspected.diagnostic;
   row.date_source = date
     ? "EXIF（時差情報なしはこの端末の時刻）"
     : file.lastModified

@@ -1,3 +1,13 @@
+## 2026-10-25 写真機能の公開差分切り出し：準備完了・未公開
+- 公開基準: ab777269a91dcc178b86829e04c27790feb561d7。GitHub mainとPages deployment 7237191827（success）が同SHA。原開発領域を保持し、work/camera-gps-release-20261025 / release/camera-gps-20261025へローカル隔離コピー。
+- 公開予定版20261025-camera-gps。製品差分8ファイル: meal-ui.jsの写真入力/表示/本人確認のみ、style.cssの写真カード/縦ボタンのみ、importer/photos.js、importer/gps-diagnostics.js、importer/jpeg-ref-diagnostics.js、meal-photo.js読込エラー表示、index.html/main.jsの参照版のみ。
+- 変更依存チェーンはindex→main→meal-ui→meal-photo→importer/photos→gps-diagnostics→jpeg-ref-diagnosticsまで新URL版。未変更のstore-link-ui/meal-client等は旧版を維持。新SWなし。認証/保存/履歴/店舗検索/推薦/他アプリ連携は基準との一致を静的assertで確認。
+- 開発版の推薦/過去料理表示、OSM/Google試作、LANサーバー、架空データ、SHA比較、仮fingerprint、現在地検証、保存禁止設定は取り込みなし。JPEG生バイト/変換過程の詳細表示も製品UIから除外。正常座標、失敗状態、写真詳細、本人確認は維持。直接JPEGモジュールは空Ref判定/有理数変換依存として含める。
+- 分離後: 単体36 PASS/0FAIL（直前実行を引継ぎ、再開後再実行なし）、本番ファイル無変換のlocalhostブラウザ5 PASS/0FAIL、構文6ファイルPASS、相対import解決/許可リスト/保存ハンドラー基準一致PASS。モック通信のみ・実API0・業務データ書込0。静的検査初回は既存mainのuid用Math.randomを新規仮IDと誤判定し、基準一致を確認して検査対象を修正。製品の追加修正なし。
+- Androidで確認済みのcamera-buttons-local成果を継承。ただし分離版そのもののAndroid操作・公開後配信キャッシュ確認は未実施。ローカルブラウザでは実crypto SHA/縮小前EXIF/本人確認取消/過去画像表示削除/自動検索なし/通常main起動を確認。
+- 公開前残作業: 本人承認、当日時点main変化の確認、既存配備方式の対象資産8件追加/更新とテスト資産除外確認。公開後HTTP200/ハッシュ一致/旧キャッシュ更新/Android最小確認。DB/Edge操作不要。失敗時はこの変更コミットをrevertし再配信、force push不要。
+- 今回push/本番公開/DB/Edge変更なし。公開承認待ちで停止。
+
 ## 2026-10-22 写真500m・RPC互換性の限定公開
 - バージョン20261022-photo500m。公開直前基準9d2c542b424dceb795fce63085f3a8df7e0dfe3dからrelease/photo500m-only-20261022へ対象のみ切り出し。
 - 登録店舗の写真GPS500m検索、名称絞り込み/保持/万萬照合、重複確認/確認取消、スマホカード、store_idとunlinked_store_name:nullの同時送信。履歴からの既存選択・手動登録で共通コールバック使用。
