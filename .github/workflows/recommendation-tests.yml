@@ -37,6 +37,8 @@ jobs:
       - name: Store linking name search tests
         run: node --experimental-default-type=module --test tests/store-link-search.test.mjs
       - name: Bottle merge tests
+        if: always()
         run: node --experimental-default-type=module --test tests/bottle-merge.test.mjs
       - name: Store navigation tests
+        if: always()
         run: node --experimental-default-type=module --test tests/store-navigation.test.mjs
