@@ -2,11 +2,12 @@ import {validPoint,distanceKm} from './places.js';
 import {filterNearbyPhotoStores,photoNameKey,photoNameMatches} from './photo-store-candidates.js?v=20261022-photo500m';
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function storeNameKey(value){return String(value??'').normalize('NFKC').toLowerCase().replace(/[\s\u3000・･\-ー_()（）]/g,'').replace(/^(?:やきとり|焼き鳥|焼鳥)(?=.)/,'焼鳥');}
-export function matchingStores(rows,query){const key=storeNameKey(query);if(!key)return rows;return rows.filter(r=>photoNameMatches(storeNameKey(r.name),key));}
+export function matchingStores(rows,query){const key=storeNameKey(query);if(!key)return rows;return rows.filter(r=>[r.name,...(r.aliases||[])].some(n=>photoNameMatches(storeNameKey(n),key)));}
 export function storeCandidateRank(row,query,referenceAddress=''){
  const name=storeNameKey(row.name),wanted=storeNameKey(query);
  const address=storeNameKey(row.address||row.area),reference=storeNameKey(referenceAddress);
- const exact=Boolean(wanted)&&name===wanted,partial=Boolean(wanted)&&photoNameMatches(name,wanted);
+ const names=[row.name,...(row.aliases||[])].map(storeNameKey);
+ const exact=Boolean(wanted)&&names.some(n=>photoNameKey(n)===photoNameKey(wanted)),partial=Boolean(wanted)&&names.some(n=>photoNameMatches(n,wanted));
  const addressMatch=Boolean(reference&&address)&&(address===reference||address.includes(reference)||reference.includes(address));
  const distance=Number.isFinite(row.distance_m)?row.distance_m:Infinity;
  return {exact,partial,addressMatch,distance};
@@ -65,7 +66,7 @@ export async function recoverStoreLink({client,candidate,onSelect,isCurrent=()=>
  const stores=await client.stores();
  if(!isCurrent())return false;
  const matching=stores.filter(s=>sameStoreLocation(s,candidate));
- if(matching.length!==1)return false;
+ if(matching.length!==1||potentialStoreMatches(stores,candidate).length!==1)return false;
  await onSelect({...candidate,id:matching[0].id});
  return isCurrent();
 }
@@ -76,21 +77,24 @@ export async function confirmManualStore({candidate,approved,client,onSelect,isC
  await onSelect({...candidate,id});
  return true;
 }
+export function confirmRepresentativeLocation(candidate,approve=message=>confirm(message)){return !candidate?.representative||approve('この位置はOSMの範囲の中心点で、店舗入口を保証しません。地図を開き、店名・所在地・店舗位置を確認済みですか？未確認の場合はキャンセルしてください。');}
 export async function chooseStore({client,point,onSelect,initialName='',referenceAddress='',allowManual=true,isCurrent=()=>true}){
  if(!client?.session())throw Error('この機能はハラケン本人専用です');
- const dialog=document.createElement('dialog');dialog.className='store-link-dialog';dialog.innerHTML='<h3>店舗を確認して関連付け</h3><p>GPSだけで店舗を確定しません。店名・所在地を確認してください。</p><input aria-label="店舗名で絞り込み" placeholder="店舗名で絞り込み"><button type="button" data-near>写真の500m以内を検索</button><button type="button" data-manual>候補にない店舗を手動確認</button><p role="status"></p><div data-list></div><button type="button" data-close>閉じる</button>';
+ const dialog=document.createElement('dialog');dialog.className='store-link-dialog';dialog.innerHTML='<h3>店舗を確認して関連付け</h3><p>GPSだけで店舗を確定しません。店名・所在地を確認してください。</p><input aria-label="店舗名で絞り込み" placeholder="店舗名で絞り込み"><button type="button" data-near>写真の500m以内を検索</button><p>ボタンを押すと写真の座標をOverpassへ送信します。店名・履歴・認証情報は送りません。</p><a data-map target="_blank" rel="noopener noreferrer">Googleマップで店を探す</a><p data-source aria-live="polite"></p><p>外部店舗情報：<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors（ODbL）</a>。未掲載・位置誤差があります。</p><button type="button" data-manual>候補にない店舗を手動確認</button><p role="status"></p><div data-list></div><button type="button" data-close>閉じる</button>';
  if(!allowManual)dialog.querySelector('[data-manual]').remove();
  document.body.append(dialog);dialog.showModal();const status=dialog.querySelector('[role=status]'),list=dialog.querySelector('[data-list]'),input=dialog.querySelector('input'),near=dialog.querySelector('[data-near]');let rows=[],registeredRows=[],busy=false;input.value=String(initialName||'').slice(0,120);
  const current=()=>dialog.isConnected&&isCurrent();
- let gpsRows=null;
- const draw=()=>{const visible=visibleStoreRows(rows,input.value,referenceAddress);list.innerHTML=visible.map(({r,i})=>'<article class="store-link-card"><button type="button" data-select="'+i+'">'+escape(r.name)+'</button><div class="store-link-address">'+escape(r.address||r.area||'所在地未登録')+'</div><div class="store-link-distance">'+(r.distance_m!=null?'写真位置から約'+r.distance_m+'m':'距離未確認')+'</div></article>').join('');status.textContent=visible.length?(gpsRows===rows?'写真の500m以内の登録店舗：':'登録店舗：')+visible.length+'件。店名・所在地を確認してください。':rows.length?'入力した店名に一致する候補は0件です。入力を消すと元の候補を再表示します。':'該当する登録店舗は0件です。未連携のまま保存できます。';};
+ let gpsRows=null,hintMode=true;const sourceStatus=dialog.querySelector('[data-source]'),map=dialog.querySelector('[data-map]');
+ const updateMap=()=>{map.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([input.value,validPoint(point)?point.latitude+','+point.longitude:''].filter(Boolean).join(' ')||'飲食店');};
+ const mapUrl=r=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([r.name,r.address||r.area,validPoint(r)?r.latitude+','+r.longitude:''].filter(Boolean).join(' '));
+ const draw=()=>{updateMap();let visible=visibleStoreRows(rows,input.value,referenceAddress);const fallback=hintMode&&gpsRows===rows&&!visible.length&&rows.length;if(fallback)visible=visibleStoreRows(rows,'',referenceAddress);list.innerHTML=visible.map(({r,i})=>'<article class="store-link-card"><button type="button" data-select="'+i+'">'+escape(r.name)+'</button><div class="store-link-address">'+escape(r.address||r.area||'所在地未登録')+'</div><div class="store-link-distance">'+(r.distance_m!=null?'写真位置から約'+r.distance_m+'m':'距離未確認')+'</div><div>'+escape(r.review?'要確認':linkedStoreId(r)?'登録済み':'未登録')+' · '+escape((r.sources||[{type:linkedStoreId(r)?'supabase':'osm'}]).map(s=>s.type==='osm'?'OSM':'登録店舗').filter((v,i,a)=>a.indexOf(v)===i).join(' / '))+(r.representative?'（代表座標・位置要確認）':'')+'</div><a target="_blank" rel="noopener noreferrer" href="'+escape(mapUrl(r))+'">地図で確認</a></article>').join('');status.textContent=fallback?'保存店名に一致する候補はありません。500m以内の他の候補を表示しています。':visible.length?(gpsRows===rows?'写真の500m以内の店舗：':'登録店舗：')+visible.length+'件。店名・所在地を確認してください。':rows.length?'入力した店名に一致する候補は0件です。入力を消すと元の候補を再表示します。':'該当する登録店舗は0件です。未連携のまま保存できます。';};
  const showDuplicates=error=>{if(!Array.isArray(error?.storeCandidates))return false;rows=error.storeCandidates;input.value='';draw();status.textContent='重複の可能性がある登録店舗です（500m検索とは別の確認）。新規登録せず、所在地・座標を確認して候補を選んでください。';return true;};
- dialog.querySelector('[data-close]').onclick=()=>{if(!busy)dialog.close();};dialog.onclose=()=>dialog.remove();dialog.oncancel=e=>{if(busy)e.preventDefault();};input.oninput=()=>draw();
+ dialog.querySelector('[data-close]').onclick=()=>{if(!busy)dialog.close();};dialog.onclose=()=>dialog.remove();dialog.oncancel=e=>{if(busy)e.preventDefault();};input.oninput=()=>{hintMode=false;draw();};
  if(allowManual)dialog.querySelector('[data-manual]').onclick=async()=>{if(busy||!current())return;
   const name=String(input.value||initialName||'').trim().slice(0,120);
-  const address=prompt('店舗の住所を入力してください（地図で確認するために使用。DBには保存されません）。','');
+  const address=prompt('店舗の住所を入力してください（任意・確認用。現在DBには保存されません）。','');
   if(address===null)return;
-  if(!name||!address.trim()){status.textContent='店名と住所が必要です。';return;}
+  if(!name){status.textContent='店名が必要です。';return;}
   const mapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(name+' '+address.trim());
   const link=document.createElement('a');link.href=mapUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent='地図で店舗位置を確認する';status.replaceChildren('住所を確認しました。',link,'。地図の位置を確認し、緯度・経度を入力してください。');
   const next=document.createElement('button');next.type='button';next.textContent='地図で位置を確認したので座標を入力する';status.append(' ',next);
@@ -106,8 +110,8 @@ export async function chooseStore({client,point,onSelect,initialName='',referenc
 
  };
  near.hidden=!validPoint(point);
- near.onclick=async()=>{if(busy||!validPoint(point))return;busy=true;near.disabled=true;status.textContent='写真周辺の登録店舗を確認しています…';try{const found=await client.nearbyPhotoStores(point);if(!current())return;gpsRows=filterNearbyPhotoStores(found,point);rows=gpsRows;draw();}catch{status.textContent='候補を取得できません。前の検索結果を保持しています。';}finally{busy=false;near.disabled=false;}};
- list.onclick=async e=>{const button=e.target.closest('[data-select]');if(!button||busy||!current())return;const candidate=rows[Number(button.dataset.select)];if(!candidate||!confirm('店舗名：'+candidate.name+'\n所在地：'+(candidate.address||candidate.area||'不明')+'\n緯度：'+(candidate.latitude??'未登録')+' / 経度：'+(candidate.longitude??'未登録')+'\n'+(candidate.distance_m!=null?'写真位置から約'+candidate.distance_m+'m\n':'')+'\nこの店舗で間違いありませんか？'))return;busy=true;button.disabled=true;
- try{const id=await resolveStoreSelection(client,candidate,current);if(!current())return;await onSelect({...candidate,id});dialog.close();}catch{try{if(await recoverStoreLink({client,candidate,onSelect,isCurrent:current})){dialog.close();return;}}catch{}status.textContent='関連付けを確認できません。履歴・登録店舗を再取得して同じ店舗を選び直してください。';}finally{busy=false;button.disabled=false;}};
- try{registeredRows=await client.stores();if(!current())return;rows=validPoint(point)?filterNearbyPhotoStores(registeredRows,point):registeredRows;gpsRows=validPoint(point)?rows:null;draw();if(validPoint(point)&&String(initialName||'').trim())await near.onclick();}catch{status.textContent='登録店舗を取得できません。';}
+ near.onclick=async()=>{if(busy||!validPoint(point)||!current())return;busy=true;near.disabled=true;sourceStatus.textContent='周辺店舗を検索しています…';try{const result=await client.photoStoreSearch(point);if(!current())return;gpsRows=result.candidates;rows=gpsRows;draw();const messages={ok:'OSMの周辺候補を取得しました。',empty:'OSMの周辺候補は0件です。登録店舗は利用できます。',timeout:'外部検索がタイムアウトしました。登録店舗は利用できます。',unavailable:'外部検索に失敗しました。登録店舗は利用できます。',rate_limited:'外部検索は待機中です。時間をおいてお試しください。登録店舗は利用できます。'};sourceStatus.textContent=(messages[result.status]||messages.unavailable)+(result.cached?'（キャッシュ）':'');}catch{sourceStatus.textContent='検索できません。表示済みの登録店舗は保持しています。';}finally{busy=false;near.disabled=false;}};
+ list.onclick=async e=>{const button=e.target.closest('[data-select]');if(!button||busy||!current())return;const candidate=rows[Number(button.dataset.select)];if(!candidate||!confirmRepresentativeLocation(candidate)||!confirm('店舗名：'+candidate.name+'\n所在地：'+(candidate.address||candidate.area||'不明')+'\n緯度：'+(candidate.latitude??'未登録')+' / 経度：'+(candidate.longitude??'未登録')+'\n'+(candidate.distance_m!=null?'写真位置から約'+candidate.distance_m+'m\n':'')+'\n'+(linkedStoreId(candidate)?'この登録店舗で間違いありませんか？':'未登録店舗です。地図で位置を確認しましたか？本人の店舗として登録し関連付けます。')))return;busy=true;button.disabled=true;
+ try{const id=await resolveStoreSelection(client,candidate,current);if(!current())return;await onSelect({...candidate,id});dialog.close();}catch(error){if(showDuplicates(error))return;try{if(await recoverStoreLink({client,candidate,onSelect,isCurrent:current})){dialog.close();return;}}catch{}status.textContent='関連付けを確認できません。履歴・登録店舗を再取得して同じ店舗を選び直してください。';}finally{busy=false;button.disabled=false;}};
+ try{registeredRows=await client.stores();if(!current())return;rows=validPoint(point)?filterNearbyPhotoStores(registeredRows,point):registeredRows;gpsRows=validPoint(point)?rows:null;draw();}catch{status.textContent='登録店舗を取得できません。';}
 }

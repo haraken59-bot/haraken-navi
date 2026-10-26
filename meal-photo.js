@@ -18,18 +18,22 @@ export function originalPath(owner,mealId,p){
  return `${owner}/${mealId}/${p.id}_${p.fingerprint}.${{'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[p.file.type]}`;
 }
 export function validOriginalPath(path,owner,mealId){return typeof path==='string'&&path.startsWith(`${owner}/${mealId}/`)&&/^[a-f0-9-]{36}\/[a-f0-9-]{36}\/[a-f0-9-]{36}_[a-f0-9]{64}\.(jpg|png|webp)$/i.test(path);}
-export async function saveMealWithPhotos(client,meal,photos){
+export async function saveMealWithPhotos(client,meal,photos,expectedOwner=null){
  const s=await client.fresh(),owner=s.user.id;
+ if(expectedOwner&&owner!==expectedOwner)throw Error('アカウントが変わりました。保存を停止しました。');
+ if(!owner)throw Error('ログイン状態を確認できません。');
  if(photos.reduce((n,p)=>n+p.file.size,0)>MAX_MEAL_BYTES)throw Error('写真は1食合計50MBまでです。');
  const attached=photos.map(p=>({image_id:p.id,path:originalPath(owner,meal.id,p),...p.original_info,sha256:p.fingerprint}));
  const saved={...meal,navi_metadata:{...meal.navi_metadata,original_photos:attached}};
  // Deterministic paths make retry safe; never overwrite a different object.
+ // Never delete originals on upload failure: an earlier ambiguous save may
+ // already have committed this meal and reference these deterministic paths.
  try{for(let i=0;i<photos.length;i++)await client.uploadOriginal(attached[i].path,photos[i].file,photos[i].fingerprint);}
- catch(e){try{await client.removePendingOriginals(attached.map(x=>x.path));}catch{e.message+=' 未完了の原画の削除を確認できません。入力を変えず再試行してください。';}throw e;}
- if((await client.fresh()).user.id!==owner)throw Error('アカウントが変わりました。保存を停止しました。');
- try{await client.mealRpc('save_navi_meal',{meal:saved});}
+ catch(e){e.message+=' アップロード済みの原画は保護しています。入力を変えず再試行してください。';throw e;}
+ if((await client.fresh()).user?.id!==owner)throw Error('アカウントが変わりました。保存を停止しました。');
+ try{await client.mealRpc('save_navi_meal',{meal:saved},owner);}
  catch(e){
-  if(e.saveRejected){try{await client.removePendingOriginals(attached.map(x=>x.path));}catch{e.message+=' 未完了原画の削除を確認できません。';}throw e;}
+  if(e.saveRejected){e.message+=' 原画は安全のため保持しています。履歴を確認してください。';throw e;}
   // Timeout may mean the DB committed. Do not delete a possibly attached original.
   e.message+=' 原画は再試行用に保持しています。入力を変えずに再試行してください。';throw e;
  }
