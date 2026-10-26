@@ -6,7 +6,7 @@ import {MealClient} from './meal-client.js?v=20261027-five-core';
 import {mountMealUI} from './meal-ui.js?v=20261027-five-core';
 import {neutralContext,CHANGE_REASONS,selectStore,changeStore,completeMeal,excludeRecord} from './session.js';
 import {buildPool,guestPool,DiscoveryController,scopeKey,edgeDiscoveryTransport,guestDiscoveryTransport} from './discovery.js';
-import {DEFAULT_CONTEXT,normalizeConditions,toggleCondition,recommendSearch,provenance,trustedValue,japanDay} from './domain.js';
+import {DEFAULT_CONTEXT,normalizeConditions,toggleCondition,recommendSearch,provenance,trustedValue,japanDay} from './domain.js?v=20261027-budget-fix';
 import {readState,writeState,validateRecord,isStorageQuotaError} from './storage.js';
 import {ReadOnlyClient,consumeAuthRedirect,SESSION_KEY,PROJECT,loadPublicConfig,OtpFlow,OtpAuthError} from './api.js';
 const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
