@@ -40,10 +40,10 @@ export function priceDetails(c,ctx={},now=new Date()){
  const hour=Number(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tokyo',hour:'2-digit',hourCycle:'h23'}).format(now));
  const period=ctx.mode==='drink'?'dinner':hour>=11&&hour<15?'lunch':hour>=17&&hour<24?'dinner':'unknown';
  const rows=(c.personal_prices||[]).filter(p=>Number.isFinite(p.amount)&&p.amount>=0).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')));
- const chosen=rows.find(p=>p.period===period)||rows[0];
+ const chosen=rows.find(p=>p.period===period)||(ctx.mode==='drink'?null:rows[0]);
  const labels=[];let value=null,confidence=0,at=null,source='unknown';
  if(chosen){value=chosen.amount;at=chosen.at;source='personal_history';confidence=chosen.period===period?1:0.75;labels.push(`本人${chosen.period==='lunch'?'ランチ':chosen.period==='dinner'?'夕食・飲み':''}実績：約${value.toLocaleString()}円`);}
- else if(c.price!=null&&Number.isFinite(Number(c.price))){value=Number(c.price);at=c.price_observed_at||c.observed_at;source='personal_or_manual';confidence=0.75;labels.push(c.kind==='action'&&value===0?'支出なし':`記録・入力時の目安：約${value.toLocaleString()}円`);}
+ else if(c.price!=null&&Number.isFinite(Number(c.price))&&!(ctx.mode==='drink'&&(c.source==='食事履歴'||c.price_period==='lunch'))){value=Number(c.price);at=c.price_observed_at||c.observed_at;source='personal_or_manual';confidence=0.75;labels.push(c.kind==='action'&&value===0?'支出なし':`記録・入力時の目安：約${value.toLocaleString()}円`);}
  const hp=c.hotpepper;
  if(hp?.budget_name)labels.push(`ディナー目安：${hp.budget_name}`);
  if(hp?.budget_average)labels.push(`HP平均予算：${hp.budget_average}`);
