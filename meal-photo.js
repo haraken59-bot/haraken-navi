@@ -23,6 +23,7 @@ export async function saveMealWithPhotos(client,meal,photos,expectedOwner=null){
  if(expectedOwner&&owner!==expectedOwner)throw Error('アカウントが変わりました。保存を停止しました。');
  if(!owner)throw Error('ログイン状態を確認できません。');
  if(photos.reduce((n,p)=>n+p.file.size,0)>MAX_MEAL_BYTES)throw Error('写真は1食合計50MBまでです。');
+ if(client.duplicatePhotoMeals&&(await client.duplicatePhotoMeals(meal,owner)).length)throw Object.assign(Error('同じ写真の保存済み履歴があります。履歴を確認してください。'),{saveRejected:true});
  const attached=photos.map(p=>({image_id:p.id,path:originalPath(owner,meal.id,p),...p.original_info,sha256:p.fingerprint}));
  const saved={...meal,navi_metadata:{...meal.navi_metadata,original_photos:attached}};
  // Deterministic paths make retry safe; never overwrite a different object.

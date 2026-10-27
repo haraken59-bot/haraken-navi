@@ -1,7 +1,7 @@
 import {searchPhotoOsm,mergePhotoStores} from './photo-osm-search.js?v=20261027-five-core';
 import {ReadOnlyClient} from './api.js';
 import {validPoint,distanceKm} from './places.js';
-import {PHOTO_BUCKET} from './meal-photo.js?v=20261027-five-core';
+import {PHOTO_BUCKET} from './meal-photo.js?v=20261027-photo-fingerprint';
 import {filterNearbyPhotoStores} from './photo-store-candidates.js?v=20261022-photo500m';
 import {registrationMatch} from './store-link-ui.js?v=20261027-five-core';
 export const canRestoreMealLearning=row=>row?.navi_metadata?.is_test===true&&row?.navi_metadata?.exclude_from_learning===true;
@@ -51,6 +51,13 @@ export class MealClient extends ReadOnlyClient{
   }
   const session=await this.fresh();
   try{return await this.send('/rest/v1/rpc/edit_meal_details',{meal_id:row.id,expected_revision:row.revision,patch},session.access_token);}catch{throw Error('編集を保存できませんでした。履歴を再取得して確認してください。');}
+ }
+ async duplicatePhotoMeals(meal,owner){
+  const fingerprints=[...new Set((meal.images||[]).map(i=>i.fingerprint))];if(!fingerprints.length)return [];
+  if(!fingerprints.every(f=>typeof f==='string'&&/^[a-f0-9]{64}$/.test(f))||!/^[a-f0-9-]{36}$/i.test(meal.id))throw Error('写真指紋または記録IDが不正です。');
+  const session=await this.fresh();if(session.user?.id!==owner)throw Error('ログイン状態が変わりました。');
+  const rows=await this.send('/rest/v1/meal_images?select=meal_id&user_id=eq.'+encodeURIComponent(owner)+'&meal_id=neq.'+meal.id+'&fingerprint=in.('+fingerprints.join(',')+')&limit=5',undefined,session.access_token,'GET');
+  if(this.session()?.user?.id!==owner||!Array.isArray(rows))throw Error('写真の重複確認ができません。');return rows;
  }
  async savedMealExists(id,owner){
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))throw Error('保存待ちIDが不正です。');

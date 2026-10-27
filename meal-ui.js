@@ -1,13 +1,13 @@
 import {createMealSaveJournal} from './meal-save-journal.js?v=20261027-five-core';
-import {saveMealRecoverably} from './meal-save-recovery.js?v=20261027-five-core';
+import {saveMealRecoverably} from './meal-save-recovery.js?v=20261027-photo-fingerprint';
 import {shouldOfferPostSaveStoreLink} from './post-save-store-policy.js?v=20261027-five-core';
 import {linkSavedMeal} from './meal-store-link-recovery.js?v=20261027-five-core';
 import {gpsStatus,confirmPhotoDirection} from './importer/gps-diagnostics.js?v=20261025-camera-gps';
 import {chooseStore,photoPoint} from './store-link-ui.js?v=20261027-five-core';
 import {officialStoreName} from './places.js';
-import {canRestoreMealLearning} from './meal-client.js?v=20261027-five-core';
-import {prepareMealPhoto,saveMealWithPhotos,downloadMealPhoto} from './meal-photo.js?v=20261027-five-core';
-import {buildMeal,parseMealText,gpsComparison,duplicateMeals} from './meal-record.js';
+import {canRestoreMealLearning} from './meal-client.js?v=20261027-photo-fingerprint';
+import {prepareMealPhoto,saveMealWithPhotos,downloadMealPhoto} from './meal-photo.js?v=20261027-photo-fingerprint';
+import {buildMeal,parseMealText,gpsComparison,duplicateMeals} from './meal-record.js?v=20261027-photo-fingerprint';
 import {normalizeStoreName} from './importer/records.js';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,onSaved,onRefresh,onDeleted=()=>{}}){
@@ -87,7 +87,7 @@ export function mountMealUI({getClient,getOwner,getContext,getDecision,getTest,o
   const button=form.querySelector('button[type=submit]'),startOwner=getOwner();busy=true;button.disabled=true;
   try{
    const stored=await journal.read(startOwner);if(startOwner!==getOwner())throw Error('ログイン状態が変わりました。');if(stored)pending=stored.meal;
-   if(!pending){const input={eaten_at:$('meal-date').value,store_name:$('actual-store').value,store_id:stores.find(s=>s.id===$('meal-store-id').value&&normalizeStoreName(s.name)===normalizeStoreName($('actual-store').value))?.id||null,dish_name:$('actual-dish').value,amount_jpy:$('actual-amount').value,satisfaction:$('actual-rating').value,comment:$('meal-comment').value,genre:$('meal-genre').value,companion:$('meal-companion').value,change_reason:[$('change-reason-type').value,$('change-reason').value].filter(Boolean).join('：'),exclude_from_learning:false};pending=buildMeal(input,{photos,current,store:selectedStore(),decision:getDecision(),context:getContext(),isTest:getTest()});const dup=duplicateMeals(pending,history);if(dup.length){pending=null;throw Error('同じ時間帯・店舗の記録があります。共通の食事履歴を確認してください。');}}
+   if(!pending){const input={eaten_at:$('meal-date').value,store_name:$('actual-store').value,store_id:stores.find(s=>s.id===$('meal-store-id').value&&normalizeStoreName(s.name)===normalizeStoreName($('actual-store').value))?.id||null,dish_name:$('actual-dish').value,amount_jpy:$('actual-amount').value,satisfaction:$('actual-rating').value,comment:$('meal-comment').value,genre:$('meal-genre').value,companion:$('meal-companion').value,change_reason:[$('change-reason-type').value,$('change-reason').value].filter(Boolean).join('：'),exclude_from_learning:false};pending=buildMeal(input,{photos,current,store:selectedStore(),decision:getDecision(),context:getContext(),isTest:getTest()});const dup=duplicateMeals(pending,history);if(dup.length){pending=null;throw Error('同じ写真の記録があります。共通の食事履歴を確認してください。');}}
    status('共通履歴へ保存しています…');const result=await saveMealRecoverably({client:getClient(),journal,owner:startOwner,meal:pending,photos,isCurrent:()=>getOwner()===startOwner,approveRetry:()=>confirm('前回の保存結果をまだ確認できません。同じ記録ID・内容で再試行します。現在の入力変更は適用されません。続けますか？')});const saved=result.meal;
    if(startOwner!==getOwner())throw Error('保存中にアカウントが変わりました。元のアカウントで履歴を確認してください。');
    $('meal-save-recovery').hidden=true;pending=null;photos=[];current=null;form.reset();$('meal-date').value=nowInput();$('meal-gps-status').textContent='現在地は未取得です。写真GPS・店舗GPSと別々に保存します。';showPhotos();

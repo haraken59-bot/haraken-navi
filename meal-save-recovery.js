@@ -1,4 +1,4 @@
-import {saveMealWithPhotos,MAX_MEAL_BYTES,MAX_PHOTO_BYTES,originalPath} from './meal-photo.js?v=20261027-five-core';
+import {saveMealWithPhotos,MAX_MEAL_BYTES,MAX_PHOTO_BYTES,originalPath} from './meal-photo.js?v=20261027-photo-fingerprint';
 export async function saveMealRecoverably({client,journal,owner,meal,photos,isCurrent,approveRetry=()=>false}){
  const check=()=>{if(!isCurrent()||client.session()?.user?.id!==owner)throw Error('アカウントが変わりました。前の本人で保存結果を確認してください。');};
  check();const old=await journal.read(owner);check();
