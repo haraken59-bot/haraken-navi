@@ -1,3 +1,20 @@
+# 変更履歴（最新記録を先頭に記載）
+
+## 2026-10-31 GPS共通処理5案件・本番公開完了／Android確認
+- 公開版 `20261030-gps-common-navi`、公開コミット `0cd4d115550b5a5fca4d41b818963258437ac506`、正式URL https://haraken59-bot.github.io/haraken-navi/ 。
+- GitHub Pages run 41127130322成功。対象9ファイルのHTTP 200・内容一致、版表示、スマホ幅画面、JavaScriptエラー0件との公開作業報告。
+- 対象: `importer/gps-diagnostics.js`、`importer/photo-location.js`、`importer/photo-location-map.js`、`importer/photos.js`、`meal-ui.js`、`meal-record.js`、`meal-photo.js`、`main.js`、`index.html`。
+- 分離版の単体43件・ブラウザモック10件・構文8ファイル成功。以前の102件・隔離DB15件・Android検証結果は再実行せず引き継ぎ。
+- 公開版Androidで、ユーザーが新版表示、GPSなし写真選択、地図指定、キャンセル、再指定・確定と `user_map` 表示の5項目成功を報告。実保存は未実施。
+- 訪問分類・参考候補・関連CIを除外。本番DB・Storage・RPC・Edge、独立写真DBの変更なし。復旧不要。
+- 写真DB全機能統合は未完了。外部店舗検索のOverpassタイムアウトとナビ入力保持の問題は別案件として継続。
+
+## 2026-10-31 管理文書の公開状態同期
+- `NAVI_STATUS.md` と `CHANGELOG.md` が10月25日の記録で止まっていたため、公開済みGPS版とAndroid最終確認を追記。
+- 古い記録は履歴として保持し、現行状態は `NAVI_STATUS.md` の最新節を優先。文書のみ更新し、製品コード・DB・Storage・Edgeの変更なし。
+
+---
+
 ## 2026-10-25 写真機能の公開差分切り出し：準備完了・未公開
 - 公開基準: ab777269a91dcc178b86829e04c27790feb561d7。GitHub mainとPages deployment 7237191827（success）が同SHA。原開発領域を保持し、work/camera-gps-release-20261025 / release/camera-gps-20261025へローカル隔離コピー。
 - 公開予定版20261025-camera-gps。製品差分8ファイル: meal-ui.jsの写真入力/表示/本人確認のみ、style.cssの写真カード/縦ボタンのみ、importer/photos.js、importer/gps-diagnostics.js、importer/jpeg-ref-diagnostics.js、meal-photo.js読込エラー表示、index.html/main.jsの参照版のみ。
