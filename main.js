@@ -3,7 +3,7 @@ import {renderCandidate} from './candidate-card.js';
 import {actionAlternatives} from './action-options.js';
 import {prepareNow,localAction,historyReusable} from './now-context.js';
 import {MealClient} from './meal-client.js?v=20261027-photo-fingerprint';
-import {mountMealUI} from './meal-ui.js?v=20261027-photo-fingerprint';
+import {mountMealUI} from './meal-ui.js?v=20261030-gps-common-navi';
 import {neutralContext,CHANGE_REASONS,selectStore,changeStore,completeMeal,excludeRecord} from './session.js';
 import {buildPool,guestPool,DiscoveryController,scopeKey,edgeDiscoveryTransport,guestDiscoveryTransport} from './discovery.js';
 import {DEFAULT_CONTEXT,normalizeConditions,toggleCondition,recommendSearch,provenance,trustedValue,japanDay} from './domain.js?v=20261027-budget-fix';

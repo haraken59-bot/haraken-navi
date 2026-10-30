@@ -1,5 +1,5 @@
 import exifr from "../vendor/exifr.mjs";
-import { inspectGps } from "./gps-diagnostics.js?v=20261025-camera-gps";
+import { inspectGps } from './gps-diagnostics.js?v=20261030-gps-common-navi';
 import { inferPeriod, emptyClassification } from "./domain.js";
 export async function resize(file, max = 1280, quality = 0.8) {
   let bitmap;

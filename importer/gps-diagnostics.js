@@ -69,7 +69,21 @@ export async function inspectGps(file, parser = exifr, originalBytes) {
   diagnostic.conversion={latitude:lat.stage+' / '+lat.format+' / Ref '+lat.ref,longitude:lon.stage+' / '+lon.format+' / Ref '+lon.ref,fast:validGps(fast)?'成功':'取得不可'};
   const converted={latitude:lat.value,longitude:lon.value};
   const hasRaw=diagnostic.latitudeTag||diagnostic.longitudeTag;
-  const gps = hasRaw ? (validGps(converted)?converted:null) : validGps(fast)?fast:validGps(tags)?tags:null;
+  let gps = validGps(converted)?converted:null;
+  // A library may omit a named Ref despite an intact GPS IFD. Recover only
+  // from one unambiguous pair in the SAME original JPEG, never from guessed N/E.
+  const segments=directRefs.segments.filter(s=>s.status==='GPS IFD確認済み');
+  const direct=segments.map(s=>{
+    const ref=id=>{const rs=s.refs.filter(r=>r.tag===id);return rs.length===1&&rs[0].type===2&&rs[0].count===2?({'4E 00':'N','53 00':'S','45 00':'E','57 00':'W'})[rs[0].hex]:undefined;};
+    return {latitude:coordinate(s.dms?.find(r=>r.tag===2)?.values,ref(1),'lat'),longitude:coordinate(s.dms?.find(r=>r.tag===4)?.values,ref(3),'lon')};
+  });
+  const directValid=direct.length>0&&direct.every(p=>validGps(p)&&p.latitude===direct[0].latitude&&p.longitude===direct[0].longitude);
+  // A simplified parser can return positive decimals with missing/empty Refs.
+  // Actual invalid GPS IFD bytes must never be overridden by that shortcut.
+  if(segments.length&&!directValid)gps=null;
+  if(!gps&&directValid){gps=direct[0];diagnostic.refSource='元JPEGのGPS IFDからRef・度分秒を直接回収';}
+  const conflicting=direct.some(p=>validGps(p))&&!directValid;
+  if(conflicting){gps=null;diagnostic.error='複数EXIFのGPSが一致しません';}
   const refs=directRefs.segments.filter(s=>s.status==='GPS IFD確認済み').flatMap(s=>s.refs);
   const emptyDirection=[1,3].every(id=>refs.some(r=>r.tag===id))&&refs.every(r=>r.present&&r.emptyRef);
   const magnitude={latitude:coordinate(tags?.GPSLatitude,'N','lat'),longitude:coordinate(tags?.GPSLongitude,'E','lon')};
@@ -78,23 +92,27 @@ export async function inspectGps(file, parser = exifr, originalBytes) {
     if(pairs.length&&pairs.every(p=>validGps(p)&&p.latitude===pairs[0].latitude&&p.longitude===pairs[0].longitude)){Object.assign(magnitude,pairs[0]);diagnostic.magnitudeSource='JPEG GPS IFDの有理数から直接変換';}
   }
   if(emptyDirection)diagnostic.magnitudeSource??=validGps(magnitude)?'EXIF解析値から絶対値変換':'数値変換失敗・JPEG直接診断の度分秒を確認';
-  if(!gps&&emptyDirection)diagnostic.directionPending={...magnitude,confirmed:false,numericValid:validGps(magnitude)};
-  diagnostic.status = gps ? 'ok' : diagnostic.directionPending ? 'direction_missing' : fullFailed ? 'error' : diagnostic.latitudeTag || diagnostic.longitudeTag ? 'invalid' : 'missing';
+  const missingRef = r=>r===undefined||r===null||directionOf(r)==='';
+  const refsMissing=missingRef(tags?.GPSLatitudeRef)||missingRef(tags?.GPSLongitudeRef);
+  const refsCompatible=[['lat',tags?.GPSLatitudeRef],['lon',tags?.GPSLongitudeRef]].every(([a,r])=>missingRef(r)||(a==='lat'?['N','S']:['E','W']).includes(directionOf(r)));
+  if(!gps&&!conflicting&&(emptyDirection||(refsMissing&&refsCompatible&&validGps(magnitude))))diagnostic.directionPending={...magnitude,confirmed:false,numericValid:validGps(magnitude),latitudeRef:directionOf(tags?.GPSLatitudeRef),longitudeRef:directionOf(tags?.GPSLongitudeRef)};
+  diagnostic.status = conflicting ? 'invalid' : gps ? 'ok' : diagnostic.directionPending?.numericValid ? 'direction_missing' : fullFailed ? 'error' : diagnostic.latitudeTag || diagnostic.longitudeTag || emptyDirection ? 'invalid' : 'missing';
   // Non-enumerable: device-only diagnostic, excluded from JSON/save metadata.
   Object.defineProperty(diagnostic,'directRefs',{value:directRefs});
   return { gps: gps ? {latitude: gps.latitude, longitude: gps.longitude} : null, diagnostic };
 }
 export function gpsStatus(row) {
-  if (row.gps) return '写真GPS取得成功';
+  if (row.gps) return row.gpsDiagnostic?.status==='user_map'?'本人が地図で指定した撮影地点':row.gpsDiagnostic?.status==='user_confirmed'?'本人が方角を確認した撮影地点':'写真GPS取得成功';
   return ({direction_missing:'方角情報なし（撮影地点の確認が必要です）',error:'GPS情報の読み取りに失敗しました', invalid:'GPS座標が不正です', read_error:'写真を読み込めませんでした'})[row.gpsDiagnostic?.status] || '写真にGPS情報がありません';
 }
 
 export function confirmPhotoDirection(row,latRef,lonRef,verifiedMagnitude){
  const p=row.gpsDiagnostic?.directionPending;
  if(!p||p.confirmed||!['N','S'].includes(latRef)||!['E','W'].includes(lonRef))throw Error('方角を両方選択してください');
+ if((p.latitudeRef&&p.latitudeRef!==latRef)||(p.longitudeRef&&p.longitudeRef!==lonRef))throw Error('EXIFに存在する方角と一致しません');
  const m=verifiedMagnitude??p;
  if(!validGps(m)||m.latitude<0||m.longitude<0)throw Error('撮影地点の数値を確認してください');
  const gps={latitude:m.latitude*(latRef==='S'?-1:1),longitude:m.longitude*(lonRef==='W'?-1:1)};
  if(!validGps(gps))throw Error('GPS座標が不正です');
- return {...row,gps,gpsDiagnostic:{...row.gpsDiagnostic,status:'user_confirmed',directionPending:{...p,confirmed:true},positionSource:'本人が方角・撮影地点を確認',confirmedRefs:{latitude:latRef,longitude:lonRef}}};
+ return {...row,gps,gpsDiagnostic:{...row.gpsDiagnostic,status:'user_confirmed',confirmedAt:new Date().toISOString(),directionPending:{...p,confirmed:true},positionSource:'本人が方角・撮影地点を確認',confirmedRefs:{latitude:latRef,longitude:lonRef}}};
 }

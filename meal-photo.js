@@ -1,4 +1,4 @@
-import {prepare,createRow,thumbnail} from './importer/photos.js?v=20261025-camera-gps';
+import {prepare,createRow,thumbnail} from './importer/photos.js?v=20261030-gps-common-navi';
 export const PHOTO_BUCKET='navi-meal-originals';
 export const MAX_PHOTO_BYTES=20*1024*1024;
 export const MAX_MEAL_BYTES=50*1024*1024;
