@@ -242,3 +242,15 @@
 7. テスト：push前の限定Nodeテスト19成功/0失敗。ブラウザ3項目の前回モック成功を再利用。実装コミットCI run42668530156/job129338563451成功（Node22、構文・specific-dish・recommend-specific・store-link-search）。CIにはW-B1追加テストやbottle/store-navigationは含まれず、ローカル結果・PR12の既存CIと区別する。
 8. 未反映・残作業：main未統合・未公開。PR12のstore-navigation既知失敗はW-B6。追加修正・テスト無効化なし。ブラウザ依存パスは既存PC専用、Android/本番検索は未検証。
 9. あんこ独立確認依頼：PR13の14ファイル差分と実装コミット、CI run42668530156、外部hint非送信、GPS除外、当日営業イベントと定休日の優先関係を確認。mainや公開版にW-B1が反映済みと扱わない。マージ・公開は別途承認。
+
+
+## 2026-11-10 W-B1 PR13マージ・本番公開（最新到達状態）
+1. 案件/作業ID：W-B1案件1〜4。独立確認20261110_WB1_PR13_INDEPENDENT_REVIEW_ANKO_v01の判定Aとユーザー承認に基づく。
+2. 作業状態：PR13をsquash merge、main反映・本番配信・限定公開確認完了。W-B6/NAVI-05には未着手。
+3. GitHub：承認head036a8820818a9298648fd36900396bdede43568b、実装7b0ec4fb244c218aea4167342ef55c2ee5029347。マージ/製品公開コミットa0b95cbf158f4d50d9407918ad983ce21f32b4fc。承認headとmainのtree一致。差分14ファイルのみ。PR12はOpen/Draft/未マージ、head e543a18fe5ccf7f08d163aec4c9a6376ca88ed05で未変更。
+4. 本番： https://haraken59-bot.github.io/haraken-navi/ 。既存main連動GitHub Pages run42698362051成功。設定・workflow変更なし。本記録更新は製品変更を伴わない。DB/SQL・認証・保存済みデータ変更なし。
+5. 対象：製品6、テスト3、状態/履歴2、報告/証跡3はPR13の範囲。公開後は本STATUS/CHANGELOGのみ更新。GPSテスト2件と既存未追跡ファイル・ローカル履歴差異は保全。
+6. 検証：承認head CI run42668694157成功を再利用。main自動Recommendation CIは既存workflowの対象外（別run成功と偽らない）。mainは承認headと同一tree。今回追加の定休日/当日open/当日closed優先3assert成功。既存Node19成功とブラウザモック3成功は再実行せず継承。
+7. 公開実測：HTML+製品6ファイル計7件HTTP200・承認内容とバイト一致。390px幅の新規ゲストブラウザ、西新/焼き鳥、実API GET2回HTTP200、推薦生成・再タップ保持・モード切替リセット・今どうする気分保持と3候補表示成功。pageerror0、書込要求0。取得上限/通信制限による一部結果の案内あり。配信済み純粋関数の合成データ4条件（店名順位・定休日・当日open優先・量限定理由）も成功。実店舗の定休日データや本人の写真検索結合は未検証。
+8. 未確認/既知失敗：Android実機・既存端末キャッシュ・ログイン/実保存は未検証。W-B6既知6件（photo-gps2、photo-direction2、jpeg-ref-diagnostics1、store-navigation1）は独立報告の既存失敗として保持し未修正・未再実行。テスト無効化なし。店名ヒント外部非送信はコード照合、順位は純粋関数確認であり実写真検索の成功とはしない。
+9. あんこ公開後独立確認：PR13、製品公開コミット、CI42668694157、Pages42698362051、公開URL、WB1-PRODUCTION-CHECK-20261110.jsonを照合。次案件への移行・追加修正・ロールバックなし。
