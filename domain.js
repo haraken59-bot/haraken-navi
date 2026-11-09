@@ -76,7 +76,7 @@ export function operating(c,events=[],now=new Date()){
  const e=events.filter(e=>(e.candidate_id===c.id||sameStore(c,e))&&japanDay(new Date(e.at))===japanDay(now)).sort((a,b)=>b.at.localeCompare(a.at))[0];
  if(e){const hours=(now-new Date(e.at))/3600000;if(e.status==='closed')return {available:false,label:'本日の休業を確認',certainty:0};if(e.status==='full'&&hours<2)return {available:false,label:'満席・行列（直近の確認）',certainty:0.1};if(e.status==='open'&&hours<4)return {available:true,label:'本日の営業を本人確認',certainty:0.95};}
  if(c.kind==='action')return {available:true,label:'店の営業確認は不要',certainty:1};
- if((c.closed_weekdays||[]).includes(weekday(now)))return {available:true,label:'基本定休日・当日の営業は未確認',certainty:0.2};
+ if((c.closed_weekdays||[]).includes(weekday(now)))return {available:false,label:'基本定休日',certainty:0};
  if(outsidePublishedHours(c,now))return {available:true,label:'掲載営業時間の外の可能性・要確認',certainty:0.15,outside_hours:true};
  const fresh=ageFactor(c.hotpepper?.fetched_at||c.observed_at,30,now);return {available:true,label:c.hours?'掲載営業時間あり・当日の営業と空席は要確認':'当日の営業・空席は未確認',certainty:c.hours?0.45+0.2*fresh:0.4};
 }
@@ -145,7 +145,7 @@ export function recommend(candidates,ctx,records=[],food={},events=[],now=new Da
   if(c.kind==='action')score-=55;if(c.id==='wait')score+=1;if(c.id==='wait'&&ctx.direction==='wait')score+=300;if(ctx.direction==='genre'&&recent.length)score-=18;
   if(!Number.isFinite(score))score=0;
   if(ctx.mode==='eat'&&ctx.portion==='軽め'&&c.id==='home')score+=65;
-  scored.push({...c,match,genre_fit,portion_fit,score,pricing,distance_m:ctx.location&&Number.isFinite(c.latitude)?Math.round(distanceKm(ctx.location,c)*1000):null,score_parts:{price:weights.money*priceScore,time:weights.time*(travel==null?0.2:Math.max(0,1-travel/40)),certainty:weights.reliable*op.certainty+reliabilityAdjustment,novel:weights.novel*(familiarity?0.2:1)},meal_fit:fit,expectedSatisfaction:rating,travel,op,label:match?'今の気分に合いそう':familiarity?'安定候補':c.kind==='action'?'こんな過ごし方も':'新規開拓枠',reason:genre_fit?genre_fit.reason+(ctx.portion?'・'+ctx.portion+'の量は要確認':''):ctx.portion&&ctx.mode==='eat'?(portion_fit==='fit'?`${ctx.category==='おまかせ'?'':ctx.category+'・'}${ctx.portion}の条件に合う提供情報あり（量は要確認）`: '食事量への適合は情報不足・要確認'):match?'今の「食べたい・飲みたい」を優先':fit.reason?fit.reason:past.length?'学習対象の本人記録を参考にしました':c.satisfaction>=4?'過去の本人満足度が高い候補':c.bottles?.length?'キープボトルのある店':c.kind==='action'?'店に行く以外の選択肢も大切に':favorite?'記録された好みと共通点があります':'今の条件から比較する候補'});
+  scored.push({...c,match,genre_fit,portion_fit,score,pricing,distance_m:ctx.location&&Number.isFinite(c.latitude)?Math.round(distanceKm(ctx.location,c)*1000):null,score_parts:{price:weights.money*priceScore,time:weights.time*(travel==null?0.2:Math.max(0,1-travel/40)),certainty:weights.reliable*op.certainty+reliabilityAdjustment,novel:weights.novel*(familiarity?0.2:1)},meal_fit:fit,expectedSatisfaction:rating,travel,op,label:match?'今の気分に合いそう':familiarity?'安定候補':c.kind==='action'?'こんな過ごし方も':'新規開拓枠',reason:genre_fit?genre_fit.reason+(ctx.portion?'・'+ctx.portion+'の量は要確認':''):ctx.portion&&ctx.mode==='eat'?(portion_fit==='fit'?`${ctx.portion}の量に合う提供情報あり（量は要確認）`: '食事量への適合は情報不足・要確認'):match?'今の「食べたい・飲みたい」を優先':fit.reason?fit.reason:past.length?'学習対象の本人記録を参考にしました':c.satisfaction>=4?'過去の本人満足度が高い候補':c.bottles?.length?'キープボトルのある店':c.kind==='action'?'店に行く以外の選択肢も大切に':favorite?'記録された好みと共通点があります':'今の条件から比較する候補'});
  }
  const fitRank=c=>c.portion_fit==='fit'?2:c.portion_fit==='unsuitable'?0:1;
  const hasPortion=ctx.mode==='eat'&&Boolean(ctx.portion);

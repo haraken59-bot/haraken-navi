@@ -2,7 +2,7 @@ import {searchPhotoOsm,mergePhotoStores} from './photo-osm-search.js?v=20261027-
 import {ReadOnlyClient} from './api.js';
 import {validPoint,distanceKm} from './places.js';
 import {PHOTO_BUCKET} from './meal-photo.js?v=20261027-photo-fingerprint';
-import {filterNearbyPhotoStores} from './photo-store-candidates.js?v=20261022-photo500m';
+import {filterNearbyPhotoStores,rankPhotoStores} from './photo-store-candidates.js?v=20261022-photo500m';
 import {registrationMatch} from './store-link-ui.js?v=20261027-five-core';
 export const canRestoreMealLearning=row=>row?.navi_metadata?.is_test===true&&row?.navi_metadata?.exclude_from_learning===true;
 export class MealClient extends ReadOnlyClient{
@@ -75,14 +75,14 @@ export class MealClient extends ReadOnlyClient{
   return history.records.map(r=>({...r,navi_metadata:byId.get(r.id)||{},is_test:byId.get(r.id)?.is_test===true,exclude_from_learning:byId.get(r.id)?.exclude_from_learning===true}));
  }
  async mealPhotos(id){if(!/^[a-f0-9-]{36}$/i.test(id))throw Error('記録ID不正');const s=await this.fresh();return this.send('/rest/v1/meal_images?select=id,thumbnail,file_name,taken_at&meal_id=eq.'+id,undefined,s.access_token,'GET');}
- async photoStoreSearch(point){
+ async photoStoreSearch(point,name=''){
   await this.verifyNaviOwner();
   const owner=this.session()?.user?.id;if(!owner)throw Error('ログイン状態を確認してください。');
   const registered=await this.stores();
   if(this.session()?.user?.id!==owner)throw Error('ログイン状態が変わりました。');
   const external=await searchPhotoOsm(point);
   if(this.session()?.user?.id!==owner)throw Error('ログイン状態が変わりました。');
-  return {...external,candidates:mergePhotoStores(registered,external.candidates,point)};
+  return {...external,candidates:rankPhotoStores(mergePhotoStores(registered,external.candidates,point),name)};
  }
  async nearbyPhotoStores(point){
   if(!validPoint(point)||(point.latitude===0&&point.longitude===0))throw Error('写真GPSが正しくありません。');

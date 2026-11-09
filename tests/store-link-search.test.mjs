@@ -22,10 +22,8 @@ console.log('store link search: 16 assertions passed');
 
 import {readFileSync} from 'node:fs';
 const clientSource=readFileSync(new URL('../meal-client.js',import.meta.url),'utf8');
-assert.match(clientSource,/\.\.\.\(hint\?\{hint\}:\{\}\)/,'named photo lookup passes optional hint');
 
 
-assert.match(clientSource,/match\(a\)-match\(b\)/,'name matches are ranked ahead of 20-item cap');
 
 const photo={latitude:32.74333,longitude:129.8757236111111};
 assert.deepEqual(verifiedManualStore('万徳','32.744','129.876',photo),{name:'万徳',latitude:32.744,longitude:129.876});
@@ -33,7 +31,7 @@ for(const [lat,lng] of [['','129.876'],['abc','129.876'],['32.744abc','129.876']
 assert.equal(verifiedManualStore('','32.744','129.876',photo),null,'name required');
 
 let writes=0,links=0;
-const client={confirmStore:async()=>{writes++;return 'store-id';}};
+const client={stores:async()=>[],confirmStore:async()=>{writes++;return 'store-id';}};
 const onSelect=async()=>{links++;};
 const candidate={name:'万徳',latitude:32.744,longitude:129.876};
 assert.equal(await confirmManualStore({candidate,approved:false,client,onSelect}),false);
@@ -53,3 +51,16 @@ const coordinatePrompt=uiSource.indexOf("const latitude=prompt(",manualStart);
 assert.ok(manualStart>=0&&mapLink>manualStart&&nextClick>mapLink&&coordinatePrompt>nextClick,'map link is presented before coordinates are prompted on a separate click');
 assert.match(uiSource,/if\(!confirm\('店舗名：'/,'manual registration requires explicit final confirmation');
 assert.match(uiSource,/confirmManualStore\(\{candidate,approved:true,client,onSelect,isCurrent:current\}\)/,'manual registration uses guarded write helper');
+
+// Replaces only the two obsolete remote-hint/source-fragment assertions.
+import {rankPhotoStores} from '../photo-store-candidates.js';
+const input=[{name:'別店舗',distance_m:1},{name:'ＡＢ・カフェ',distance_m:100},{name:'ABカフェ 支店',distance_m:50}];
+const before=JSON.stringify(input);
+assert.deepEqual(rankPhotoStores(input,'ab カフェ').map(c=>c.distance_m),[50,100,1]);
+assert.deepEqual(rankPhotoStores(input,'').map(c=>c.distance_m),[1,50,100]);
+assert.equal(rankPhotoStores(input,'unknown').length,3);
+assert.equal(JSON.stringify(input),before);
+assert.equal(rankPhotoStores(Array.from({length:25},(_,i)=>({name:'店'+i,distance_m:i})),'店').length,25);
+assert.deepEqual(rankPhotoStores(input,'ＡＢ・カフェ').map(c=>c.distance_m),[50,100,1]);
+assert.deepEqual(rankPhotoStores(input,'x'.repeat(60)+'AB').map(c=>c.distance_m),[1,50,100]);
+console.log('W-B1 photo ranking: 7 assertions passed; original non-obsolete checks retained');
