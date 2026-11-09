@@ -157,3 +157,15 @@
 7. テスト：今回push前Node関連19エントリ成功/0失敗。2026-11-09のブラウザ3項目成功を再利用（西新/ゲスト/127.0.0.1:8140、検索応答モック、実API成功ではない）。Node24とCI22は区別。store-navigation既知失敗は未修正・未再実行。
 8. 未反映・残作業：main統合・公開未実施。PR12のCI緑化はNAVI-08/W-B6別作業。ブラウザテストは既存PCのPlaywright依存パスを使用する手動受け入れ用でCI自動実行対象ではない。
 9. あんこ独立確認依頼：本ブランチの案件1〜4差分、GPSテスト混入なし、外部hint非送信、定休日と当日営業イベントの既存優先関係、CI結果を確認。公開版のW-B1確認は公開承認前につき対象外。
+
+
+## 2026-11-10 W-B1 GitHub反映結果（未マージ・未公開）
+1. 案件/作業ID：W-B1案件1〜4。
+2. 作業状態：限定ローカル受け入れ完了、GitHub専用ブランチ反映完了。独立コード確認待ち。
+3. GitHub反映状態：work/wb1-20261110、実装コミット7b0ec4fb244c218aea4167342ef55c2ee5029347のpush成功。Draft PR #13 https://github.com/haraken59-bot/haraken-navi/pull/13 。mainはa84027369fc5e66d3a960191b06bbfa496053546のまま。PR #12は未変更・Open/Draft/未マージ。
+4. 本番反映状態：未実施。main統合、Pages公開、DB/SQL変更なし。
+5. 変更ファイル：製品6（main.js、domain.js、discovery.js、meal-client.js、store-link-ui.js、photo-store-candidates.js）、テスト3（store-link-search.test.mjs、wb1-recommend.test.mjs、wb1-mood.browser.cjs）、NAVI_STATUS.md、CHANGELOG.md、WB1-LOCAL-IMPLEMENTATION-20261109.md、WB1-ACCEPTANCE-20261109.md、WB1-MOOD-ACCEPTANCE-20261109.jsonの計14。
+6. 関連未変更：既存GPS差異tests/photo-direction.test.mjs・tests/photo-gps.test.mjsを除外し保持。GPS未追跡3件、workflow、store-navigationも保全。作業前全ファイルのSHA-256は追記対象2文書以外一致。文書はmain履歴にW-B1のみ追加し、ローカルのGPS履歴差異は反映していない。
+7. テスト：push前の限定Nodeテスト19成功/0失敗。ブラウザ3項目の前回モック成功を再利用。実装コミットCI run42668530156/job129338563451成功（Node22、構文・specific-dish・recommend-specific・store-link-search）。CIにはW-B1追加テストやbottle/store-navigationは含まれず、ローカル結果・PR12の既存CIと区別する。
+8. 未反映・残作業：main未統合・未公開。PR12のstore-navigation既知失敗はW-B6。追加修正・テスト無効化なし。ブラウザ依存パスは既存PC専用、Android/本番検索は未検証。
+9. あんこ独立確認依頼：PR13の14ファイル差分と実装コミット、CI run42668530156、外部hint非送信、GPS除外、当日営業イベントと定休日の優先関係を確認。mainや公開版にW-B1が反映済みと扱わない。マージ・公開は別途承認。
