@@ -120,7 +120,7 @@
 
 ## 2026-10-18 PR #9 手動店舗確認（未公開）
 - 写真GPS候補の店名優先、候補にない店舗の住所→地図検索、緯度経度の手動入力・明示的確定・既存API登録を開発ブランチに追加。
-- 座標形式・範囲・写真GPSとの完全一致を検証。住所はDB未保存。GitHub Actions run 39101449499 success、Android未確認、PR未マージ、本番DB変更なし。
+- 座標形式・範囲・写真GPSとの完全一致を検証。住所はDB未保存。GitHub Actions run 39101449499 success、Android未確認、PRは2026-10-18マージ済み（当時は準備のみ未公開）、本番DB変更なし。
 
 
 ## 2026-11-09 W-B1 案件2・4 ローカル限定実装
@@ -181,3 +181,15 @@
 7. 公開実測：HTML+製品6ファイル計7件HTTP200・承認内容とバイト一致。390px幅の新規ゲストブラウザ、西新/焼き鳥、実API GET2回HTTP200、推薦生成・再タップ保持・モード切替リセット・今どうする気分保持と3候補表示成功。pageerror0、書込要求0。取得上限/通信制限による一部結果の案内あり。配信済み純粋関数の合成データ4条件（店名順位・定休日・当日open優先・量限定理由）も成功。実店舗の定休日データや本人の写真検索結合は未検証。
 8. 未確認/既知失敗：Android実機・既存端末キャッシュ・ログイン/実保存は未検証。W-B6既知6件（photo-gps2、photo-direction2、jpeg-ref-diagnostics1、store-navigation1）は独立報告の既存失敗として保持し未修正・未再実行。テスト無効化なし。店名ヒント外部非送信はコード照合、順位は純粋関数確認であり実写真検索の成功とはしない。
 9. あんこ公開後独立確認：PR13、製品公開コミット、CI42668694157、Pages42698362051、公開URL、WB1-PRODUCTION-CHECK-20261110.jsonを照合。次案件への移行・追加修正・ロールバックなし。
+
+
+## 2026-11-10 NAVI-05仕様B・アルファA・ベータA／GEO-03（レビュー用ブランチ）
+1. 案件/作業ID：NAVI-05＋GEO-03。正本20261110_NAVI05_WORK_IMPLEMENTATION_INSTRUCTION_ANKO_v01.md（Drive 1MPpXHjm303MQR2KbDXIrJWCHRWsM3F-M）。
+2. 作業状態：ローカル実装・指定テスト成功。Android実機は未確認。開始時GitHub mainは指定2e133f271b6cecb6b97f4c7b557a989ad17bc3c8と一致。既存作業コピーのHEAD036a882は移動せず、対象3ファイルに既存変更なしと確認。文書の既存履歴差異は保全。
+3. GitHub反映状態：main 2e133f271b6cecb6b97f4c7b557a989ad17bc3c8を基準にfix/navi05-geo03-20261110でレビュー対象。マージ・公開は未承認。PR CIはPR側で確認する。
+4. 本番反映状態：未公開、DB/SQL/Edge変更なし。実API・Auth通信なし。
+5. 今回変更：genre-fit.js（非ジャンル意図→ボタン→自由入力の順、rules/dishesへ指定ひらがな3語のみ追加）、tests/recommend-specific.test.mjs（既存8assert維持＋11assert追加）、api.js（開発origin配列から指定ngrokのみ削除）、NAVI_STATUS.md/CHANGELOG.md（NAVI-09/10訂正・§11仕様B引継ぎ・完了記録）。
+6. 関連未変更：domain.jsのdesireMatch/specificDishMatch、genreFit本体/clean、W-B1製品箇所、discovery、Edge/SQL、GPS既存差異、W-B6、PR12。既存未追跡ファイルも保持。
+7. 検証：公式Node v22.23.4の一時実行環境、CIと同じ--experimental-default-type=module --testで3スイート成功/0失敗。recommend-specific既存8件（競合2件含む）＋追加11assert成功。GEO-03はモックfetchで本番/localhost/127.0.0.1/除去originの4ケース成功、製品ngrok残存0、変更JS/テスト3ファイル構文成功。Node24ではCIフラグ非対応だったため実テストには使用せず、システム設定は変更していない。
+8. 未確認/制限：Android（肉ボタン＋魚が食べたい等）、公開/実API、Edgeのhint/category仕様は未確認。料理名グループ外（刺身等）の独立照合は保証しない。GEO-03は環境分岐のモック確認で実認証の確認ではない。W-B6既知6失敗は未実行・未修正。
+9. あんこ独立確認：20261110_NAVI05_GEO03_POST_EVIDENCE_REVIEW_ANKO_v01.mdは判定A、3スイート・既存8・追加11・GEO-03の4条件を独立再現済み。次はPR差分の独立確認とユーザー承認待ち。

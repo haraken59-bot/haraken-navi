@@ -1,9 +1,9 @@
 import {outsidePublishedHours} from './places.js';
-const rules={魚:/魚|寿司|すし|鮨|海鮮|刺身|焼き?魚|煮魚|魚介|鮮魚|seafood|sushi/i,肉:/肉|焼鳥|焼き鳥|やきとり|ステーキ|とんかつ|ハンバーグ|唐揚げ|焼肉|yakitori|steak|barbecue/i,麺:/麺|ラーメン|らーめん|うどん|そば|ちゃんぽん|パスタ|焼きそば|ramen|noodle|udon|soba|pasta/i,中華:/中華|中国料理|餃子|麻婆豆腐|炒飯|チャーハン|やきめし|四川|広東|台湾料理|chinese/i,定食:/定食|セット食|teishoku/i};
-const dishes={...rules,魚:/寿司|すし|鮨|海鮮|刺身|焼き?魚|煮魚|魚介|鮮魚|魚料理|seafood|sushi/i,肉:/肉料理|焼肉|焼鳥|焼き鳥|やきとり|ステーキ|とんかつ|ハンバーグ|唐揚げ|yakitori|steak|barbecue/i,麺:/麺料理|ラーメン|らーめん|うどん|そば|ちゃんぽん|パスタ|焼きそば|ramen|noodle|udon|soba|pasta/i};
+const rules={魚:/さかな|魚|寿司|すし|鮨|海鮮|刺身|焼き?魚|煮魚|魚介|鮮魚|seafood|sushi/i,肉:/にく|やきにく|肉|焼鳥|焼き鳥|やきとり|ステーキ|とんかつ|ハンバーグ|唐揚げ|焼肉|yakitori|steak|barbecue/i,麺:/麺|ラーメン|らーめん|うどん|そば|ちゃんぽん|パスタ|焼きそば|ramen|noodle|udon|soba|pasta/i,中華:/中華|中国料理|餃子|麻婆豆腐|炒飯|チャーハン|やきめし|四川|広東|台湾料理|chinese/i,定食:/定食|セット食|teishoku/i};
+const dishes={...rules,魚:/さかな|寿司|すし|鮨|海鮮|刺身|焼き?魚|煮魚|魚介|鮮魚|魚料理|seafood|sushi/i,肉:/にく|やきにく|肉料理|焼肉|焼鳥|焼き鳥|やきとり|ステーキ|とんかつ|ハンバーグ|唐揚げ|yakitori|steak|barbecue/i,麺:/麺料理|ラーメン|らーめん|うどん|そば|ちゃんぽん|パスタ|焼きそば|ramen|noodle|udon|soba|pasta/i};
 const sweets=/たい焼|たいやき|鯛焼|鯛魚[焼燒]|和菓子|洋菓子|スイーツ|デザート|菓子|ドーナツ|ケーキ|アイスクリーム|confectionery|dessert|ice_cream/i;
 const clean=s=>String(s||'').normalize('NFKC').replace(/たい焼き?|たいやき|鯛焼き?|鯛魚[焼燒]/g,'菓子').replace(/(?:魚|肉|麺|中華|定食)(?:料理)?(?:は|の提供は)?(?:なし|無し|提供していません)/g,'');
-export function requestedGenre(ctx){const q=ctx.desire?.trim()|| (ctx.category==='おまかせ'?'':ctx.category)||'';if(/家で|自宅で|食べない|飲まない|まだ決めない|後で決め/.test(q))return null;return Object.keys(rules).find(k=>rules[k].test(clean(q)))||null;}
+export function requestedGenre(ctx){const q=ctx.desire?.trim()||'';if(/家で|自宅で|食べない|飲まない|まだ決めない|後で決め/.test(q))return null;if(Object.hasOwn(rules,ctx.category))return ctx.category;return Object.keys(rules).find(k=>rules[k].test(clean(q)))||null;}
 const hour=d=>Number(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tokyo',hour:'2-digit',hourCycle:'h23'}).format(d));
 function lunchTime(c,text,now){
  const ranges=[...String(text+' '+(c.hours||'')).normalize('NFKC').matchAll(/(\d{1,2}):(\d{2})\s*[～〜~-]\s*(\d{1,2}):(\d{2})/g)].filter(m=>Number(m[1])>=6&&Number(m[3])<=16&&Number(m[3])>Number(m[1]));

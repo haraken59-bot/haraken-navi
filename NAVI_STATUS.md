@@ -16,7 +16,7 @@
 - 過去食事写真DBのナビへの全機能統合は未完了。独立写真DBの終了・削除は未決定。
 - 訪問分類・店舗参考候補・関連CIの未公開変更は今回の公開対象外。
 - ナビ本体の気分入力が「今から食べる」「今どうする？」操作で消えるとの再現報告、条件調整で外部検索が繰り返されるとの報告あり。原因・修正は未確認。
-- 写真撮影地点からの外部店舗検索でOverpassタイムアウトをAndroid画面で確認。Geoapify採用は保留。福岡100店舗のOSM調査は46件掲載、Geoapify API実測は未実施。
+- 写真撮影地点からの外部店舗検索でOverpassタイムアウトをAndroid画面で確認。Geoapify採用は保留。福岡100店舗の最終結果はOSM掲載47件、Geoapify実測完了・発見50/100（2026-11-10訂正。旧46件／実測未実施は過去記録であり、今回のAPI実測ではない）。
 - 本人ログイン後の最新実保存・履歴更新など、今回実施していないテストは完了扱いしない。
 
 ## 文書運用
@@ -147,6 +147,8 @@
 - ユーザーAndroid画面の上位3候補：①やきとり ひだか、②焼き鳥のあんど、③焼鳥 にわ とりのすけ 西新店。以前のステーキ／焼肉優先が解消したことを今回の条件で確認。スクリーンショットによる画面確認であり検索条件全組合せの保証ではない。
 - mainソースへの修正反映は確認済み。GitHub Pagesの該当コミットへの配信成功・公開資産バイト一致は今回未独立検証。DB／認証／他アプリ変更なし。
 
+- 2026-11-10 NAVI-05仕様Bの引き継ぎ：料理名がジャンル判定まで決める動きだけを止める適用範囲の明確化。ボタンを確定ジャンルとし、料理名の評価は原則維持する。アルファAによりdesireMatchの加点方式不変、ベータAによりspecificDishMatch既存10グループ・語彙不変（刺身等のグループ外独立照合は保証しない）。根拠：20261109_NAVI05_SPEC_B_DECISION_ANKO_v01.md、20261109_NAVI05_ALPHA_A_BETA_A_DECISION_ANKO_v01.md。
+
 ## 12. 矛盾するジャンルと料理希望の回帰確認（2026-10-18）
 - PR #3 をmainへsquash merge、e14eed9ecdb27239cc345a2f524f28d6204d015c。推薦ロジック変更なし、tests/recommend-specific.test.mjsの条件追加のみ。
 - GitHub Actions run 39098279017 success。魚＋やきとり、肉＋寿司、魚のみ、おまかせの追加条件を含む推薦テスト成功。Android実機で矛盾条件の検索は未確認。
@@ -184,16 +186,16 @@
 - PR #8 squash merge：52c8ea7abbd3bcb3e62937d9413182c7435416f5。meal-client.jsから写真の店名をnavi-discoverのhintに送信、store-link-ui.jsから記録済み店名を引き渡し。CI pathsにmeal-client.js/store-link-ui.jsを追加。
 - GitHub Actions run 39100303365 completed success。mainマージ済み。公開Pages反映とAndroid実機での万徳候補表示は未確認。検索プロバイダが候補十分と判定するとキーワード検索を省略する可能性があり、表示保証なし。DB書込・自動店舗確定なし。
 
-## 20. PR #9 写真店舗の手動確認フロー（2026-10-18、未マージ）
+## 20. PR #9 写真店舗の手動確認フロー（2026-10-18マージ済み・当時は準備のみ未公開）
 - ブランチ fix/photo-store-name-search、PR #9。写真GPS検索結果を店名一致優先で表示し、候補がない場合に住所入力からGoogleマップを開く案内と、本人による緯度経度入力・最終確認・既存confirm_navi_store経由の関連付け処理を追加。
 - 住所は地図検索用のみでDB保存なし。写真GPSと完全一致の座標、数値でない座標、無効範囲は拒否。ただし位置の真正性は自動保証できず、地図上で本人確認が必要。
-- GitHub Actions run 39101449499 success（commit 48e6b3e）。自動テスト成功は実機での登録成功を意味しない。Android操作未確認、Pages未公開、PR未マージ、本番DB変更なし。
-- 公開前の残作業：手動フローのUI操作テストと回帰テスト、PR内の未使用photoStoreLookupパラメータの扱い整理、レビュー、マージ後の配信とAndroid確認。
+- GitHub Actions run 39101449499 success（commit 48e6b3e）。自動テスト成功は実機での登録成功を意味しない。Android操作未確認、Pages未公開、PRは2026-10-18マージ済み（当時は準備のみ未公開）、本番DB変更なし。
+- 公開前の残作業：手動フローのUI操作テストと回帰テスト、PR内の未使用photoStoreLookupパラメータの扱い整理、レビュー、配信とAndroid確認。
 
 ### PR #9 追加レビュー（2026-10-18）
 - 未使用photoStoreLookup指定を削除し、実装済みhintのみを維持。座標入力の検証をverifiedManualStoreに分離し正常・不正値を自動テスト。キャンセル／無効画面ではDB書込しないconfirmManualStore単体テストを追加。
 - Googleマップのリンクを表示した後、別ボタンで座標入力を開始する二段階操作に修正。画面コード上の操作順を検査する回帰テストを追加（commit ae0acad）。Androidの実画面操作・Googleマップとの連携・本番DBへの登録は未検証。
-- commit 0c8fdc6 の Actions run 39101790815 は成功。commit ae0acad のCIは確認待ち。未マージ・未公開。
+- commit 0c8fdc6 の Actions run 39101790815 は成功。commit ae0acad のCIは確認待ち。2026-10-18マージ済み・当時は準備のみ未公開。
 
 
 ## 2026-11-09 W-B1 案件2・4 ローカル限定実装
@@ -254,3 +256,15 @@
 7. 公開実測：HTML+製品6ファイル計7件HTTP200・承認内容とバイト一致。390px幅の新規ゲストブラウザ、西新/焼き鳥、実API GET2回HTTP200、推薦生成・再タップ保持・モード切替リセット・今どうする気分保持と3候補表示成功。pageerror0、書込要求0。取得上限/通信制限による一部結果の案内あり。配信済み純粋関数の合成データ4条件（店名順位・定休日・当日open優先・量限定理由）も成功。実店舗の定休日データや本人の写真検索結合は未検証。
 8. 未確認/既知失敗：Android実機・既存端末キャッシュ・ログイン/実保存は未検証。W-B6既知6件（photo-gps2、photo-direction2、jpeg-ref-diagnostics1、store-navigation1）は独立報告の既存失敗として保持し未修正・未再実行。テスト無効化なし。店名ヒント外部非送信はコード照合、順位は純粋関数確認であり実写真検索の成功とはしない。
 9. あんこ公開後独立確認：PR13、製品公開コミット、CI42668694157、Pages42698362051、公開URL、WB1-PRODUCTION-CHECK-20261110.jsonを照合。次案件への移行・追加修正・ロールバックなし。
+
+
+## 2026-11-10 NAVI-05仕様B・アルファA・ベータA／GEO-03（レビュー用ブランチ）
+1. 案件/作業ID：NAVI-05＋GEO-03。正本20261110_NAVI05_WORK_IMPLEMENTATION_INSTRUCTION_ANKO_v01.md（Drive 1MPpXHjm303MQR2KbDXIrJWCHRWsM3F-M）。
+2. 作業状態：ローカル実装・指定テスト成功。Android実機は未確認。開始時GitHub mainは指定2e133f271b6cecb6b97f4c7b557a989ad17bc3c8と一致。既存作業コピーのHEAD036a882は移動せず、対象3ファイルに既存変更なしと確認。文書の既存履歴差異は保全。
+3. GitHub反映状態：main 2e133f271b6cecb6b97f4c7b557a989ad17bc3c8を基準にfix/navi05-geo03-20261110でレビュー対象。マージ・公開は未承認。PR CIはPR側で確認する。
+4. 本番反映状態：未公開、DB/SQL/Edge変更なし。実API・Auth通信なし。
+5. 今回変更：genre-fit.js（非ジャンル意図→ボタン→自由入力の順、rules/dishesへ指定ひらがな3語のみ追加）、tests/recommend-specific.test.mjs（既存8assert維持＋11assert追加）、api.js（開発origin配列から指定ngrokのみ削除）、NAVI_STATUS.md/CHANGELOG.md（NAVI-09/10訂正・§11仕様B引継ぎ・完了記録）。
+6. 関連未変更：domain.jsのdesireMatch/specificDishMatch、genreFit本体/clean、W-B1製品箇所、discovery、Edge/SQL、GPS既存差異、W-B6、PR12。既存未追跡ファイルも保持。
+7. 検証：公式Node v22.23.4の一時実行環境、CIと同じ--experimental-default-type=module --testで3スイート成功/0失敗。recommend-specific既存8件（競合2件含む）＋追加11assert成功。GEO-03はモックfetchで本番/localhost/127.0.0.1/除去originの4ケース成功、製品ngrok残存0、変更JS/テスト3ファイル構文成功。Node24ではCIフラグ非対応だったため実テストには使用せず、システム設定は変更していない。
+8. 未確認/制限：Android（肉ボタン＋魚が食べたい等）、公開/実API、Edgeのhint/category仕様は未確認。料理名グループ外（刺身等）の独立照合は保証しない。GEO-03は環境分岐のモック確認で実認証の確認ではない。W-B6既知6失敗は未実行・未修正。
+9. あんこ独立確認：20261110_NAVI05_GEO03_POST_EVIDENCE_REVIEW_ANKO_v01.mdは判定A、3スイート・既存8・追加11・GEO-03の4条件を独立再現済み。次はPR差分の独立確認とユーザー承認待ち。

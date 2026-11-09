@@ -4,7 +4,7 @@ export const SESSION_KEY='haraken-navi-supabase-session-v1';
 export const OTP_WAIT_MS=60000;
 export async function loadPublicConfig(href,request=fetch){
  const page=new URL(href);
- const development=['http://127.0.0.1:8140','http://localhost:8140','https://supreme-each-undrafted.ngrok-free.dev'].includes(page.origin);
+ const development=['http://127.0.0.1:8140','http://localhost:8140'].includes(page.origin);
  try{
   let response=await request(new URL('./public-config.json',page),{cache:'no-store',signal:AbortSignal.timeout(10000)});
   // Running development servers may predate the static configuration route.
