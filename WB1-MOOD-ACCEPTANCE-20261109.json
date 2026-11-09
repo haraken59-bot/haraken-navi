@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "checks": [
+    "same-mode: desire/selection/results retained",
+    "mode-change: desire/category/results reset",
+    "startNow: desire retained and used by recommendation"
+  ],
+  "origin": "http://127.0.0.1:8140",
+  "area": "西新",
+  "guest": true,
+  "discovery": "browser route synthetic response",
+  "requests": [
+    {
+      "area": "西新",
+      "hint": "焼き鳥",
+      "mode": "eat"
+    }
+  ],
+  "realExternalRequests": 0,
+  "status": "西新 の検索範囲：外部情報から1店、履歴と照合後1店。営業時間・価格・料理は要確認。"
+}
