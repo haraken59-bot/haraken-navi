@@ -1,0 +1,139 @@
+# 未適用・独立レビュー用 v02。リポジトリへの導入／実行は別承認。
+# 公開候補は56ファイル（検証用5ファイルの保持はユーザー承認済み）。
+# 開発用25ファイルの公開終了が未承認のため、保留ゲートは false のまま意図的に停止する案。
+# 注意: fetch-depth: 0 はmain祖先確認（refs/remotes/origin/main の存在）の前提。浅く変更しないこと。
+name: Approved manual Pages release
+run-name: Pages ${{ inputs.release_sha }}
+'on':
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: '公開承認済みの完全な40桁コミットSHA（mainの履歴内）'
+        required: true
+        type: string
+permissions: {}
+concurrency:
+  group: haraken-navi-production-pages
+  cancel-in-progress: false
+jobs:
+  package:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.repository == 'haraken59-bot/haraken-navi'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: read
+    outputs:
+      release_sha: ${{ steps.verify.outputs.release_sha }}
+    steps:
+      - name: Validate dispatch and inventory approval
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+          PUBLISH_INVENTORY_APPROVED: 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[0-9a-fA-F]{40}$ ]] || { echo 'STOP: FULL_SHA_REQUIRED'; exit 1; }
+          [[ "$GITHUB_RUN_ATTEMPT" == '1' ]] || { echo 'STOP: RERUN_REQUIRES_NEW_APPROVAL_AND_DISPATCH'; exit 1; }
+          [[ "$PUBLISH_INVENTORY_APPROVED" == 'true' ]] || { echo 'STOP: PUBLIC_FILE_INVENTORY_REVIEW_PENDING'; exit 1; }
+      - name: Checkout exact approved revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.release_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+          submodules: false
+          lfs: false
+      - name: Verify exact revision and main ancestry
+        id: verify
+        env:
+          RELEASE_SHA: ${{ inputs.release_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="${RELEASE_SHA,,}"
+          actual="$(git rev-parse --verify HEAD)"
+          [[ "$actual" == "$expected" ]] || { echo 'STOP: CHECKOUT_MISMATCH'; exit 1; }
+          git rev-parse --verify refs/remotes/origin/main >/dev/null
+          git merge-base --is-ancestor "$actual" refs/remotes/origin/main || { echo 'STOP: NOT_MAIN_HISTORY'; exit 1; }
+          echo "release_sha=$actual" >> "$GITHUB_OUTPUT"
+          {
+            echo "Release SHA: $actual"
+            echo "Main snapshot: $(git rev-parse refs/remotes/origin/main)"
+            echo "Workflow SHA: $GITHUB_WORKFLOW_SHA"
+            echo "Run: $GITHUB_RUN_ID / $GITHUB_RUN_ATTEMPT"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Read Pages configuration
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+        with:
+          enablement: false
+      - name: Package reviewed allowlist without executing repository code
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, hashlib, shutil, subprocess
+          allowed = ['.nojekyll', 'action-options.js', 'api.js', 'candidate-card.js', 'discovery.js', 'domain.js', 'genre-fit.js', 'hidaka-context.js', 'icons/icon-192-v20261011.png', 'icons/icon-192-v20261011b.png', 'icons/icon-192-v20261012-step1.png', 'icons/icon-192.png', 'icons/icon-512-v20261011.png', 'icons/icon-512-v20261011b.png', 'icons/icon-512-v20261012-step1.png', 'icons/icon-512.png', 'icons/icon-maskable-192-v20261011.png', 'icons/icon-maskable-192-v20261011b.png', 'icons/icon-maskable-192-v20261012-step1.png', 'icons/icon-maskable-512-v20261011.png', 'icons/icon-maskable-512-v20261011b.png', 'icons/icon-maskable-512-v20261012-step1.png', 'importer/domain.js', 'importer/gps-diagnostics.js', 'importer/jpeg-ref-diagnostics.js', 'importer/locations.js', 'importer/photo-location-map.js', 'importer/photo-location.js', 'importer/photos.js', 'importer/records.js', 'index.html', 'internal-delete-test/index.html', 'internal-delete-test/page.js', 'internal-delete-test/runner.js', 'internal-delete-test/test.css', 'main.js', 'manifest.webmanifest', 'meal-client.js', 'meal-photo.js', 'meal-record.js', 'meal-save-journal.js', 'meal-save-recovery.js', 'meal-store-link-recovery.js', 'meal-ui.js', 'now-context.js', 'photo-osm-search.js', 'photo-store-candidates.js', 'photo-store-test.html', 'places.js', 'post-save-store-policy.js', 'public-config.json', 'session.js', 'storage.js', 'store-link-ui.js', 'style.css', 'vendor/exifr.mjs']
+          dest = Path(os.environ['RUNNER_TEMP']) / 'pages-site'
+          dest.mkdir(exist_ok=False)
+          source = Path.cwd().resolve()
+          lines=[]
+          for name in allowed:
+              p=Path(name)
+              if p.is_absolute() or '..' in p.parts:
+                  raise SystemExit('STOP: UNSAFE_PATH')
+              if any(q.is_symlink() for q in (p, *p.parents)) or not p.is_file():
+                  raise SystemExit('STOP: MISSING_OR_LINK_FILE')
+              if not p.resolve().is_relative_to(source):
+                  raise SystemExit('STOP: PATH_ESCAPE')
+              mode=subprocess.check_output(['git','ls-files','--stage','--',name], text=True).split()[0]
+              if mode not in ('100644','100755'):
+                  raise SystemExit('STOP: NON_REGULAR_TRACKED_FILE')
+              target=dest/p
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copyfile(p,target)
+              lines.append(hashlib.sha256(target.read_bytes()).hexdigest()+'  '+name)
+          if sorted(str(p.relative_to(dest)) for p in dest.rglob('*') if p.is_file()) != sorted(allowed):
+              raise SystemExit('STOP: ARTIFACT_INVENTORY_MISMATCH')
+          manifest='\n'.join(lines)+'\n'
+          (Path(os.environ['RUNNER_TEMP'])/'pages-payload-sha256.txt').write_text(manifest,encoding='utf-8')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as out:
+              out.write('\nPayload file SHA-256 manifest\n```text\n'+manifest+'```\n')
+          PY
+      - name: Upload Pages artifact
+        id: artifact
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: ${{ runner.temp }}/pages-site
+          name: github-pages
+          retention-days: 7
+      - name: Record artifact identifier
+        env:
+          ARTIFACT_ID: ${{ steps.artifact.outputs.artifact_id }}
+        run: echo "Pages artifact ID $ARTIFACT_ID (github-pages)" >> "$GITHUB_STEP_SUMMARY"
+  deploy:
+    needs: package
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.repository == 'haraken59-bot/haraken-navi'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the artifact from this run
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+        with:
+          artifact_name: github-pages
+      - name: Record outcome
+        if: always()
+        env:
+          RELEASE_SHA: ${{ needs.package.outputs.release_sha }}
+          DEPLOY_OUTCOME: ${{ steps.deployment.outcome }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          printf 'Release %s; deployment %s; URL %s\n' "$RELEASE_SHA" "$DEPLOY_OUTCOME" "$PAGE_URL" >> "$GITHUB_STEP_SUMMARY"
