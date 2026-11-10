@@ -22,6 +22,6 @@ test('unknown genre reason describes only portion',()=>{
  assert.equal(c.reason,'ガッツリの量に合う提供情報あり（量は要確認）');assert.ok(!c.reason.includes('その他'));
 });
 test('strong genre reason unchanged',()=>{
- const c=recommend([store('焼肉店',{tags:['焼肉']})],{...DEFAULT_CONTEXT,category:'焼肉',portion:'ガッツリ',storesOnly:true},[],{},[],now).top[0];
+ const c=recommend([store('焼肉店',{tags:['焼肉']})],{...DEFAULT_CONTEXT,category:'肉',portion:'ガッツリ',storesOnly:true},[],{},[],now).top[0];
  assert.equal(c.genre_fit.level,'strong');assert.equal(c.reason,c.genre_fit.reason+'・ガッツリの量は要確認');
 });
