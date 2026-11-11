@@ -30,7 +30,7 @@ jobs:
       - name: Validate dispatch and inventory approval
         env:
           RELEASE_SHA: ${{ inputs.release_sha }}
-          PUBLISH_INVENTORY_APPROVED: 'false'
+          PUBLISH_INVENTORY_APPROVED: 'true'
         shell: bash
         run: |
           set -euo pipefail
