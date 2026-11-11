@@ -1,6 +1,7 @@
 import {samePlace,normalizeName,mergeExternal,validPoint,withinSearch} from './places.js';
 import {candidatesFromCloud} from './domain.js';
 import {learningRecords} from './storage.js';
+import {requestedGenre} from './genre-fit.js';
 function mealPeriod(date){if(!date)return 'unknown';const h=Number(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tokyo',hour:'2-digit',hourCycle:'h23'}).format(new Date(date)));return h>=11&&h<15?'lunch':h>=17?'dinner':'unknown';}
 const norm=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[\s・]/g,'');
 export function km(a,b){const r=x=>x*Math.PI/180;return 12742*Math.asin(Math.sqrt(Math.sin(r(b.latitude-a.latitude)/2)**2+Math.cos(r(a.latitude))*Math.cos(r(b.latitude))*Math.sin(r(b.longitude-a.longitude)/2)**2));}
@@ -36,13 +37,17 @@ export function scopeKey(ctx){return validPoint(ctx.location)?`gps:${ctx.locatio
 // API coordinates define the search area; its display label is not an area filter.
 export function guestPool(data){return withinSearch((data?.candidates||[]).filter(c=>c.discovered&&['hotpepper','known_store'].includes(c.source_kind)),data?.center,data?.radius_m).map(c=>({...c,search_scoped:true}));}
 export function searchHint(value){return String(value||'').normalize('NFKC').replace(/[^\p{L}\p{N}\sー]/gu,' ').replace(/\s+/g,' ').trim().slice(0,60);}
+// Spec: a selected genre button is the confirmed genre for discovery too.
+// The free-text hint is dropped only when it implies a different genre;
+// no-genre or matching-genre text keeps the hint, as does no button (おまかせ).
+export function effectiveHint(ctx){const hint=searchHint(ctx.desire);if(!hint)return '';const button=requestedGenre({category:ctx.category,desire:''});if(!button)return hint;const implied=requestedGenre({category:'おまかせ',desire:ctx.desire});return implied&&implied!==button?'':hint;}
 // A late response from a previous area must never replace the new area's pool.
 const CACHE_KEY='haraken-discovery-cache-v1',FRESH=30*60*1000,MAX_AGE=7*86400000;
 // Shared request contract for the current Node route and a future Edge transport.
 // Personal history, owner IDs and satisfaction never enter search parameters.
 export function discoveryParams(ctx){
  const params=new URLSearchParams();
- const hint=searchHint(ctx.desire);if(hint)params.set('hint',hint);
+ const hint=effectiveHint(ctx);if(hint)params.set('hint',hint);
  if(validPoint(ctx.location)){params.set('latitude',ctx.location.latitude);params.set('longitude',ctx.location.longitude);}
  else if(ctx.area?.trim()){params.set('area',ctx.area.trim());params.set('region',ctx.region||'');if(ctx.placeIndex!=null)params.set('placeIndex',ctx.placeIndex);}
  if(['near','cheap','adventure','sure'].includes(ctx.direction))params.set('direction',ctx.direction);
@@ -82,7 +87,7 @@ export class DiscoveryController{
  remember(key,data){this.saved[key]=data;this.saved=Object.fromEntries(Object.entries(this.saved).filter(([,v])=>this.valid(v)).sort((a,b)=>Date.parse(b[1].fetched_at)-Date.parse(a[1].fetched_at)).slice(0,12));if(this.storage){for(;;){try{this.storage.setItem(CACHE_KEY,JSON.stringify(this.saved));break;}catch{const keys=Object.keys(this.saved);if(keys.length<=1)break;delete this.saved[keys[keys.length-1]];}}}}
  valid(v){return v&&Array.isArray(v.candidates)&&v.center&&Number.isFinite(v.center.latitude)&&Number.isFinite(v.center.longitude)&&Number.isFinite(Date.parse(v.fetched_at))&&this.now()-Date.parse(v.fetched_at)<MAX_AGE&&v.candidates.every(c=>!c.hotpepper||this.now()-Date.parse(c.hotpepper.fetched_at)<86400000);}
  recover(data,old){if(!data.source_data||!old?.source_data)return data;const sources={...data.source_data};let reused=false;for(const kind of ['osm','hotpepper']){const v=old.source_data[kind];if(!sources[kind]&&v&&this.now()-Date.parse(v.fetched_at)<(kind==='hotpepper'?86400000:MAX_AGE)){sources[kind]=v;reused=true;}}if(!reused)return data;return {...data,source_data:sources,candidates:mergeExternal(sources.osm?.candidates,sources.hotpepper?.candidates),from_cache:true,degraded:true,warning:(data.warning||'')+' 保存情報を併用しています。最新情報ではない可能性があります。'};}
- async search(ctx){const variant=':adaptive-v1:'+JSON.stringify([ctx.direction||'',ctx.category||'おまかせ',ctx.portion||'',ctx.budget??null,ctx.mode||'eat',searchHint(ctx.desire)]);const key=scopeKey(ctx)+variant,base=scopeKey({...ctx,placeIndex:undefined})+variant;
+ async search(ctx){const variant=':adaptive-v1:'+JSON.stringify([ctx.direction||'',ctx.category||'おまかせ',ctx.portion||'',ctx.budget??null,ctx.mode||'eat',effectiveHint(ctx)]);const key=scopeKey(ctx)+variant,base=scopeKey({...ctx,placeIndex:undefined})+variant;
   const matchesCenter=data=>!validPoint(ctx.location)||validPoint(data?.center)&&km(ctx.location,data.center)<0.001;
   if(this.value&&!matchesCenter(this.value))this.value=null;
   if(key&&this.key===key&&this.value&&!this.value.degraded&&(this.value.needs_choice||this.now()-Date.parse(this.value.fetched_at)<FRESH))return this.value;
@@ -96,3 +101,4 @@ export class DiscoveryController{
   }finally{if(version===this.version)this.pending=null;}})();this.pending=promise;return promise;
  }
 }
+
