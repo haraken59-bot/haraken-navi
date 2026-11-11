@@ -15,3 +15,15 @@ assert.equal(rankFish('寿司','肉')[0],'sushi','specific sushi overrides confl
 assert.ok(['sushi','seafood'].includes(rankFish('','魚')[0]),'fish category works without desire');
 assert.equal(rankFish('','おまかせ').length,3,'omakase still works');
 console.log('recommend integration: 8 assertions passed');
+
+// NAVI-05 spec B: genre and specific-dish ranking are independent axes.
+import {requestedGenre,genreFit} from '../genre-fit.js';
+const genreCases=[
+ ['魚','やきとり','魚'],['おまかせ','やきとり','肉'],
+ ['おまかせ','にく','肉'],['おまかせ','さかな','魚'],['おまかせ','やきにく','肉'],
+ ['魚','家で食べる',null],['魚','','魚']
+];
+for(const [category,desire,expected] of genreCases)assert.equal(requestedGenre({category,desire}),expected,`confirmed genre: ${category} + ${desire}`);
+for(const [dish,genre] of [['にく','肉'],['やきにく','肉'],['さかな','魚']])assert.equal(genreFit({dish},genre).level,'strong',`hiragana menu evidence: ${dish}`);
+assert.equal(genreFit({name:'情報なし'},'魚').level,'unknown','unknown genre is not mismatch');
+console.log('NAVI-05 genre axis: 11 assertions passed (7 required + 4 related)');
