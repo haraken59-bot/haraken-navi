@@ -1,6 +1,7 @@
 # 未適用・独立レビュー用 v02。リポジトリへの導入／実行は別承認。
 # 公開候補は56ファイル（検証用5ファイルの保持はユーザー承認済み）。
-# 開発用25ファイルの公開終了が未承認のため、保留ゲートは false のまま意図的に停止する案。
+# 開発用25ファイルの公開終了と検証用5ファイルの公開継続は承認済み。
+# PRマージ・保留ゲート解除・初回手動公開は別承認待ちのため、ゲートは false のまま維持する。
 # 注意: fetch-depth: 0 はmain祖先確認（refs/remotes/origin/main の存在）の前提。浅く変更しないこと。
 name: Approved manual Pages release
 run-name: Pages ${{ inputs.release_sha }}
