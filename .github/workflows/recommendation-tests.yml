@@ -5,9 +5,13 @@ on:
       - fix/specific-food-preference-20261018
   pull_request:
     paths:
+      - 'discovery.js'
+      - 'photo-store-candidates.js'
+      - 'importer/**'
       - 'domain.js'
       - 'genre-fit.js'
       - 'meal-client.js'
+      - 'meal-photo.js'
       - 'store-link-ui.js'
       - 'tests/**'
       - '.github/workflows/recommendation-tests.yml'
@@ -20,7 +24,11 @@ jobs:
         with:
           node-version: '22'
       - name: Check syntax
-        run: node --check domain.js
+        run: |
+          node --check domain.js
+          node --check discovery.js
+          node --check meal-client.js
+          node --check store-link-ui.js
       - name: Specific dish unit tests
         run: node --experimental-default-type=module --test tests/specific-dish.test.mjs
       - name: Recommendation integration tests
@@ -28,3 +36,9 @@ jobs:
 
       - name: Store linking name search tests
         run: node --experimental-default-type=module --test tests/store-link-search.test.mjs
+      - name: Bottle merge tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/bottle-merge.test.mjs
+      - name: Store navigation tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/store-navigation.test.mjs
