@@ -150,7 +150,13 @@ export function recommend(candidates,ctx,records=[],food={},events=[],now=new Da
  const fitRank=c=>c.portion_fit==='fit'?2:c.portion_fit==='unsuitable'?0:1;
  const hasPortion=ctx.mode==='eat'&&Boolean(ctx.portion);
  if(hasPortion&&ctx.portion==='ガッツリ'&&!ctx.relaxPortion){for(let i=scored.length-1;i>=0;i--)if(scored[i].portion_fit==='unsuitable')scored.splice(i,1);}
- const explicit=Boolean(ctx.desire.trim()||ctx.category!=='おまかせ');scored.sort((a,b)=>(ctx.direction==='wait'?Number(b.id==='wait')-Number(a.id==='wait'):0)||(ctx.desire.trim()?specificDishMatch(b,ctx)-specificDishMatch(a,ctx):0)||(explicit?b.match-a.match:0)||(hasPortion?fitRank(b)-fitRank(a):0)||b.score-a.score||a.id.localeCompare(b.id));
+ const explicit=Boolean(ctx.desire.trim()||ctx.category!=='おまかせ');
+ // NAVI-05 ranking: with a genre button selected, genre fit (match) is compared
+ // before the specific-dish key; with no button (おまかせ) the legacy order stays.
+ const genreFirst=Boolean(requestedGenre({category:ctx.category,desire:''}));
+ const dishKey=(a,b)=>ctx.desire.trim()?specificDishMatch(b,ctx)-specificDishMatch(a,ctx):0;
+ const matchKey=(a,b)=>explicit?b.match-a.match:0;
+ scored.sort((a,b)=>(ctx.direction==='wait'?Number(b.id==='wait')-Number(a.id==='wait'):0)||(genreFirst?(matchKey(a,b)||dishKey(a,b)):(dishKey(a,b)||matchKey(a,b)))||(hasPortion?fitRank(b)-fitRank(a):0)||b.score-a.score||a.id.localeCompare(b.id));
  const unique=[];for(const c of scored)if(!unique.some(x=>x.kind==='store'&&c.kind==='store'&&sameStore(x,c)))unique.push(c);
  let top=unique.slice(0,3);if(ctx.direction!=='wait'){
   const fresh=c=>c.kind==='store'&&c.visited!==true&&!c.satisfaction&&!learned.some(r=>sameStore(c,r));
