@@ -1,5 +1,6 @@
 name: Recommendation regression tests
 on:
+  workflow_dispatch:
   push:
     branches:
       - fix/specific-food-preference-20261018
@@ -42,3 +43,31 @@ jobs:
       - name: Store navigation tests
         if: always()
         run: node --experimental-default-type=module --test tests/store-navigation.test.mjs
+      - name: Photo GPS pending tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/photo-gps.test.mjs
+      - name: Photo direction tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/photo-direction.test.mjs
+      - name: JPEG reference diagnostics tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/jpeg-ref-diagnostics.test.mjs
+      - name: JPEG reference hex tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/jpeg-ref-hex.test.mjs
+      - name: GPS offset audit tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/gps-offset-audit.test.mjs
+      - name: Photo store candidates tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/photo-store-candidates.test.mjs
+      - name: Discovery hint tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/discovery-hint.test.mjs
+      - name: NAVI-05 ranking tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/navi05-ranking.test.mjs
+      - name: W-B1 recommend tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/wb1-recommend.test.mjs
+
