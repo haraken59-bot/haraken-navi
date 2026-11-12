@@ -26,7 +26,7 @@ export function specificDishMatch(c,ctx){
  const groups=[/焼き?鳥|やきとり|焼鳥|yakitori/,/ラーメン|らーめん|ramen/,/焼肉|やきにく/,/ステーキ|steak/,/寿司|すし|鮨|sushi/,/うどん|udon/,/そば|蕎麦|soba/,/カレー|curry/,/餃子|ぎょうざ/,/チャーハン|炒飯|やきめし/];
  const requested=groups.find(re=>re.test(q));if(!requested)return 0;
  const evidence=[c.name,c.dish,c.menu,c.cuisine,c.hotpepper?.genre,c.hotpepper?.sub_genre,...(c.tags||[]),...(c.owner_genres||[])].filter(Boolean).map(norm);
- return evidence.some(x=>requested.test(x))?1:0;
+ return evidence.some(x=>requested.test(x)&&!(requested.source==='うどん|udon'&&/(?:うどん|udon)(?:の)?(?:提供)?(?:は)?(?:なし|無し|ありません|していません|終了|中止|休止|取り扱いなし)/i.test(x)))?1:0;
 }
 export function trustedValue(row,key){if(Object.hasOwn(row.confirmed_values||{},key))return row.confirmed_values[key];return row[key];}
 export function provenance(row,key){return Object.hasOwn(row.confirmed_values||{},key)?'本人確定':row.field_provenance?.[key]?.state==='estimated'?'推定':'確度未確認';}
@@ -126,6 +126,7 @@ export function recommend(candidates,ctx,records=[],food={},events=[],now=new Da
   const travel=travelMinutes(c,ctx),stay=c.kind==='action'?0:ctx.mode==='drink'?(ctx.round===2?40:70):30;
   if(c.kind==='store'&&travel!=null&&travel*2+stay>maxMinutes)continue;
   const genre_fit=genreFit(c,requestedGenre(ctx),{now,owner:ctx.owner,history:food.meal_history||[],historyOwner:food.history_owner});if(genre_fit?.level==='mismatch')continue;
+  if(c.kind==='store'&&/うどん|udon/i.test(norm(ctx.desire||''))&&!specificDishMatch(c,ctx))continue;
   const match=desireMatch(c,ctx,{now,fit:genre_fit}),portion_fit=ctx.mode==='eat'?portionFit(c,ctx.portion):'neutral',past=learned.filter(r=>sameStore(c,r)&&(!r.dish_name||norm(r.dish_name)===norm(c.dish)));
   let rating=c.satisfaction??3,weight=1;for(const r of past){const w=ageFactor(r.created_at,365,now);rating+=r.satisfaction*w;weight+=w;}rating/=weight;
   const recentRows=[...(food.recent7||[]),...learned.map(r=>({eaten_at:r.created_at,dish_name:r.dish_name,genre:r.tags?.[0]}))].filter(r=>!r.eaten_at||new Date(r.eaten_at)<=now).sort((a,b)=>String(b.eaten_at||'').localeCompare(String(a.eaten_at||''))).slice(0,7);
