@@ -81,7 +81,6 @@ export async function inspectGps(file, parser = exifr, originalBytes) {
   // A simplified parser can return positive decimals with missing/empty Refs.
   // Actual invalid GPS IFD bytes must never be overridden by that shortcut.
   if(segments.length&&!directValid)gps=null;
-  if(!gps&&directValid){gps=direct[0];diagnostic.refSource='元JPEGのGPS IFDからRef・度分秒を直接回収';}
   const conflicting=direct.some(p=>validGps(p))&&!directValid;
   if(conflicting){gps=null;diagnostic.error='複数EXIFのGPSが一致しません';}
   const refs=directRefs.segments.filter(s=>s.status==='GPS IFD確認済み').flatMap(s=>s.refs);
@@ -92,11 +91,8 @@ export async function inspectGps(file, parser = exifr, originalBytes) {
     if(pairs.length&&pairs.every(p=>validGps(p)&&p.latitude===pairs[0].latitude&&p.longitude===pairs[0].longitude)){Object.assign(magnitude,pairs[0]);diagnostic.magnitudeSource='JPEG GPS IFDの有理数から直接変換';}
   }
   if(emptyDirection)diagnostic.magnitudeSource??=validGps(magnitude)?'EXIF解析値から絶対値変換':'数値変換失敗・JPEG直接診断の度分秒を確認';
-  const missingRef = r=>r===undefined||r===null||directionOf(r)==='';
-  const refsMissing=missingRef(tags?.GPSLatitudeRef)||missingRef(tags?.GPSLongitudeRef);
-  const refsCompatible=[['lat',tags?.GPSLatitudeRef],['lon',tags?.GPSLongitudeRef]].every(([a,r])=>missingRef(r)||(a==='lat'?['N','S']:['E','W']).includes(directionOf(r)));
-  if(!gps&&!conflicting&&(emptyDirection||(refsMissing&&refsCompatible&&validGps(magnitude))))diagnostic.directionPending={...magnitude,confirmed:false,numericValid:validGps(magnitude),latitudeRef:directionOf(tags?.GPSLatitudeRef),longitudeRef:directionOf(tags?.GPSLongitudeRef)};
-  diagnostic.status = conflicting ? 'invalid' : gps ? 'ok' : diagnostic.directionPending?.numericValid ? 'direction_missing' : fullFailed ? 'error' : diagnostic.latitudeTag || diagnostic.longitudeTag || emptyDirection ? 'invalid' : 'missing';
+  if(!gps&&!conflicting&&emptyDirection)diagnostic.directionPending={...magnitude,confirmed:false,numericValid:validGps(magnitude),latitudeRef:directionOf(tags?.GPSLatitudeRef),longitudeRef:directionOf(tags?.GPSLongitudeRef)};
+  diagnostic.status = conflicting ? 'invalid' : gps ? 'ok' : diagnostic.directionPending ? 'direction_missing' : fullFailed ? 'error' : diagnostic.latitudeTag || diagnostic.longitudeTag || emptyDirection ? 'invalid' : 'missing';
   // Non-enumerable: device-only diagnostic, excluded from JSON/save metadata.
   Object.defineProperty(diagnostic,'directRefs',{value:directRefs});
   return { gps: gps ? {latitude: gps.latitude, longitude: gps.longitude} : null, diagnostic };
