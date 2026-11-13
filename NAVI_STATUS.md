@@ -35,10 +35,10 @@
 
 ## 公開済み・確認済み
 
-- 正式URL: [https\://haraken59-bot.github.io/haraken-navi/](https://haraken59-bot.github.io/haraken-navi/)  
-- 公開バージョン: 手動公開 release \#7（2026-11-12公開）  
-- 公開コミット: `ab89926404477ebafb69c08d43005ade39bda2e1`（2026-11-12確認。release \#6 はバッチA（PR \#23）、release \#7 はバッチB（PR \#24）の公開。公開中のアプリファイルは現行mainと一致を実測確認）  
-- CI: Recommendation regression tests は全テストファイルが対象（バッチC・PR \#22 で 5ファイル17件から全スイートへ拡張し、`workflow_dispatch` を追加済み）。全スイートは現在15ファイル88件（バッチB でうどん専用テスト3件を追加）。  
+- 正式URL: https://haraken59-bot.github.io/haraken-navi/  
+- 公開バージョン: 手動公開 release #7（2026-11-12公開）  
+- 公開コミット: `ab89926404477ebafb69c08d43005ade39bda2e1`（2026-11-12確認。release #6 はバッチA（PR #23）、release #7 はバッチB（PR #24）の公開。公開中のアプリファイルは現行mainと一致を実測確認）  
+- CI: Recommendation regression tests は全テストファイルが対象（バッチC・PR #22 で 5ファイル17件から全スイートへ拡張し、`workflow_dispatch` を追加済み）。全スイートは現在15ファイル88件（バッチB でうどん専用テスト3件を追加）。  
 - GitHub Pages Actions run 41127130322: success。公開対象9ファイルのHTTP 200・内容一致、新版表示、スマホ幅トップ画面、JavaScriptエラー0件との公開作業報告。  
 - GPS共通処理5案件（N02/I01/I02/I03/X04）を公開済み。対象はGPS処理5ファイルとキャッシュ参照4ファイルのみ。訪問分類・参考候補・関連CIの未公開差分は含めない。  
 - 公開前の分離版検証: 単体43件＋ブラウザモック10件成功、構文8ファイル成功。既存102件・隔離DB15件の成功記録は引き継ぎ、再実行なし。  
@@ -49,17 +49,17 @@
 
 - 過去食事写真DBのナビへの全機能統合は未完了。独立写真DBの終了・削除は未決定。  
 - 訪問分類・店舗参考候補・関連CIの未公開変更は今回の公開対象外。  
-- （解決済み）ナビ本体の気分入力が「今から食べる」「今どうする？」操作で消える問題と、条件調整で外部検索が繰り返される問題は、W-B1（PR \#13、2026-11-11マージ・公開）で修正し、受け入れ確認と公開後確認で解消を確認済み。  
+- （解決済み）ナビ本体の気分入力が「今から食べる」「今どうする？」操作で消える問題と、条件調整で外部検索が繰り返される問題は、W-B1（PR #13、2026-11-11マージ・公開）で修正し、受け入れ確認と公開後確認で解消を確認済み。  
 - 写真撮影地点からの外部店舗検索でOverpassタイムアウトをAndroid画面で確認。Geoapify採用は保留。福岡100店舗の最終結果はOSM掲載47件、Geoapify実測完了・発見50/100（2026-11-10訂正。旧46件／実測未実施は過去記録であり、今回のAPI実測ではない）。  
 - 本人ログイン後の最新実保存・履歴更新など、今回実施していないテストは完了扱いしない。
 
 ## 承認済み・実装待ち／保留（2026-11-12）
 
-- 完了: Android GPS原本ファイル選択の追加（NAVI-18、バッチA。PR \#23 でマージし release \#6 で公開。Download 経由の選択で GPS 取得を確認。Camera フォルダーからの直接選択では GPS が未確定になる問題が別記として残る）。  
-- 完了: うどん除外（NAVI-15-A、バッチB。PR \#24 で通常マージし release \#7 で公開。全スイート88成功／0失敗、公開後検証済み。「提供なし」の実店舗での検証は未実施であり、専用テストの成功とは区別する）。  
+- 完了: Android GPS原本ファイル選択の追加（NAVI-18、バッチA。PR #23 でマージし release #6 で公開。Download 経由の選択で GPS 取得を確認。Camera フォルダーからの直接選択では GPS が未確定になる問題が別記として残る）。  
+- 完了: うどん除外（NAVI-15-A、バッチB。PR #24 で通常マージし release #7 で公開。全スイート88成功／0失敗、公開後検証済み。「提供なし」の実店舗での検証は未実施であり、専用テストの成功とは区別する）。  
 - 保留: 店舗ID引き継ぎ第2分岐（NAVI-15-B。同名別店舗への誤紐付けを防ぐ追加の識別根拠が確定するまで、現行の第1分岐を維持）。  
-- 方針決定・未実施: PR \#10・\#11 は保全確認済み（保全対象と閉鎖手順を記録済み）。閉鎖方針は承認済みだが閉鎖操作は未実施で、ブランチは保持する。  
-- 外部確認待ち: Geoapify Phase 10 段階1（GEO-01）は本人の確認2点（Backups 4項目・外部依存の申告）待ち。あんこ側の判定は CONDITIONAL\_READY。
+- 方針決定・未実施: PR #10・#11 は保全確認済み（保全対象と閉鎖手順を記録済み）。閉鎖方針は承認済みだが閉鎖操作は未実施で、ブランチは保持する。  
+- 外部確認待ち: Geoapify Phase 10 段階1（GEO-01）は本人の確認2点（Backups 4項目・外部依存の申告）待ち。あんこ側の判定は CONDITIONAL_READY。
 
 - 未解決: Android の Camera フォルダーから直接選択すると GPS が未確定になる問題（原因未確定。Download フォルダーへコピーしてから選択する回避策は確認済み）。  
 - 承認待ち: GPS 取得失敗時の案内文に、Download フォルダーへコピーする方法を追記する改善案（あんこ提案済み・未承認）。  
@@ -86,7 +86,7 @@
 ## 2026-10-22 写真500m・RPC互換性の限定公開
 
 - バージョン20261022-photo500m。公開直前基準9d2c542b424dceb795fce63085f3a8df7e0dfe3dからrelease/photo500m-only-20261022へ対象のみ切り出し。  
-- 登録店舗の写真GPS500m検索、名称絞り込み/保持/万萬照合、重複確認/確認取消、スマホカード、store\_idとunlinked\_store\_name:nullの同時送信。履歴からの既存選択・手動登録で共通コールバック使用。  
+- 登録店舗の写真GPS500m検索、名称絞り込み/保持/万萬照合、重複確認/確認取消、スマホカード、store_idとunlinked_store_name:nullの同時送信。履歴からの既存選択・手動登録で共通コールバック使用。  
 - 過去の保存復旧/ジャーナル/保存直後確認/推薦修正は除外。認証・通常保存・写真原画・DB/RPC/Edge・PWAは基準から変更なし。架空データ/LANサーバーは公開対象外。今回のモックテストファイルも作業領域のみで配信しない。  
 - 切り出し後の限定確認: Nodeテスト13成功/0失敗（1件は既存16assertionsのファイル）、ブラウザ10+5成功/0失敗/外部要求0。既存102+6成功記録を再利用。保存直後の関連付け1件は未公開機能のため今回対象外。  
 - index/main/依存JS/CSS参照を?v=20261022-photo500mで統一。新SWなし。公開後に配信バイト一致・正常起動を確認予定。Androidの実関連付けは本人確認待ち。  
@@ -95,23 +95,23 @@
 
 # ハラケン・ナビ 現在状態
 
-確認日：2026-10-18。現行リポジトリAGENTS.md指定の唯一の状態正本。 ローカルの旧HARAKEN\_NAV\_STATUS.mdは本書への案内のみ。過去チャット・古いSTATUSの未解決事項を自動継承しない。
+確認日：2026-10-18。現行リポジトリAGENTS.md指定の唯一の状態正本。 ローカルの旧HARAKEN_NAV_STATUS.mdは本書への案内のみ。過去チャット・古いSTATUSの未解決事項を自動継承しない。
 
-## 1\. 正式公開の基準
+## 1. 正式公開の基準
 
-- 正式URL：[https\://haraken59-bot.github.io/haraken-navi/](https://haraken59-bot.github.io/haraken-navi/)  
+- 正式URL：https://haraken59-bot.github.io/haraken-navi/  
 - アプリ配信確認基準：578f06dede1c61c276b91bd200caa965872a6a23（共通店舗・写真GPS連携、2026-10-18確認）。以降の確認記録コミットは文書のみ。  
 - GitHub Pages run 39004007104：success。安全削除の画面実装コミット4d3216b2d287eac894c98e0d3990531808daef75。  
-- f553efa→0d7cdb5はAGENTS.md／NAVI\_STATUS.md／CHANGELOG.md追加のみ。画面コードの差分なし。  
+- f553efa→0d7cdb5はAGENTS.md／NAVI_STATUS.md／CHANGELOG.md追加のみ。画面コードの差分なし。  
 - 公開ランタイム資産39件をHTTP200・Gitバイト一致で確認。work/appの同名資産も一致（テキストの改行コード差は正規化）。公開用設定生成・非配信の開発ツールは同一性比較の対象外。  
 - 通常画面は安全削除・今回の店舗関連付けに更新済み。本人専用検証ページ追加コミット31cbd502ec034e98d3db1d6eba75dafa22a28705は公開確認済み。  
 - Supabase navi-discover：v22 ACTIVE（今回管理APIで確認）。Edgeは静的リポジトリのGit SHAとは別管理。  
 - 画面のLOCAL v1は既存表示であり、未公開／PC依存の意味ではない。
 
-## 2\. 今回の本番スモーク結果
+## 2. 今回の本番スモーク結果
 
 | 項目 | 結果と確認範囲 |
-| :---- | :---- |
+|---|---|
 | 正式ページ起動 | 成功。未ログイン表示とOTP送信画面を確認 |
 | 本人OTPログイン | 未確認。検証ブラウザに本人セッションなし、OTP受信コード未取得。送信・ログアウトは未実施 |
 | 本人検索 | 今回未確認。JWT本人経路の実装は公開済み |
@@ -120,73 +120,73 @@
 | 再検索4ボタン | もっと近く／安く／冒険／確実を公開画面で各1回操作、各3候補と再計算表示を確認 |
 | 利用／再訪バッジ | 本番候補応答でひだか・友志revisited、赤兵衛藤崎used。カード描画実装は公開済み。今回の上位3カードで両バッジの実表示は未確認 |
 | 食事履歴表示・編集・写真表示 | 実装／公開／本番RPC定義確認済み。本人セッションでの今回の実操作は未確認 |
-| ゲスト本人機能拒否 | 保存・編集UIなし、本人専用案内を確認。owner-check／未認証edit\_meal\_details要求401 |
+| ゲスト本人機能拒否 | 保存・編集UIなし、本人専用案内を確認。owner-check／未認証edit_meal_details要求401 |
 | Edge本番応答 | ゲストGPS101候補／藤崎エリア33候補、いずれも200。外部候補のsatisfactionはnull、既知店舗は項目なし。非null満足度・コメント・写真・個人metadataなし |
 
 - 今回は上記スモークとコード／RPC定義の読み取りだけ。既存72件などの全テストを再実行していない。  
 - Android実機、実第三者JWT、本人の保存・編集の再実証は未実施。過去の成功報告と今回確認を混同しない。
 
-## 3\. 実装済み・公開済み
+## 3. 実装済み・公開済み
 
 - 本人専用Email OTP、検証済みJWTとサーバー本人ID照合、トップ3状態。ゲストは検索・公開集約情報のみ。  
 - GPS中心の500m→1km→2km→3km不足時拡張、Hot Pepper＋既知店舗統合、同一距離制限、希望語補足、条件別cache。キープ店固定＋8点は廃止済み（第9節）。  
-- 共通食事履歴：店名・料理名・日時・コメント・金額・満足度を編集可能。金額は整数0以上／空欄可、満足度1～5／空欄可。本番edit\_meal\_detailsは本人所有・revision照合、手動確定値とprovenance更新。写真／学習除外metadataを変更しない。  
+- 共通食事履歴：店名・料理名・日時・コメント・金額・満足度を編集可能。金額は整数0以上／空欄可、満足度1～5／空欄可。本番edit_meal_detailsは本人所有・revision照合、手動確定値とprovenance更新。写真／学習除外metadataを変更しない。  
 - テスト記録の学習対象復帰（選択1件・確認付き）。通常の手動学習除外UIはなし。  
 - 写真原画＋表示用画像、元FileからEXIF/GPS取得、旧画像互換、本人向け表示・ダウンロード。  
-- 写真インポーターが保存した既存meals／meal\_details／meal\_imagesを共通経路で参照する実装済み。別アプリや未移行の端末内ファイルを丸ごと読む機能ではない。  
-- get\_meal\_historyはauth.uid()本人の共通食事記録を食事日時順で100件ずつ取得。ナビ履歴画面は追加ページ取得可。推薦コンテキストは初回の直近100件と既存get\_food\_context等を参照し、全履歴を毎回読んではいない。  
+- 写真インポーターが保存した既存meals／meal_details／meal_imagesを共通経路で参照する実装済み。別アプリや未移行の端末内ファイルを丸ごと読む機能ではない。  
+- get_meal_historyはauth.uid()本人の共通食事記録を食事日時順で100件ずつ取得。ナビ履歴画面は追加ページ取得可。推薦コンテキストは初回の直近100件と既存get_food_context等を参照し、全履歴を毎回読んではいない。  
 - 表示範囲：店舗・料理・日時・金額・満足度・コメント・写真枚数、写真ボタンでthumbnail／記録済みGPS情報。原画の有無は記録metadataとStorageによる。本人ログイン後のみ。
 
-## 4\. 実装済みだが未公開
+## 4. 実装済みだが未公開
 
 - 安全削除の正式画面は公開済み（第8節参照）。  
 - MELON keepaliveはローカル経路のみ。クラウド移行は未完了で、通常検索には依存しない。  
 - 段階アイコン移行の第2段階以降は未公開・実機確認待ち。今回画像／PWA設定は変更しない。
 
-## 5\. 未実装
+## 5. 未実装
 
 - ローカルだけに残る旧履歴の編集、天気API。  
 - 保存失敗時の未確定原画掃除removePendingOriginalsは存在するが、保存済み履歴の削除機能とは別。
 
-## 6\. 保留・未確認
+## 6. 保留・未確認
 
 - 本人OTP・本人検索・履歴表示・6項目編集・実保存・写真表示・インポーター既存データ参照はユーザーの実機成功報告あり。今回の削除テストとは別。  
 - 原画アップロード／再取得／他ユーザー拒否／同一性の最新実証は今回未実施。過去の成功・失敗を推測して更新しない。  
 - 日高／焼酎／食生活OS連携の本人実操作最終確認、独立インポーター終了判断。  
 - Nominatim403完全解決、MELONクラウド化、アイコンのAndroid採用状況。検索公開の新しい阻害条件とはしない。
 
-## 7\. 維持する仕様
+## 7. 維持する仕様
 
-- PWA恒久ID／start\_url／scope／アイコン維持。Service Worker新設なし。  
-- service\_roleや秘密値をクライアントへ置かない。ゲストに個人履歴・写真・感想・満足度を返さない。  
-- historical\_review本番ランキング・日高extra scoringを復活しない。通常記録は学習対象、明示テストだけ除外。
+- PWA恒久ID／start_url／scope／アイコン維持。Service Worker新設なし。  
+- service_roleや秘密値をクライアントへ置かない。ゲストに個人履歴・写真・感想・満足度を返さない。  
+- historical_review本番ランキング・日高extra scoringを復活しない。通常記録は学習対象、明示テストだけ除外。
 
-## 8\. 安全削除の現在状態（2026-10-17）
+## 8. 安全削除の現在状態（2026-10-17）
 
 - 実装コミット4d3216b2d287eac894c98e0d3990531808daef75：本人の履歴編集画面に削除ボタン。本人限定・確認ダイアログ必須・写真ありは「写真も削除されます」。正式配信確認済み。  
-- DB migration navi\_meal\_deletion\_outbox適用済み、navi-meal-delete v1 ACTIVE。所有者・revision・写真パス検証、削除ジョブ保存とDB削除を同一トランザクションで確定後、Storage APIで削除。失敗はpendingとして保持・再試行。DB確定失敗時はStorageに触れない。  
-- 専用EdgeはAuth /userによるJWT検証＋NAVI\_OWNER\_USER\_ID照合。削除RPCはservice\_role限定。実Edgeゲスト・無効JWT401、有効な第三者JWTは実環境未確認（模擬・DB権限検証済み）。  
+- DB migration navi_meal_deletion_outbox適用済み、navi-meal-delete v1 ACTIVE。所有者・revision・写真パス検証、削除ジョブ保存とDB削除を同一トランザクションで確定後、Storage APIで削除。失敗はpendingとして保持・再試行。DB確定失敗時はStorageに触れない。  
+- 専用EdgeはAuth /userによるJWT検証＋NAVI_OWNER_USER_ID照合。削除RPCはservice_role限定。実Edgeゲスト・無効JWT401、有効な第三者JWTは実環境未確認（模擬・DB権限検証済み）。  
 - 写真削除未完了は履歴再取得時1件再開または手動再試行。常時巡回なし。再開されるまで対象原画はジョブ付きで残る。  
 - 関連Node54件最終PASS、DB一時レコード8項目PASS・ROLLBACK、削除画面3件PASS、専用検証導線3件PASS。今回は同じ成功済みテストを繰り返さず、配信3JS構文確認。  
-- 実環境専用テスト1件：本人JWT保存成功。ユーザー画面でDBなし／Storageなし／job done／他データ比較一致／deletion\_complete trueを確認報告。さらにSQL読取で対象mealsなし・meal\_images 0・Storage objects 0・ジョブdoneを確認。テストの実記録・画像は清掃完了。  
-- 他データ比較は本人meals・meal\_details・meal\_imagesおよび原画Storage一覧のハッシュ一致。全原画バイト検査・他ユーザー内容の検査ではない。本物の履歴・写真は削除していない。  
+- 実環境専用テスト1件：本人JWT保存成功。ユーザー画面でDBなし／Storageなし／job done／他データ比較一致／deletion_complete trueを確認報告。さらにSQL読取で対象mealsなし・meal_images 0・Storage objects 0・ジョブdoneを確認。テストの実記録・画像は清掃完了。  
+- 他データ比較は本人meals・meal_details・meal_imagesおよび原画Storage一覧のハッシュ一致。全原画バイト検査・他ユーザー内容の検査ではない。本物の履歴・写真は削除していない。  
 - 障害注入（実Storage故障・実DB故障）は未実施。補償・再試行は既存模擬テストとDBロールバック試験で確認。  
 - 専用検証URL：/haraken-navi/internal-delete-test/。同じ本人セッションを利用、通常リンクなし。静的HTMLは公開、操作・データは本人照合必須。生成テストIDだけ対象。記録は学習対象外、合成画像1枚。削除済みIDを再利用しない。  
 - 次：正式履歴編集で削除ボタン・確認文言をAndroid確認。確認だけならキャンセルし、本物の履歴を検証目的で削除しない。- 公開後確認：main.js／meal-client.js／meal-ui.js／manifestはHTTP200・Gitバイト一致。.env／config.local.jsonは404。PWA／アイコン／Auth／DB再変更なし。  
 - 正式ページで本人セッション継続・履歴20件の編集入口・編集画面の「削除」「キャンセル」表示を確認し、キャンセルで終了。実際の履歴は削除していない。Androidでの最終表示確認はユーザー操作待ち。  
 - 2026-10-17 ユーザーAndroid実機報告：正式履歴編集の削除ボタン→確認メッセージ表示→キャンセルで戻る動作が成功。実履歴の削除は実施せず。ユーザー申告による確認であり、操作ログの独立検証ではない。
 
-## 9\. ボトル保持・固定加点廃止（2026-10-17、正式公開済み）
+## 9. ボトル保持・固定加点廃止（2026-10-17、正式公開済み）
 
-- 正式ソース discovery.js：既存の同一店舗照合後、本人ボトル情報を統合。id／bottle\_idで重複排除し、複数ボトルと既存フィールドを保持。ゲスト経路は変更なし。  
+- 正式ソース discovery.js：既存の同一店舗照合後、本人ボトル情報を統合。id／bottle_idで重複排除し、複数ボトルと既存フィールドを保持。ゲスト経路は変更なし。  
 - domain.js：飲みモードのキープ店固定＋8点のみ削除。表示用ボトル情報と他の評価要素は維持。work/app同名2ファイルも同期。  
 - 新規6件＋関連既存34件＝40/40 PASS。架空データのみ。4再検索条件でもボトル有無によるスコア差なし。  
 - 公開コミット ae51fedad70704cba837c37d439893a861542977、main push成功、Pages run 39030342041 success。discovery.js／domain.jsはHTTP200・JavaScript MIME・コミット完全一致。未変更manifestも200・完全一致。DB／Edge／認証／PWA／実データ変更なし。  
 - 既存40件PASS対象から実装変更なしのため再実行なし。開発用同名2ファイルと一致。ゲスト検索の今回の実操作は未実施。Androidの本人ボトル表示は未確認・ユーザー確認待ち。
 
-## 10\. 共通店舗・写真GPS連携（2026-10-18）
+## 10. 共通店舗・写真GPS連携（2026-10-18）
 
-- DB：storesへgenres／usage\_mode／is\_testを追加。既存ID・RLS・既存同期項目を維持。本人店舗読取、ジャンル・モードの競合検知付き保存、ユーザー確認後のみ店舗確定するRPCを追加。
+- DB：storesへgenres／usage_mode／is_testを追加。既存ID・RLS・既存同期項目を維持。本人店舗読取、ジャンル・モードの競合検知付き保存、ユーザー確認後のみ店舗確定するRPCを追加。
 
 - テスト4店舗を正確なIDで区分。本番ひだかのID・アプリリンク・注文は不変。ボトル／残量更新／来訪はバックアップ比較一致。物理削除なし、削除候補は保留。
 
@@ -196,21 +196,21 @@
 
 - 焼酎店舗画面：ジャンル複数選択／利用モードを共通DBへ直接保存。既存オフライン同期とは分離し、同期本体9関数は不変。
 
-- 写真GPS：元Fileの既存EXIF・保存済みphoto\_locationを利用。写真500m以内の候補を表示し、本人確認後に共通store\_idを確定。自動登録なし。GPSなしでも既存店舗選択／未連携保存可。過去食事は店舗IDだけを本人確認で関連付け可能。
+- 写真GPS：元Fileの既存EXIF・保存済みphoto_locationを利用。写真500m以内の候補を表示し、本人確認後に共通store_idを確定。自動登録なし。GPSなしでも既存店舗選択／未連携保存可。過去食事は店舗IDだけを本人確認で関連付け可能。
 
-- 現在20食事／185過去レビューは未連携のまま。店名一致候補は食事0・レビュー2。所在地の裏付け不足で一括関連付けなし。過去レビューの新規ランキング利用、taste\_profile／meal\_analysisの追加スコア利用は行わない。既存食事分類・満足度・傾向集計を再利用し、独立食生活OSは作成しない。
+- 現在20食事／185過去レビューは未連携のまま。店名一致候補は食事0・レビュー2。所在地の裏付け不足で一括関連付けなし。過去レビューの新規ランキング利用、taste_profile／meal_analysisの追加スコア利用は行わない。既存食事分類・満足度・傾向集計を再利用し、独立食生活OSは作成しない。
 
-- 検証：ロジック48/48、DB12項目（全試験書込ROLLBACK）、隔離画面6/6、既存同期9関数不変。既存店舗の変更は4件のis\_testと更新日時のみ。既存履歴・写真・原画・注文変更なし。
+- 検証：ロジック48/48、DB12項目（全試験書込ROLLBACK）、隔離画面6/6、既存同期9関数不変。既存店舗の変更は4件のis_testと更新日時のみ。既存履歴・写真・原画・注文変更なし。
 
 - DB適用済み。ナビ578f06d／Pages39076004968、焼酎38f1e4c／Pages39076023477はsuccess。変更資産と未変更manifest計12件がHTTP200・コミット一致。秘密2パス×2サイト404。Android・実本人の店舗設定保存／写真関連付けは未確認。
 
-- 既存DB警告：food\_bias\_rules search\_path、rls\_auto\_enable公開実行権限などは今回変更外。今回新規RPCはSECURITY INVOKER／固定search\_path／anon実行拒否を確認。
+- 既存DB警告：food_bias_rules search_path、rls_auto_enable公開実行権限などは今回変更外。今回新規RPCはSECURITY INVOKER／固定search_path／anon実行拒否を確認。
 
 - 開発配信・ビルドの3allowlistへstore-link-ui.jsだけ追加し、新規資産の欠落を防止。新規店舗や過去履歴の本番追加・関連付けは実行していない。
 
-## 11\. 具体的な料理希望の優先順位（2026-10-18）
+## 11. 具体的な料理希望の優先順位（2026-10-18）
 
-- PR \#2をmainへsquash merge、コミット c8f4deb9bf2dfdba10ead8534bb8838829120b86。domain.jsで具体的料理名の一致を大分類の肉一致より優先。肉のみ／おまかせの従来判定は維持する設計。
+- PR #2をmainへsquash merge、コミット c8f4deb9bf2dfdba10ead8534bb8838829120b86。domain.jsで具体的料理名の一致を大分類の肉一致より優先。肉のみ／おまかせの従来判定は維持する設計。
 
 - GitHub Actions run 39097899607 は success（修正ブランチのテスト）。テストコードは料理判定7ケース、推薦順位4ケース。実行ログの個別assert件数は今回未照合。
 
@@ -218,61 +218,61 @@
 
 - mainソースへの修正反映は確認済み。GitHub Pagesの該当コミットへの配信成功・公開資産バイト一致は今回未独立検証。DB／認証／他アプリ変更なし。
 
-- 2026-11-10 NAVI-05仕様Bの引き継ぎ：料理名がジャンル判定まで決める動きだけを止める適用範囲の明確化。ボタンを確定ジャンルとし、料理名の評価は原則維持する。アルファAによりdesireMatchの加点方式不変、ベータAによりspecificDishMatch既存10グループ・語彙不変（刺身等のグループ外独立照合は保証しない）。根拠：20261109\_NAVI05\_SPEC\_B\_DECISION\_ANKO\_v01.md、20261109\_NAVI05\_ALPHA\_A\_BETA\_A\_DECISION\_ANKO\_v01.md。
+- 2026-11-10 NAVI-05仕様Bの引き継ぎ：料理名がジャンル判定まで決める動きだけを止める適用範囲の明確化。ボタンを確定ジャンルとし、料理名の評価は原則維持する。アルファAによりdesireMatchの加点方式不変、ベータAによりspecificDishMatch既存10グループ・語彙不変（刺身等のグループ外独立照合は保証しない）。根拠：20261109_NAVI05_SPEC_B_DECISION_ANKO_v01.md、20261109_NAVI05_ALPHA_A_BETA_A_DECISION_ANKO_v01.md。
 
-## 12\. 矛盾するジャンルと料理希望の回帰確認（2026-10-18）
+## 12. 矛盾するジャンルと料理希望の回帰確認（2026-10-18）
 
-- PR \#3 をmainへsquash merge、e14eed9ecdb27239cc345a2f524f28d6204d015c。推薦ロジック変更なし、tests/recommend-specific.test.mjsの条件追加のみ。  
+- PR #3 をmainへsquash merge、e14eed9ecdb27239cc345a2f524f28d6204d015c。推薦ロジック変更なし、tests/recommend-specific.test.mjsの条件追加のみ。  
 - GitHub Actions run 39098279017 success。魚＋やきとり、肉＋寿司、魚のみ、おまかせの追加条件を含む推薦テスト成功。Android実機で矛盾条件の検索は未確認。
 
-## 13\. 食事履歴・店舗ID連携の読み取り調査（2026-10-18）
+## 13. 食事履歴・店舗ID連携の読み取り調査（2026-10-18）
 
-- Supabase public.meal\_details 20件：store\_id連携0件、未連携店名あり20件。public.historical\_reviews 185件：matched\_store\_id連携0件、原店名あり185件。いずれも本番DBの読取集計。  
-- is\_test=falseの共通storesとの店名完全一致はmeal\_details 0件、historical\_reviews 2件。名前の一致は店舗同一性の証明ではなく、住所・GPSの裏付けと本人確認が必要。  
+- Supabase public.meal_details 20件：store_id連携0件、未連携店名あり20件。public.historical_reviews 185件：matched_store_id連携0件、原店名あり185件。いずれも本番DBの読取集計。  
+- is_test=falseの共通storesとの店名完全一致はmeal_details 0件、historical_reviews 2件。名前の一致は店舗同一性の証明ではなく、住所・GPSの裏付けと本人確認が必要。  
 - GitHub meal-ui.jsには既存食事の店舗関連付け操作が存在。新規画面を一から作る必要なし。過去レビューの本番ランキング学習は保留継続。  
 - 今回はSQL SELECTとソース閲覧のみ。店舗ID・食事・レビュー・DBスキーマ・アプリコード・公開物の変更なし。次は住所/GPS/表記揺れ候補の安全な提示方式を設計。
 
-## 14\. 店舗関連付けの店名検索改善（2026-10-18）
+## 14. 店舗関連付けの店名検索改善（2026-10-18）
 
-- PR \#4をmainへsquash merge：fbb76ea7c23c56133c809f21c94fb4f617059232。既存食事履歴の店名を関連付け画面の検索欄へ事前入力し、全角半角・空白・中黒・焼鳥表記の違いを吸収する検索を追加。  
+- PR #4をmainへsquash merge：fbb76ea7c23c56133c809f21c94fb4f617059232。既存食事履歴の店名を関連付け画面の検索欄へ事前入力し、全角半角・空白・中黒・焼鳥表記の違いを吸収する検索を追加。  
 - GitHub Actions run 39098740055 completed success。追加6条件の検索テストを含むワークフロー合格。既存の本人確認とGPS検索は維持し、店舗自動確定なし。  
 - DB・食事履歴205件・認証・他アプリ変更なし。mainへのマージ確認済み。GitHub Pagesの当該コミットの公開配信一致とAndroid実機確認は未実施。
 
-## 15\. 写真GPS候補の店名フィルター残留修正（2026-10-18）
+## 15. 写真GPS候補の店名フィルター残留修正（2026-10-18）
 
-- PR \#5 squash merge：fea77fe2c87db4a6e56ba242b41d80bdcf24c38c。食事履歴の店名事前入力が写真GPS周辺検索の候補表示を隠す問題を修正。GPS検索時は絞り込みを解除、候補選択は元配列インデックス維持。  
+- PR #5 squash merge：fea77fe2c87db4a6e56ba242b41d80bdcf24c38c。食事履歴の店名事前入力が写真GPS周辺検索の候補表示を隠す問題を修正。GPS検索時は絞り込みを解除、候補選択は元配列インデックス維持。  
 - GitHub Actions run 39098851457 completed success。店名照合の回帰テスト計8条件を含む。店舗の自動確定なし。DB・食事履歴変更なし。GitHub Pages配信一致・Android実機確認は未実施。
 
-## 16\. 店舗候補の順位付け（2026-10-18）
+## 16. 店舗候補の順位付け（2026-10-18）
 
-- PR \#6 squash merge：a4bc3751213ed7f13588e69662cd7547e3519f99。店名完全一致・住所一致・GPS距離で関連付け候補の表示順を整理し、店名一致／所在地一致の根拠を表示。住所照合は呼び出し元がreferenceAddressを提供する場合のみ有効で、現行履歴画面は未提供。  
+- PR #6 squash merge：a4bc3751213ed7f13588e69662cd7547e3519f99。店名完全一致・住所一致・GPS距離で関連付け候補の表示順を整理し、店名一致／所在地一致の根拠を表示。住所照合は呼び出し元がreferenceAddressを提供する場合のみ有効で、現行履歴画面は未提供。  
 - GitHub Actions run 39099000413 completed success。候補順位の追加4条件を含む。本人確認維持、店舗自動確定なし、DB・履歴変更なし。公開配信一致とAndroid実機確認は未実施。
 
-## 17\. 本番公開資産の読み取り確認（2026-10-18）
+## 17. 本番公開資産の読み取り確認（2026-10-18）
 
-- 公開GitHub Pagesの store-link-ui.js と meal-ui.js がHTTP 200で取得できることを確認。前者にstoreCandidateRank/visibleStoreRowsおよびGPS検索時 rows=found; input.value=''; draw();、後者に initialName:row.store\_name の存在を確認。  
-- 確認URL：[https\://haraken59-bot.github.io/haraken-navi/store-link-ui.js](https://haraken59-bot.github.io/haraken-navi/store-link-ui.js) / [https\://haraken59-bot.github.io/haraken-navi/meal-ui.js](https://haraken59-bot.github.io/haraken-navi/meal-ui.js) 。公開ソースの機能断片確認であり、Gitコミット全ファイルのバイト一致やAndroid操作成功を意味しない。  
+- 公開GitHub Pagesの store-link-ui.js と meal-ui.js がHTTP 200で取得できることを確認。前者にstoreCandidateRank/visibleStoreRowsおよびGPS検索時 rows=found; input.value=''; draw();、後者に initialName:row.store_name の存在を確認。  
+- 確認URL：https://haraken59-bot.github.io/haraken-navi/store-link-ui.js / https://haraken59-bot.github.io/haraken-navi/meal-ui.js 。公開ソースの機能断片確認であり、Gitコミット全ファイルのバイト一致やAndroid操作成功を意味しない。  
 - 本番DB・履歴・アプリ設定の変更なし。Android本人操作で店舗関連付け検索とGPS候補を確認する作業が残る。
 
-## 18\. 店名絞り込み解除時の案内文修正（2026-10-18）
+## 18. 店名絞り込み解除時の案内文修正（2026-10-18）
 
 - Android実機で、redLanternの店名検索を空にすると登録3店舗が表示された一方、旧「一致がありません」の案内が残る不整合を確認。  
-- PR \#7 squash merge：64131e0c2d8725e240d4da2781868d45f2984bee。入力変更時に候補と案内文を同期。GitHub Actions run 39099512864 completed success、追加4条件含む。  
+- PR #7 squash merge：64131e0c2d8725e240d4da2781868d45f2984bee。入力変更時に候補と案内文を同期。GitHub Actions run 39099512864 completed success、追加4条件含む。  
 - mainマージ済み。公開GitHub Pagesへの当該修正反映とAndroid再確認は未実施。DB・履歴変更なし。
 
-## 19\. 写真GPS検索の店名ヒント（2026-10-18）
+## 19. 写真GPS検索の店名ヒント（2026-10-18）
 
-- PR \#8 squash merge：52c8ea7abbd3bcb3e62937d9413182c7435416f5。meal-client.jsから写真の店名をnavi-discoverのhintに送信、store-link-ui.jsから記録済み店名を引き渡し。CI pathsにmeal-client.js/store-link-ui.jsを追加。  
+- PR #8 squash merge：52c8ea7abbd3bcb3e62937d9413182c7435416f5。meal-client.jsから写真の店名をnavi-discoverのhintに送信、store-link-ui.jsから記録済み店名を引き渡し。CI pathsにmeal-client.js/store-link-ui.jsを追加。  
 - GitHub Actions run 39100303365 completed success。mainマージ済み。公開Pages反映とAndroid実機での万徳候補表示は未確認。検索プロバイダが候補十分と判定するとキーワード検索を省略する可能性があり、表示保証なし。DB書込・自動店舗確定なし。
 
-## 20\. PR \#9 写真店舗の手動確認フロー（2026-10-18マージ済み・当時は準備のみ未公開）
+## 20. PR #9 写真店舗の手動確認フロー（2026-10-18マージ済み・当時は準備のみ未公開）
 
-- ブランチ fix/photo-store-name-search、PR \#9。写真GPS検索結果を店名一致優先で表示し、候補がない場合に住所入力からGoogleマップを開く案内と、本人による緯度経度入力・最終確認・既存confirm\_navi\_store経由の関連付け処理を追加。  
+- ブランチ fix/photo-store-name-search、PR #9。写真GPS検索結果を店名一致優先で表示し、候補がない場合に住所入力からGoogleマップを開く案内と、本人による緯度経度入力・最終確認・既存confirm_navi_store経由の関連付け処理を追加。  
 - 住所は地図検索用のみでDB保存なし。写真GPSと完全一致の座標、数値でない座標、無効範囲は拒否。ただし位置の真正性は自動保証できず、地図上で本人確認が必要。  
 - GitHub Actions run 39101449499 success（commit 48e6b3e）。自動テスト成功は実機での登録成功を意味しない。Android操作未確認、Pages未公開、PRは2026-10-18マージ済み（当時は準備のみ未公開）、本番DB変更なし。  
 - 公開前の残作業：手動フローのUI操作テストと回帰テスト、PR内の未使用photoStoreLookupパラメータの扱い整理、レビュー、配信とAndroid確認。
 
-### PR \#9 追加レビュー（2026-10-18）
+### PR #9 追加レビュー（2026-10-18）
 
 - 未使用photoStoreLookup指定を削除し、実装済みhintのみを維持。座標入力の検証をverifiedManualStoreに分離し正常・不正値を自動テスト。キャンセル／無効画面ではDB書込しないconfirmManualStore単体テストを追加。  
 - Googleマップのリンクを表示した後、別ボタンで座標入力を開始する二段階操作に修正。画面コード上の操作順を検査する回帰テストを追加（commit ae0acad）。Androidの実画面操作・Googleマップとの連携・本番DBへの登録は未検証。  
@@ -284,7 +284,7 @@
 - 状態：両案件の指定変更を実装し限定Node検証成功。バッチ全体は未完了。案件1・3の状況はWB1-LOCAL-IMPLEMENTATION-20261109.md。  
 - GitHub反映：なし。main基準a84027369fc5e66d3a960191b06bbfa496053546を読取確認。本領域はGit管理外の既存コピー。  
 - 本番反映：未実施。  
-- 変更：domain.js（基本定休日分岐、未評価ジャンルの理由1分岐）、discovery.js（closed\_weekdays引継ぎ）、新規tests/wb1-recommend.test.mjs。  
+- 変更：domain.js（基本定休日分岐、未評価ジャンルの理由1分岐）、discovery.js（closed_weekdays引継ぎ）、新規tests/wb1-recommend.test.mjs。  
 - 関連未変更：genre-fit.js、SQL/DB、Edge、認証、既存GPSテスト、workflow。  
 - 検証：新規5テスト成功。specific-dish/recommend-specific既存2ファイル成功。今回全体の失敗・ブラウザ未確認は上記報告で分離。既存当日営業イベントの優先順位は不変・追加検証なし。  
 - 未反映：全変更ローカルのみ。PR12はDraft/未マージ、CI failure、取り込み保留。  
@@ -305,10 +305,10 @@
 ## 2026-11-10 W-B1 GitHub反映準備（案件1〜4・未公開）
 
 1. 案件/作業ID：W-B1案件1店名ヒント、案件2基本定休日、案件3気分入力、案件4推薦理由。  
-2. 作業状態：ローカル実装・限定受け入れ完了。あんこ20261109\_WB1\_PRE\_PUSH\_REVIEW\_UPDATE\_ANKO\_v01の判定Aを確認。  
+2. 作業状態：ローカル実装・限定受け入れ完了。あんこ20261109_WB1_PRE_PUSH_REVIEW_UPDATE_ANKO_v01の判定Aを確認。  
 3. GitHub反映状態：専用ブランチwork/wb1-20261110へ本差分を反映する。main基準a84027369fc5e66d3a960191b06bbfa496053546と一致。push/CIの実測結果は後続の反映結果記録を参照。PR12はOpen/Draft/未マージを維持。  
 4. 本番反映状態：未実施。main直接push・マージ・公開・DB/SQL変更なし。  
-5. 変更ファイル：製品main.js/domain.js/discovery.js/meal-client.js/store-link-ui.js/photo-store-candidates.js、tests/store-link-search.test.mjs、tests/wb1-recommend.test.mjs、tests/wb1-mood.browser.cjs、NAVI\_STATUS.md/CHANGELOG.md、W-B1実装・受け入れ報告とブラウザ結果JSON。  
+5. 変更ファイル：製品main.js/domain.js/discovery.js/meal-client.js/store-link-ui.js/photo-store-candidates.js、tests/store-link-search.test.mjs、tests/wb1-recommend.test.mjs、tests/wb1-mood.browser.cjs、NAVI_STATUS.md/CHANGELOG.md、W-B1実装・受け入れ報告とブラウザ結果JSON。  
 6. 関連未変更：tests/photo-direction.test.mjs・tests/photo-gps.test.mjsの既存差異はGitHub反映から除外しローカル保持。既存GPS未追跡3テスト、workflow、store-navigation、DB/SQLも対象外。Git管理外コピーに管理情報のみ追加し作業ファイルをcheckoutせず保全。  
 7. テスト：今回push前Node関連19エントリ成功/0失敗。2026-11-09のブラウザ3項目成功を再利用（西新/ゲスト/127.0.0.1:8140、検索応答モック、実API成功ではない）。Node24とCI22は区別。store-navigation既知失敗は未修正・未再実行。  
 8. 未反映・残作業：main統合・公開未実施。PR12のCI緑化はNAVI-08/W-B6別作業。ブラウザテストは既存PCのPlaywright依存パスを使用する手動受け入れ用でCI自動実行対象ではない。  
@@ -318,9 +318,9 @@
 
 1. 案件/作業ID：W-B1案件1〜4。  
 2. 作業状態：限定ローカル受け入れ完了、GitHub専用ブランチ反映完了。独立コード確認待ち。  
-3. GitHub反映状態：work/wb1-20261110、実装コミット7b0ec4fb244c218aea4167342ef55c2ee5029347のpush成功。Draft PR \#13 [https\://github.com/haraken59-bot/haraken-navi/pull/13](https://github.com/haraken59-bot/haraken-navi/pull/13) 。mainはa84027369fc5e66d3a960191b06bbfa496053546のまま。PR \#12は未変更・Open/Draft/未マージ。  
+3. GitHub反映状態：work/wb1-20261110、実装コミット7b0ec4fb244c218aea4167342ef55c2ee5029347のpush成功。Draft PR #13 https://github.com/haraken59-bot/haraken-navi/pull/13 。mainはa84027369fc5e66d3a960191b06bbfa496053546のまま。PR #12は未変更・Open/Draft/未マージ。  
 4. 本番反映状態：未実施。main統合、Pages公開、DB/SQL変更なし。  
-5. 変更ファイル：製品6（main.js、domain.js、discovery.js、meal-client.js、store-link-ui.js、photo-store-candidates.js）、テスト3（store-link-search.test.mjs、wb1-recommend.test.mjs、wb1-mood.browser.cjs）、NAVI\_STATUS.md、CHANGELOG.md、WB1-LOCAL-IMPLEMENTATION-20261109.md、WB1-ACCEPTANCE-20261109.md、WB1-MOOD-ACCEPTANCE-20261109.jsonの計14。  
+5. 変更ファイル：製品6（main.js、domain.js、discovery.js、meal-client.js、store-link-ui.js、photo-store-candidates.js）、テスト3（store-link-search.test.mjs、wb1-recommend.test.mjs、wb1-mood.browser.cjs）、NAVI_STATUS.md、CHANGELOG.md、WB1-LOCAL-IMPLEMENTATION-20261109.md、WB1-ACCEPTANCE-20261109.md、WB1-MOOD-ACCEPTANCE-20261109.jsonの計14。  
 6. 関連未変更：既存GPS差異tests/photo-direction.test.mjs・tests/photo-gps.test.mjsを除外し保持。GPS未追跡3件、workflow、store-navigationも保全。作業前全ファイルのSHA-256は追記対象2文書以外一致。文書はmain履歴にW-B1のみ追加し、ローカルのGPS履歴差異は反映していない。  
 7. テスト：push前の限定Nodeテスト19成功/0失敗。ブラウザ3項目の前回モック成功を再利用。実装コミットCI run42668530156/job129338563451成功（Node22、構文・specific-dish・recommend-specific・store-link-search）。CIにはW-B1追加テストやbottle/store-navigationは含まれず、ローカル結果・PR12の既存CIと区別する。  
 8. 未反映・残作業：main未統合・未公開。PR12のstore-navigation既知失敗はW-B6。追加修正・テスト無効化なし。ブラウザ依存パスは既存PC専用、Android/本番検索は未検証。  
@@ -328,10 +328,10 @@
 
 ## 2026-11-10 W-B1 PR13マージ・本番公開（最新到達状態）
 
-1. 案件/作業ID：W-B1案件1〜4。独立確認20261110\_WB1\_PR13\_INDEPENDENT\_REVIEW\_ANKO\_v01の判定Aとユーザー承認に基づく。  
+1. 案件/作業ID：W-B1案件1〜4。独立確認20261110_WB1_PR13_INDEPENDENT_REVIEW_ANKO_v01の判定Aとユーザー承認に基づく。  
 2. 作業状態：PR13をsquash merge、main反映・本番配信・限定公開確認完了。W-B6/NAVI-05には未着手。  
 3. GitHub：承認head036a8820818a9298648fd36900396bdede43568b、実装7b0ec4fb244c218aea4167342ef55c2ee5029347。マージ/製品公開コミットa0b95cbf158f4d50d9407918ad983ce21f32b4fc。承認headとmainのtree一致。差分14ファイルのみ。PR12はOpen/Draft/未マージ、head e543a18fe5ccf7f08d163aec4c9a6376ca88ed05で未変更。  
-4. 本番： [https\://haraken59-bot.github.io/haraken-navi/](https://haraken59-bot.github.io/haraken-navi/) 。既存main連動GitHub Pages run42698362051成功。設定・workflow変更なし。本記録更新は製品変更を伴わない。DB/SQL・認証・保存済みデータ変更なし。  
+4. 本番： https://haraken59-bot.github.io/haraken-navi/ 。既存main連動GitHub Pages run42698362051成功。設定・workflow変更なし。本記録更新は製品変更を伴わない。DB/SQL・認証・保存済みデータ変更なし。  
 5. 対象：製品6、テスト3、状態/履歴2、報告/証跡3はPR13の範囲。公開後は本STATUS/CHANGELOGのみ更新。GPSテスト2件と既存未追跡ファイル・ローカル履歴差異は保全。  
 6. 検証：承認head CI run42668694157成功を再利用。main自動Recommendation CIは既存workflowの対象外（別run成功と偽らない）。mainは承認headと同一tree。今回追加の定休日/当日open/当日closed優先3assert成功。既存Node19成功とブラウザモック3成功は再実行せず継承。  
 7. 公開実測：HTML+製品6ファイル計7件HTTP200・承認内容とバイト一致。390px幅の新規ゲストブラウザ、西新/焼き鳥、実API GET2回HTTP200、推薦生成・再タップ保持・モード切替リセット・今どうする気分保持と3候補表示成功。pageerror0、書込要求0。取得上限/通信制限による一部結果の案内あり。配信済み純粋関数の合成データ4条件（店名順位・定休日・当日open優先・量限定理由）も成功。実店舗の定休日データや本人の写真検索結合は未検証。  
@@ -340,59 +340,59 @@
 
 ## 2026-11-10 NAVI-05仕様B・アルファA・ベータA／GEO-03（レビュー用ブランチ）
 
-1. 案件/作業ID：NAVI-05＋GEO-03。正本20261110\_NAVI05\_WORK\_IMPLEMENTATION\_INSTRUCTION\_ANKO\_v01.md（Drive 1MPpXHjm303MQR2KbDXIrJWCHRWsM3F-M）。  
+1. 案件/作業ID：NAVI-05＋GEO-03。正本20261110_NAVI05_WORK_IMPLEMENTATION_INSTRUCTION_ANKO_v01.md（Drive 1MPpXHjm303MQR2KbDXIrJWCHRWsM3F-M）。  
 2. 作業状態：ローカル実装・指定テスト成功。Android実機は未確認。開始時GitHub mainは指定2e133f271b6cecb6b97f4c7b557a989ad17bc3c8と一致。既存作業コピーのHEAD036a882は移動せず、対象3ファイルに既存変更なしと確認。文書の既存履歴差異は保全。  
 3. GitHub反映状態：main 2e133f271b6cecb6b97f4c7b557a989ad17bc3c8を基準にfix/navi05-geo03-20261110でレビュー対象。マージ・公開は未承認。PR CIはPR側で確認する。  
 4. 本番反映状態：未公開、DB/SQL/Edge変更なし。実API・Auth通信なし。  
-5. 今回変更：genre-fit.js（非ジャンル意図→ボタン→自由入力の順、rules/dishesへ指定ひらがな3語のみ追加）、tests/recommend-specific.test.mjs（既存8assert維持＋11assert追加）、api.js（開発origin配列から指定ngrokのみ削除）、NAVI\_STATUS.md/CHANGELOG.md（NAVI-09/10訂正・§11仕様B引継ぎ・完了記録）。  
+5. 今回変更：genre-fit.js（非ジャンル意図→ボタン→自由入力の順、rules/dishesへ指定ひらがな3語のみ追加）、tests/recommend-specific.test.mjs（既存8assert維持＋11assert追加）、api.js（開発origin配列から指定ngrokのみ削除）、NAVI_STATUS.md/CHANGELOG.md（NAVI-09/10訂正・§11仕様B引継ぎ・完了記録）。  
 6. 関連未変更：domain.jsのdesireMatch/specificDishMatch、genreFit本体/clean、W-B1製品箇所、discovery、Edge/SQL、GPS既存差異、W-B6、PR12。既存未追跡ファイルも保持。  
 7. 検証：公式Node v22.23.4の一時実行環境、CIと同じ--experimental-default-type=module \--testで3スイート成功/0失敗。recommend-specific既存8件（競合2件含む）＋追加11assert成功。GEO-03はモックfetchで本番/localhost/127.0.0.1/除去originの4ケース成功、製品ngrok残存0、変更JS/テスト3ファイル構文成功。Node24ではCIフラグ非対応だったため実テストには使用せず、システム設定は変更していない。  
 8. 未確認/制限：Android（肉ボタン＋魚が食べたい等）、公開/実API、Edgeのhint/category仕様は未確認。料理名グループ外（刺身等）の独立照合は保証しない。GEO-03は環境分岐のモック確認で実認証の確認ではない。W-B6既知6失敗は未実行・未修正。  
-9. あんこ独立確認：20261110\_NAVI05\_GEO03\_POST\_EVIDENCE\_REVIEW\_ANKO\_v01.mdは判定A、3スイート・既存8・追加11・GEO-03の4条件を独立再現済み。次はPR差分の独立確認とユーザー承認待ち。
+9. あんこ独立確認：20261110_NAVI05_GEO03_POST_EVIDENCE_REVIEW_ANKO_v01.mdは判定A、3スイート・既存8・追加11・GEO-03の4条件を独立再現済み。次はPR差分の独立確認とユーザー承認待ち。
 
 ## 2026-11-11 NAVI-05 推薦順位のジャンルボタン優先（ローカル検証完了・GitHub未反映）
 
 1. 案件/作業ID：NAVI-05（追加仕様：推薦順位のジャンルボタン優先）。2026-11-11にユーザーが正式決定。実施はあんこ（ローカル実装・検証・成果物作成までの一括作業の承認あり）。GitHub書き込み・本番公開は承認範囲外。  
-2. 作業状態：ローカル実装・検証完了。基準mainは0dda1153a6162b53750a5f292129dc6ee3c82de5（PR \#16マージ・本番公開済み、あんこの公開後確認で公開中のdiscovery.jsがマージ版とバイト一致を確認済み）。  
-3. GitHub反映状態：未反映。ブランチ・PRは未作成。あんこのGitHub連携は書き込み不可（過去に403で実証）のため、完成ファイル・パッチ・手順をAI共有作業フォルダ「20261111\_NAVI05\_RANKING\_ANKO」に保存し、ユーザーの手動反映待ち。  
+2. 作業状態：ローカル実装・検証完了。基準mainは0dda1153a6162b53750a5f292129dc6ee3c82de5（PR #16マージ・本番公開済み、あんこの公開後確認で公開中のdiscovery.jsがマージ版とバイト一致を確認済み）。  
+3. GitHub反映状態：未反映。ブランチ・PRは未作成。あんこのGitHub連携は書き込み不可（過去に403で実証）のため、完成ファイル・パッチ・手順をAI共有作業フォルダ「20261111_NAVI05_RANKING_ANKO」に保存し、ユーザーの手動反映待ち。  
 4. 本番反映状態：未公開。DB/SQL/Edge・認証・公開設定の変更なし。本番データの変更なし。  
-5. 今回変更：domain.js（recommend()の並び替えで、ジャンルボタン選択時はジャンル適合度matchを具体的な料理名の一致specificDishMatchより先に比較する。同じ適合度では料理名の一致、その後に既存スコア。おまかせでは従来の料理名優先を維持。ボタン判定は既存requestedGenreを使用）、tests/recommend-specific.test.mjs（旧仕様「矛盾する料理名がジャンルを上書きする」と矛盾するアサーション2件の期待値のみを新仕様へ更新）、tests/navi05-ranking.test.mjs（新規15件）、NAVI\_STATUS.md/CHANGELOG.md（本記録の追記のみ、既存履歴は不変）。  
-6. 関連未変更：discovery.js・effectiveHint（PR \#16の探索修正はバイト単位で不変であることを確認）、genre-fit.js、推薦スコア計算、ジャンル適合度の段階・判定基準、GPS・写真処理、W-B6、PR \#12。  
+5. 今回変更：domain.js（recommend()の並び替えで、ジャンルボタン選択時はジャンル適合度matchを具体的な料理名の一致specificDishMatchより先に比較する。同じ適合度では料理名の一致、その後に既存スコア。おまかせでは従来の料理名優先を維持。ボタン判定は既存requestedGenreを使用）、tests/recommend-specific.test.mjs（旧仕様「矛盾する料理名がジャンルを上書きする」と矛盾するアサーション2件の期待値のみを新仕様へ更新）、tests/navi05-ranking.test.mjs（新規15件）、NAVI_STATUS.md/CHANGELOG.md（本記録の追記のみ、既存履歴は不変）。  
+6. 関連未変更：discovery.js・effectiveHint（PR #16の探索修正はバイト単位で不変であることを確認）、genre-fit.js、推薦スコア計算、ジャンル適合度の段階・判定基準、GPS・写真処理、W-B6、PR #12。  
 7. 検証：Node v22.23.4（CIと同一条件、--experimental-default-type=module \--test）で全テストスイートを実行。変更前64成功/6失敗 → 変更後79成功/6失敗。新規テスト15件は全成功、更新したrecommend-specificは全アサーション成功。構文チェック成功。パッチを基準ツリーへ適用すると完成ファイルと完全一致することを確認。  
 8. 未確認/既知失敗：失敗6件はW-B6既知（photo-gps2、photo-direction2、jpeg-ref-diagnostics1、store-navigation1）で変更前後同一、新規失敗0件。ブラウザ実走テスト（Playwright系）は未実施（対象は従来順を維持するおまかせ経路のため影響しないと判断するが、実走結果ではない）。Android実機確認は反映・公開後にユーザーが行う項目。  
 9. あんこ側の扱い：本記録はあんこのローカル実施・検証結果に基づく。GitHub反映後の差分照合はあんこが読み取り専用で実施する。PRレビュー・マージ・本番公開は別途承認を経ること。
 
-## 2026-11-12 NAVI-05 推薦順位のジャンルボタン優先（PR \#17マージ・本番公開・Android実機テスト合格）
+## 2026-11-12 NAVI-05 推薦順位のジャンルボタン優先（PR #17マージ・本番公開・Android実機テスト合格）
 
 1. 案件/作業ID：NAVI-05（追加仕様：推薦順位のジャンルボタン優先）。2026-11-11記録の続報。  
-2. 作業状態：完了。PR \#17をマージし、本番公開済み。Android実機テストは今回の条件で合格。  
-3. GitHub反映状態：PR \#17（head ca510e3）をマージし、mainは8970e1e。あんこの反映後照合で5ファイルすべてが完成版と完全一致、差分は5ファイルのみと確認済み。最終レビューは合格。  
-4. 本番反映状態：公開済み。Approved manual Pages release \#4が成功（ユーザー確認）。公開中のdomain.jsは完成版とバイト一致をあんこが実測。DB/SQL/Edge・認証の変更なし。  
+2. 作業状態：完了。PR #17をマージし、本番公開済み。Android実機テストは今回の条件で合格。  
+3. GitHub反映状態：PR #17（head ca510e3）をマージし、mainは8970e1e。あんこの反映後照合で5ファイルすべてが完成版と完全一致、差分は5ファイルのみと確認済み。最終レビューは合格。  
+4. 本番反映状態：公開済み。Approved manual Pages release #4が成功（ユーザー確認）。公開中のdomain.jsは完成版とバイト一致をあんこが実測。DB/SQL/Edge・認証の変更なし。  
 5. 今回変更：本節の追記のみ。製品コードの変更なし。  
-6. 関連未変更：全製品ファイル。discovery.js（PR \#16）は公開版でも維持。  
+6. 関連未変更：全製品ファイル。discovery.js（PR #16）は公開版でも維持。  
 7. 検証（Android実機、ユーザー実施）：モード「今から食べる」、ジャンル「魚」、自由入力「やきにく」、地域補助「福岡市」。上位3件はすべて魚料理店（海鮮とおむすび酒場 えのま 藤崎駅前店／福岡どん丸 藤崎駅前店／いつも月夜に米の飯）。矛盾する条件でも魚料理店が上位3件に表示された。  
 8. 未確認/制限：合格は今回の条件（魚＋やきにく）における判定。他の入力条件の実機確認は未実施。ブラウザ実走テストも未実施のまま。  
 9. あんこ側の扱い：実機テストはユーザーの実施・報告に基づく。あんこは公開ファイルのバイト一致とGitHub状態を読み取り専用で確認した。
 
-## 2026-11-12 NAVI-08 GPS診断の仕様整合（W-B6）（PR \#19マージ・本番公開・Android実機で安全な保留動作を確認）
+## 2026-11-12 NAVI-08 GPS診断の仕様整合（W-B6）（PR #19マージ・本番公開・Android実機で安全な保留動作を確認）
 
 1. 案件/作業ID：NAVI-08（W-B6）。2026-11-09の切り分け・仕様照合の続報。仕様4項目（M1-①／M1-②／M2／M3）は2026-11-12にユーザーが正式承認し、あんこがローカル実装した。未発見の仕様原本と照合済みとはしない。  
-2. 作業状態：完了。PR \#19をマージし、本番公開済み。Android実機検証は今回の写真について安全な保留動作を確認した。  
-3. GitHub反映状態：PR \#19（ブランチ fix/navi08-wb6-gps-20261112）をマージし、mainは47c4c6ebd59c79c71a9646c3d3e736cbdebbc51c。あんこの照合で、mainのimporter/gps-diagnostics.jsとtests/store-navigation.test.mjsは完成版とSHA-256完全一致。  
-4. 本番反映状態：公開済み。Approved manual Pages release \#5がpackage・deployとも成功（ユーザー確認）。公開中のimporter/gps-diagnostics.jsは完成版とバイト一致をあんこが実測。DB/SQL/Edge・認証の変更なし。  
+2. 作業状態：完了。PR #19をマージし、本番公開済み。Android実機検証は今回の写真について安全な保留動作を確認した。  
+3. GitHub反映状態：PR #19（ブランチ fix/navi08-wb6-gps-20261112）をマージし、mainは47c4c6ebd59c79c71a9646c3d3e736cbdebbc51c。あんこの照合で、mainのimporter/gps-diagnostics.jsとtests/store-navigation.test.mjsは完成版とSHA-256完全一致。  
+4. 本番反映状態：公開済み。Approved manual Pages release #5がpackage・deployとも成功（ユーザー確認）。公開中のimporter/gps-diagnostics.jsは完成版とバイト一致をあんこが実測。DB/SQL/Edge・認証の変更なし。  
 5. 今回変更：本節の追記のみ。製品コード・テストコードの変更なし。  
 6. 関連未変更：全製品ファイル。  
 7. 検証：ローカル全テスト85成功／0失敗（あんこ実施、新規失敗0）。Android実機（ユーザー実施）：対象写真5753.jpgの読み込みに成功し、緯度・経度タグの存在を確認。方角情報はなく、緯度・経度の数値は確認が必要と表示され、撮影地点は未確定のまま、不確かなGPS座標を自動確定しないことを画面で確認した。「撮影地点・方角を確認」のダイアログ表示も確認した。正しい方角が不明なため手動確定は実施していない。判定：今回の写真について、NAVI-08の安全な保留動作を確認した。  
 8. 未確認/制限：GPS数値の正確性、他の写真での挙動、Android全体での動作保証は未確認。ブラウザ実走テストは未実施。  
 9. 改善候補（未実装）：GPS診断で「緯度・経度の数値確認が必要」と表示される一方、確認ダイアログでは方角の入力から始まる。利用者に数値と方角の確認手順を分かりやすく案内する改善を、未実装候補として記録する。今回の作業では実装しない。実機検証はユーザーの実施・報告に基づき、あんこは公開ファイルのバイト一致とGitHub状態を読み取り専用で確認した。
 
-## 2026-11-12 PR \#12 CI回帰カバレッジ拡充（マージ完了）
+## 2026-11-12 PR #12 CI回帰カバレッジ拡充（マージ完了）
 
-1. 案件/作業ID：NAVI-06（PR \#12「Expand existing CI regression coverage」）。W-B6完了後にマージする既定の順序どおり実施した。  
-2. 作業状態：完了。PR \#12をマージした。CI設定のみの変更で、本番再公開は不要。  
-3. GitHub反映状態：PR \#12（head e543a18fe5ccf7f08d163aec4c9a6376ca88ed05）を2026-11-12 14:36 JSTにマージし、mainは00ca1fd36d744042ea776c4bf47c366ce792c59d。変更は.github/workflows/recommendation-tests.ymlの1ファイル（15行追加・1行削除）。あんこの照合で、mainのワークフローがPRの内容と一致することを確認した。  
+1. 案件/作業ID：NAVI-06（PR #12「Expand existing CI regression coverage」）。W-B6完了後にマージする既定の順序どおり実施した。  
+2. 作業状態：完了。PR #12をマージした。CI設定のみの変更で、本番再公開は不要。  
+3. GitHub反映状態：PR #12（head e543a18fe5ccf7f08d163aec4c9a6376ca88ed05）を2026-11-12 14:36 JSTにマージし、mainは00ca1fd36d744042ea776c4bf47c366ce792c59d。変更は.github/workflows/recommendation-tests.ymlの1ファイル（15行追加・1行削除）。あんこの照合で、mainのワークフローがPRの内容と一致することを確認した。  
 4. 本番反映状態：対象外。アプリの公開ファイルに変更はなく、公開ワークフロー（pages-manual-release）と公開許可リストにも変更なし。  
-5. 変更内容（PR \#12）：pull\_requestの対象パスにdiscovery.js、photo-store-candidates.js、importer/\*\*、meal-photo.jsを追加。構文チェックをdomain.jsのみから4ファイル（domain.js、discovery.js、meal-client.js、store-link-ui.js）へ拡大。テストステップにbottle-mergeとstore-navigation（いずれもif: always()）を追加。  
+5. 変更内容（PR #12）：pull_requestの対象パスにdiscovery.js、photo-store-candidates.js、importer/\*\*、meal-photo.jsを追加。構文チェックをdomain.jsのみから4ファイル（domain.js、discovery.js、meal-client.js、store-link-ui.js）へ拡大。テストステップにbottle-mergeとstore-navigation（いずれもif: always()）を追加。  
 6. 関連未変更：アプリ本体の全ファイル、テストファイルの内容。  
 7. 検証：あんこのマージ前最終検証（2026-11-12）で判定A。CIと同一条件（Node v22.23.4）でワークフローの全ステップが成功し、現行mainの全スイートは85成功／0失敗だった。試行マージで競合なし、YAML構文の解析も成功した。  
 8. 未確認/制限：GitHub Actions上での実行成功は未確認（あんこの読み取り手段ではActionsの実行履歴を取得できないため、成功済みとは記載しない）。CIが実行するテストは14ファイル中5ファイルにとどまり、GPS系・discovery-hint・navi05-rankingなどは対象外のまま（今後の拡張候補）。  
