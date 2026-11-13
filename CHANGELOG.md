@@ -1,5 +1,15 @@
 # 変更履歴（最新記録を先頭に記載）
 
+## 2026-11-13 棚卸し・文書同期（レビュー用ブランチ）
+- あんこの2026-11-13照合報告を基に、PR #25（文書整理）、PR #26（NAVI-22）、手動公開 release #8（Actions 43291884397）を最新状態に反映。
+- 全21案件：完了10、未完了9、判定保留2。GEO-02を既存Geoapifyキーの実通信HTTP 200に基づき完了へ再分類。
+- NAVI-23は本番Edge v24を基準とする結合設計と補正完了、実装準備完了。結合・追加14条件のテスト・デプロイ・公開・実機確認は未実施。18秒の意味と30分メモリキャッシュの制約を明記。
+- NAVI-21 GPS原因未確定、NAVI-15-B方式B承認待ち、GEO-01本番SQL適用未承認、B9権限判断待ち。NAVI-25/26は仮案件。
+- 今回は文書のみのブランチ更新。アプリ、DB、Edge、認証、保存、GitHub Pagesの変更なし。mainへのマージ・公開は別途判断。
+- 統一台帳v08：https://docs.google.com/document/d/1-OfAz2XOtJF8vBC-wylxagDATc-GF2PXuw5Rth5_FoU/edit
+
+
+
 ## 2026-10-31 GPS共通処理5案件・本番公開完了／Android確認
 - 公開版 `20261030-gps-common-navi`、公開コミット `0cd4d115550b5a5fca4d41b818963258437ac506`、正式URL https://haraken59-bot.github.io/haraken-navi/ 。
 - GitHub Pages run 41127130322成功。対象9ファイルのHTTP 200・内容一致、版表示、スマホ幅画面、JavaScriptエラー0件との公開作業報告。

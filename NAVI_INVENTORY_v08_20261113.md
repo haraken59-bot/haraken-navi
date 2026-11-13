@@ -1,0 +1,50 @@
+# NAVI 全案件棚卸し v08（2026-11-13）
+
+> 共有台帳v08のGitHub側参照写し。mainへのマージ前はレビュー用であり、製品実装・公開の承認ではない。
+
+## 集計
+全21件：完了10件、未完了9件、判定保留2件。v07案からGEO-02のみ完了へ変更。
+
+| 案件 | 状態 | 次の条件 |
+| --- | --- | --- |
+| NAVI-16 | 完了 | CIカバレッジ拡張 |
+| NAVI-17 | 完了 | STATUS冒頭更新 |
+| NAVI-18 | 完了 | GPS原本選択・案内 |
+| NAVI-15-A | 完了 | うどん除外 |
+| NAVI-07 | 完了 | PR #10/#11処遇 |
+| NAVI-22 | 完了 | GPS失敗案内公開・Android確認 |
+| NAVI-24 | 完了 | 当時の正本文書記録 |
+| PHOTO-RPC | 完了 | 所有者確認 |
+| NAVI-19 | 完了 | Actions履歴確認 |
+| GEO-02 | 完了 | 2026-11-13 Geoapify既存キー実通信HTTP 200。GEO-01とは別 |
+| NAVI-20 | 未完了 | STATUS書式正規化の反映判断（任意） |
+| NAVI-15-B | 未完了 | 方式B最終承認後に実装 |
+| NAVI-21 | 未完了 | Android Camera GPS T1/T2実機確認 |
+| NAVI-23 | 未完了 | 実装準備完了。Edge v24結合・14条件テスト・公開・実機確認待ち |
+| GEO-01 | 未完了 | 本番SQL適用の別途判断 |
+| B9 | 未完了 | 外部自動公開経路の権限縮小判断 |
+| NAVI-11DB | 未完了 | NO-GOのため保留 |
+| NAVI-12 | 未完了 | 再開指示待ち |
+| NAVI-13 | 未完了 | 再開指示待ち |
+| NAVI-25（案） | 判定保留 | GPS保留画面文言の仕様判断 |
+| NAVI-26（案） | 判定保留 | 初回押下問題の再現確認 |
+
+## NAVI-23の固定事項
+- 正本はSupabase Edge navi-discover v24の保全16ファイル。PR #10の未公開photoStoreLookupを取り込まない。
+- v05統合候補、実コード差分調査、時間予算・キャッシュ補正は完了。実装・デプロイ・公開は未実施。
+- 18秒はHot Pepper実呼出しの開始制限でありHTTP応答時間の保証ではない。補完時間はmax(0,min(5000,18000-elapsedMs-1000))を初期設計とする。
+- 30分キャッシュはサービスインスタンス・Edge実行環境内の有効期限であり、環境間共有や30分保持を保証しない。
+- 本番Edge GEOAPIFY_API_KEYの有無は未確認。追加14条件はテスト計画であり実施済みではない。
+
+## 公開基準と記録
+- 2026-11-13のあんこ確認：main a1b0b817a78cf02eac50eb5c573d616be1f70e20、未完了PR 0、Pages release #8（NAVI-22）、主要5ファイルの配信一致。
+- 既存mainテスト88件。NAVI-23ローカル候補92件は未反映。
+- NAVI_STATUS.mdとCHANGELOG.mdに最新の記録を同期するが、旧履歴は削除しない。
+
+## 共通作業ルール
+- ChatGPT：設計・第三者レビュー。あんこ：証拠整理と最小差分。Work：明示承認後の一括実装。ユーザー：公開・本番変更の承認。
+- 設計済み、ローカル実装済み、結合テスト済み、GitHub反映済み、デプロイ済み、Android確認済みを区別する。
+- この棚卸し同期は文書のみ。アプリ、Supabase、公開、認証、DB、保存を変更しない。
+
+原本：https://docs.google.com/document/d/1-OfAz2XOtJF8vBC-wylxagDATc-GF2PXuw5Rth5_FoU/edit
+根拠：https://drive.google.com/file/d/1kn_CodhHhWCW9Y_JRpfBdwKfjQO6xr9o/view
