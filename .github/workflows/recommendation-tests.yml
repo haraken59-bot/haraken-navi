@@ -70,4 +70,9 @@ jobs:
       - name: W-B1 recommend tests
         if: always()
         run: node --experimental-default-type=module --test tests/wb1-recommend.test.mjs
-
+      - name: Meal store ID tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/meal-store-id.test.mjs
+      - name: Session selection tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/session-selection.test.mjs
