@@ -1,6 +1,6 @@
 # NAVI 全案件棚卸し v08（2026-11-13）
 
-> 共有台帳v08のGitHub側参照写し。mainへのマージ前はレビュー用であり、製品実装・公開の承認ではない。
+> 共有台帳v08のGitHub側参照写し。mainに反映済みの棚卸し記録。個別案件の仕様承認と製品実装・公開の承認は区別する。
 
 ## 集計
 全21件：完了10件、未完了9件、判定保留2件。v07案からGEO-02のみ完了へ変更。
@@ -18,7 +18,7 @@
 | NAVI-19 | 完了 | Actions履歴確認 |
 | GEO-02 | 完了 | 2026-11-13 Geoapify既存キー実通信HTTP 200。GEO-01とは別 |
 | NAVI-20 | 未完了 | STATUS書式正規化の反映判断（任意） |
-| NAVI-15-B | 未完了 | 方式B最終承認後に実装 |
+| NAVI-15-B | 未完了（仕様・方式B承認済み／実装待ち） | 2026-11-13 ユーザーがselection_seq方式Bを正式承認。実装・テスト・PR・公開は別途承認 |
 | NAVI-21 | 未完了 | Android Camera GPS T1/T2実機確認 |
 | NAVI-23 | 未完了 | 実装準備完了。Edge v24結合・14条件テスト・公開・実機確認待ち |
 | GEO-01 | 未完了 | 本番SQL適用の別途判断 |
@@ -48,3 +48,10 @@
 
 原本：https://docs.google.com/document/d/1-OfAz2XOtJF8vBC-wylxagDATc-GF2PXuw5Rth5_FoU/edit
 根拠：https://drive.google.com/file/d/1kn_CodhHhWCW9Y_JRpfBdwKfjQO6xr9o/view
+
+## 2026-11-13 追加決定：NAVI-15-B
+- ユーザーが店舗ID引き継ぎ第2分岐の方式B（decision内のselection_seq単調増加）を正式承認。
+- 確定仕様v02とテスト設計v02（35件）を維持。選択し直し、手入力・自由文解析での店名変更、80m・area・所有者の条件を変更しない。
+- 状態は「仕様・実装方式承認済み／未実装」。35件のテストは計画であり実施済みではない。
+- 本承認に実装・GitHubマージ・Supabase変更・Pages公開の許可は含まれない。これらは別途ユーザー承認が必要。
+- 根拠：https://drive.google.com/file/d/1DDb93Fx9RJ8keKM9nCBehYRQ_tqB8buS/view
