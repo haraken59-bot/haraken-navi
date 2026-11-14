@@ -42,12 +42,13 @@ test('pattern alpha (values invalidated): SHA-256 still displayed, status stays 
   assert.equal(extras.sha256,sha256(bytes));
 });
 
-test('pattern beta (Refs emptied + values invalidated): SHA-256 displayed, direction_missing kept',async()=>{
+test('pattern beta (Refs emptied + values invalidated): SHA-256 displayed, NAVI-25 condition 0 applies',async()=>{
   const bytes=patternBeta();
   const row=await prepared(bytes);
   assert.equal(row.gps,null);
-  assert.equal(row.gpsDiagnostic.status,'direction_missing');
-  assert.equal(row.gpsDiagnostic.directionPending.numericValid,false);
+  assert.equal(row.gpsDiagnostic.status,'redacted_suspected');
+  assert.equal(row.gpsDiagnostic.redactionSuspected,true);
+  assert.equal(row.gpsDiagnostic.directionPending,undefined);
   const extras=diagnosticDisplayExtras(row.gpsDiagnostic,row.fingerprint);
   assert.equal(extras.sha256,sha256(bytes));
   assert.match(extras.directScan,/EXIFのRef値が空です/);

@@ -79,3 +79,6 @@ jobs:
       - name: NAVI-21 photo diagnostic display tests
         if: always()
         run: node --experimental-default-type=module --test tests/photo-diagnostic-display.test.mjs
+      - name: NAVI-25 GPS guidance tests
+        if: always()
+        run: node --experimental-default-type=module --test tests/navi25-gps-guidance.test.mjs
