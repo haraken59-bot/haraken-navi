@@ -35,6 +35,23 @@ function describe(value) {
   if (Array.isArray(value)) return '[' + value.map(describe).join(', ') + ']';
   return String(value).slice(0,160);
 }
+function zeroNumeratorState(directRefs){
+ const segments=(directRefs?.segments||[]).filter(s=>s.status==='GPS IFD確認済み');
+ if(!segments.length)return 'unknown';
+ let sawNonzero=false,sawZeroPair=false;
+ for(const s of segments){
+  let pairKnown=true,pairZero=true;
+  for(const id of [2,4]){
+   const entry=(s.dms||[]).find(r=>r.tag===id);
+   if(!entry||!Array.isArray(entry.parts)||entry.parts.length!==3){pairKnown=false;break;}
+   if(entry.parts.some(p=>p.numerator!==0))sawNonzero=true;
+   if(!entry.parts.every(p=>p.numerator===0))pairZero=false;
+  }
+  if(pairKnown&&pairZero)sawZeroPair=true;
+ }
+ if(sawNonzero)return 'nonzero';
+ return sawZeroPair?'zero':'unknown';
+}
 export async function inspectGps(file, parser = exifr, originalBytes) {
   const diagnostic = { version: 'GPS診断1', input: '縮小前の元File', type: file.type || '不明', size: file.size, latitudeTag: false, longitudeTag: false, status: 'missing', error: null };
   let bytes;
@@ -91,21 +108,31 @@ export async function inspectGps(file, parser = exifr, originalBytes) {
     if(pairs.length&&pairs.every(p=>validGps(p)&&p.latitude===pairs[0].latitude&&p.longitude===pairs[0].longitude)){Object.assign(magnitude,pairs[0]);diagnostic.magnitudeSource='JPEG GPS IFDの有理数から直接変換';}
   }
   if(emptyDirection)diagnostic.magnitudeSource??=validGps(magnitude)?'EXIF解析値から絶対値変換':'数値変換失敗・JPEG直接診断の度分秒を確認';
-  if(!gps&&!conflicting&&emptyDirection)diagnostic.directionPending={...magnitude,confirmed:false,numericValid:validGps(magnitude),latitudeRef:directionOf(tags?.GPSLatitudeRef),longitudeRef:directionOf(tags?.GPSLongitudeRef)};
-  diagnostic.status = conflicting ? 'invalid' : gps ? 'ok' : diagnostic.directionPending ? 'direction_missing' : fullFailed ? 'error' : diagnostic.latitudeTag || diagnostic.longitudeTag || emptyDirection ? 'invalid' : 'missing';
+  const zeroValues=zeroNumeratorState(directRefs)==='zero';
+  const redactionSuspected=!!(diagnostic.latitudeTag&&diagnostic.longitudeTag&&emptyDirection&&zeroValues&&!gps&&!conflicting);
+  if(redactionSuspected)diagnostic.redactionSuspected=true;
+  if(!gps&&!conflicting&&emptyDirection&&!redactionSuspected)diagnostic.directionPending={...magnitude,confirmed:false,numericValid:validGps(magnitude),latitudeRef:directionOf(tags?.GPSLatitudeRef),longitudeRef:directionOf(tags?.GPSLongitudeRef)};
+  diagnostic.status = conflicting ? 'invalid' : gps ? 'ok' : redactionSuspected ? 'redacted_suspected' : diagnostic.directionPending ? 'direction_missing' : fullFailed ? 'error' : diagnostic.latitudeTag || diagnostic.longitudeTag || emptyDirection ? 'invalid' : 'missing';
   // Non-enumerable: device-only diagnostic, excluded from JSON/save metadata.
   Object.defineProperty(diagnostic,'directRefs',{value:directRefs});
   return { gps: gps ? {latitude: gps.latitude, longitude: gps.longitude} : null, diagnostic };
 }
 export function gpsStatus(row) {
   if (row.gps) return row.gpsDiagnostic?.status==='user_map'?'本人が地図で指定した撮影地点':row.gpsDiagnostic?.status==='user_confirmed'?'本人が方角を確認した撮影地点':'写真GPS取得成功';
-  return ({direction_missing:'方角情報なし（撮影地点の確認が必要です）',error:'GPS情報の読み取りに失敗しました', invalid:'GPS座標が不正です', read_error:'写真を読み込めませんでした'})[row.gpsDiagnostic?.status] || '写真にGPS情報がありません';
+  return ({redacted_suspected:'GPS情報が取得できません',direction_missing:'方角情報なし（撮影地点の確認が必要です）',error:'GPS情報の読み取りに失敗しました', invalid:'この写真のGPS数値は、そのままでは使えません。地図で撮影地点を指定するか、地点を指定せずに続行できます。', read_error:'写真を読み込めませんでした'})[row.gpsDiagnostic?.status] || '写真にGPS情報がありません';
+}
+export function directionPendingLine(p){
+ if(!p)return null;
+ if(p.numericValid)return '未確定の数値：緯度の大きさ '+(p.latitude??'数値の確認が必要')+' / 経度の大きさ '+(p.longitude??'数値の確認が必要')+'（方角未設定）。方角を選ぶと、この数値で撮影地点が確定します。';
+ return 'この写真には、使える数値が記録されていません。『撮影地点・方角を確認』から、方角と数値を手入力して確定できます。';
 }
 
 export function confirmPhotoDirection(row,latRef,lonRef,verifiedMagnitude){
  const p=row.gpsDiagnostic?.directionPending;
+ if(row.gpsDiagnostic?.redactionSuspected)throw Error('位置情報が読み取れない写真のため、方角の確認では確定できません');
  if(!p||p.confirmed||!['N','S'].includes(latRef)||!['E','W'].includes(lonRef))throw Error('方角を両方選択してください');
  if((p.latitudeRef&&p.latitudeRef!==latRef)||(p.longitudeRef&&p.longitudeRef!==lonRef))throw Error('EXIFに存在する方角と一致しません');
+ if(!verifiedMagnitude&&p.latitude===0&&p.longitude===0&&!p.latitudeRef&&!p.longitudeRef)throw Error('位置情報が読み取れない写真のため、方角の確認では確定できません');
  const m=verifiedMagnitude??p;
  if(!validGps(m)||m.latitude<0||m.longitude<0)throw Error('撮影地点の数値を確認してください');
  const gps={latitude:m.latitude*(latRef==='S'?-1:1),longitude:m.longitude*(lonRef==='W'?-1:1)};
