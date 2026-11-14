@@ -1,4 +1,4 @@
-import {inspectJpegRefs} from './jpeg-ref-diagnostics.js?v=20261025-camera-gps';
+import {inspectJpegRefs,refDiagnosticText} from './jpeg-ref-diagnostics.js?v=20261025-camera-gps';
 import exifr from '../vendor/exifr.mjs';
 import { validGps } from './locations.js';
 function scalar(v) {
@@ -111,4 +111,10 @@ export function confirmPhotoDirection(row,latRef,lonRef,verifiedMagnitude){
  const gps={latitude:m.latitude*(latRef==='S'?-1:1),longitude:m.longitude*(lonRef==='W'?-1:1)};
  if(!validGps(gps))throw Error('GPS座標が不正です');
  return {...row,gps,gpsDiagnostic:{...row.gpsDiagnostic,status:'user_confirmed',confirmedAt:new Date().toISOString(),directionPending:{...p,confirmed:true},positionSource:'本人が方角・撮影地点を確認',confirmedRefs:{latitude:latRef,longitude:lonRef}}};
+}
+export function diagnosticDisplayExtras(diagnostic,fingerprint){
+  return {
+    sha256: /^[0-9a-f]{64}$/.test(fingerprint||'') ? fingerprint : '未取得',
+    directScan: refDiagnosticText(diagnostic?.directRefs),
+  };
 }
