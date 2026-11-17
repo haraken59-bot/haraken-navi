@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "source_zip": {
+    "name": "20261115_NAVI23_STAGE2_DEPLOY_CANDIDATE_ANKO_v01.zip",
+    "sha256": "53538ce6bafac88e98b1339ba62c835e77e345a00fdfce24378f3e8114be8c9f"
+  },
+  "repository": "haraken59-bot/haraken-navi",
+  "base_commit": "50e79d4e0b334500222077dd310c4a3c2701790a",
+  "branch": "chore/navi23-edge-source-baseline-20261117",
+  "deployment": {
+    "project_ref": "vflxbadvyilfjoypnhtx",
+    "function": "navi-discover",
+    "version": 25,
+    "deployed_at_jst": "2026-11-17T12:53:17.887+09:00",
+    "work_readback": "17/17 exact path and content match; rechecked 2026-11-17",
+    "anko_review": "CONDITIONAL PASS",
+    "geoapify_supplement": "disabled per stage2/stage3 preparation evidence; no setting changed by this task"
+  },
+  "mapping": "ZIP entry path equals repository-relative path; bytes preserved. Git commit is the commit adding this manifest (not self-referential).",
+  "files": [
+    {
+      "path": "supabase/functions/navi-discover/adaptive-search.mjs",
+      "sha256": "b31887c85c3fc99979de275ae161c29cc135948dc856acb1204f5bc193f33c79"
+    },
+    {
+      "path": "supabase/functions/navi-discover/db-runtime.ts",
+      "sha256": "e366ab5950fd98cdf777db66fb0b13c88527dc6ad15969963f8635562cc0ba80"
+    },
+    {
+      "path": "supabase/functions/navi-discover/db.mjs",
+      "sha256": "2d324ce6370e6ee835b4f40c32fb2fef0d86f25016e5e96bb4ce605c05bd51b7"
+    },
+    {
+      "path": "supabase/functions/navi-discover/diagnostics.mjs",
+      "sha256": "6d7f83002b527bf39bfbafefe5a984b0360c189f1b74e4fbd84e24ff612507d7"
+    },
+    {
+      "path": "supabase/functions/navi-discover/geoapify-supplement.mjs",
+      "sha256": "55a521143f791b2542da7ddf34f72ba0a5894a27c8dc378ecff5bba9c8fbcf2f"
+    },
+    {
+      "path": "supabase/functions/navi-discover/guest-search.mjs",
+      "sha256": "6be813dc6a18bb5de1752d7b96b849c81fb4693b3d2c13898cf2f89c52d92497"
+    },
+    {
+      "path": "supabase/functions/navi-discover/guest-state.mjs",
+      "sha256": "6d5e64fe3163bc99905b7993b66cd44b5dc004cd6feec1ec012c617bcebf57e7"
+    },
+    {
+      "path": "supabase/functions/navi-discover/guest-usage.mjs",
+      "sha256": "1bacdd1e776d787e05a90be9175b2cc882f6572713356976b5f908136ec330ce"
+    },
+    {
+      "path": "supabase/functions/navi-discover/handler.mjs",
+      "sha256": "f3921f60aa449c5b8aeae6455134b85267c623894815fdbda90be4e37adfd946"
+    },
+    {
+      "path": "supabase/functions/navi-discover/index.ts",
+      "sha256": "f548163803a7e45210a4e3d356d3a4c461699bc860913dc275a621669f7331cc"
+    },
+    {
+      "path": "supabase/functions/navi-discover/known-places.mjs",
+      "sha256": "f7409598cb63c6a5a98e06ccfca9158238bcf99194f5ecabff53aadd2cd432d1"
+    },
+    {
+      "path": "supabase/functions/navi-discover/known-stores.mjs",
+      "sha256": "20f8b37d2e3a903ae1090f2797fbab75546f811953894c4757c35ac15c888c4a"
+    },
+    {
+      "path": "supabase/functions/navi-discover/search-service.mjs",
+      "sha256": "c118e083662462ee15edab40125ff172657d2d7e2e2a0fb4c120380a0d509a16"
+    },
+    {
+      "path": "supabase/functions/navi-discover/search-state.mjs",
+      "sha256": "617409ff587714dee30025fde12947d0db38918ccff83513a5ca6d8d6d373ab6"
+    },
+    {
+      "path": "app/places.js",
+      "sha256": "3be4d1a5be14f36e8ca79706bcdbbf5bde9b28c6ab5cfcf4baa83b2772ca38be"
+    },
+    {
+      "path": "app/genre-fit.js",
+      "sha256": "c0244a5709a12254c7e607762905dbb6db23256ded192c32e4b8e11e760f68b6"
+    },
+    {
+      "path": "app/scripts/hotpepper-service.mjs",
+      "sha256": "3cae8738ed8d08c312d2097e09c7ef584efa3970789b3073f6ad758bd6d0cbf5"
+    }
+  ]
+}
+
